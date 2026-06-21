@@ -1,6 +1,5 @@
 import { format } from "date-fns";
-import { Fragment } from "react";
-import { DailyHeaderRow } from "@/components/DailyHeaderRow";
+import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -32,16 +31,20 @@ export function HourlyForecastList({ forecasts }: HourlyForecastProps) {
               const summary = summarizeDay(dayForecasts);
 
               return (
-                <Fragment key={format(date, "yyyy-MM-dd")}>
-                  <DailyHeaderRow date={date} summary={summary} variant="hourly" />
+                <ForecastDaySection
+                  key={format(date, "yyyy-MM-dd")}
+                  date={date}
+                  summary={summary}
+                  variant="hourly"
+                >
                   {dayForecasts.map((forecast, index) => (
                     <tr
                       key={forecast.time.toISOString()}
-                      className={
+                      className={`transition-colors duration-150 hover:bg-sky-200 dark:hover:bg-slate-700 ${
                         index % 2 === 0
                           ? "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300"
                           : "bg-sky-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
-                      }
+                      }`}
                     >
                       <td className="whitespace-nowrap px-4 py-2 tabular-nums">
                         <time dateTime={forecast.time.toISOString()}>
@@ -61,7 +64,7 @@ export function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                       </td>
                     </tr>
                   ))}
-                </Fragment>
+                </ForecastDaySection>
               );
             })}
           </tbody>

@@ -1,6 +1,5 @@
 import { format } from "date-fns";
-import { Fragment } from "react";
-import { DailyHeaderRow } from "@/components/DailyHeaderRow";
+import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { getWindDirection } from "@/lib/weather/parse";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -36,12 +35,16 @@ export function WeatherTable({ forecasts }: WeatherTableProps) {
               const summary = summarizeDay(dayForecasts);
 
               return (
-                <Fragment key={format(date, "yyyy-MM-dd")}>
-                  <DailyHeaderRow date={date} summary={summary} variant="detailed" />
+                <ForecastDaySection
+                  key={format(date, "yyyy-MM-dd")}
+                  date={date}
+                  summary={summary}
+                  variant="detailed"
+                >
                   {dayForecasts.map((forecast) => (
                     <tr
                       key={forecast.time.toISOString()}
-                      className="text-slate-700 dark:text-slate-300"
+                      className="text-slate-700 transition-colors duration-150 hover:bg-sky-200 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                       <td className="whitespace-nowrap px-4 py-2 tabular-nums">
                         {format(forecast.time, "HH:mm")}
@@ -70,7 +73,7 @@ export function WeatherTable({ forecasts }: WeatherTableProps) {
                       </td>
                     </tr>
                   ))}
-                </Fragment>
+                </ForecastDaySection>
               );
             })}
           </tbody>
