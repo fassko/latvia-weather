@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { getHourlyForecast, REVALIDATE_SECONDS } from "@/lib/weather/fetch";
+import { getLocationCookie } from "@/lib/weather/location-cookie.server";
+import { resolveLocationId } from "@/lib/weather/locations";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const savedPunkts = await getLocationCookie();
+  const locationId = resolveLocationId(
+    searchParams.get("punkts") ?? undefined,
+    savedPunkts,
+  );
+
   try {
-    const data = await getHourlyForecast();
+    const data = await getHourlyForecast(locationId);
 
     return NextResponse.json(data, {
       headers: {

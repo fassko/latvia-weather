@@ -1,8 +1,9 @@
 import { format } from "date-fns";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
+import { LocationSwitcher } from "@/components/LocationSwitcher";
 import { WindDirection } from "@/components/WindDirection";
 import { getConditionEmoji, getConditionLabel } from "@/lib/weather/parse";
-import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherData, WeatherLocationPoint } from "@/lib/weather/types";
 
 function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
   const now = Date.now();
@@ -12,18 +13,17 @@ function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
 
 interface WeatherHeaderProps {
   data: WeatherData;
+  locations: WeatherLocationPoint[];
 }
 
-export function WeatherHeader({ data }: WeatherHeaderProps) {
+export function WeatherHeader({ data, locations }: WeatherHeaderProps) {
   const current = findCurrentForecast(data.forecasts);
 
   return (
     <header className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          {data.location.name}
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">{data.location.region}</p>
+        <LocationSwitcher locations={locations} selectedId={data.location.id} />
+        <p className="mt-1 text-slate-600 dark:text-slate-400">{data.location.region}</p>
       </div>
 
       <div className="rounded-2xl bg-gradient-to-br from-sky-500 to-sky-700 p-6 text-white shadow-lg dark:from-sky-600 dark:to-sky-900 dark:shadow-sky-950/30">

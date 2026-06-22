@@ -219,9 +219,10 @@ export function WeatherChart({ forecasts }: WeatherChartProps) {
                   color: colors.legend,
                   fontSize: "13px",
                 }}
+                itemSorter={(item) => (item.name === "Temperature" ? 0 : 1)}
                 formatter={(value, name) => {
                   const num = typeof value === "number" ? value : 0;
-                  if (name === "temperature") return [`${num.toFixed(1)}°C`, "Temperature"];
+                  if (name === "Temperature") return [`${num.toFixed(1)}°C`, "Temperature"];
                   return [`${num.toFixed(2)} mm`, "Precipitation"];
                 }}
                 labelFormatter={formatTooltipLabel}

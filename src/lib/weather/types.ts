@@ -36,11 +36,41 @@ export interface HourlyForecast {
   thunderProbability: number;
 }
 
+export interface WeatherLocation {
+  id: string;
+  name: string;
+  region: string;
+}
+
+export interface WeatherPointForecastRaw {
+  punkts: string;
+  svars: number;
+  nosaukums: string;
+  novads: string;
+  lon: string;
+  lat: string;
+  temperatura: string;
+  veja_atrums: string;
+  veja_virziens: string;
+  brazmas: string;
+  nokrisni_1h: string;
+  relativais_mitrums: string;
+  laika_apstaklu_ikona: string;
+  spiediens: string;
+  sajutu_temperatura: string;
+  sniegs: string;
+  makoni: string;
+  nokrisnu_varbutiba: string;
+  uvi_indekss: string;
+  perkons: string;
+}
+
+export interface WeatherLocationPoint extends WeatherLocation {
+  temperature: number;
+  iconCode: string;
+}
+
 export interface WeatherData {
-  location: {
-    id: string;
-    name: string;
-    region: string;
-  };
+  location: WeatherLocation;
   forecasts: HourlyForecast[];
 }

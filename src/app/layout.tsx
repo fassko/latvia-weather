@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Garupe Weather",
-  description: "Hourly weather forecast for Garupe, Latvia",
+  title: "Latvia Weather",
+  description: "Hourly weather forecast for Latvia",
 };
 
 export default function RootLayout({

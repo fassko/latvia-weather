@@ -1,4 +1,4 @@
-export const THEME_STORAGE_KEY = "garupe-theme";
+export const THEME_STORAGE_KEY = "latvia-theme";
 
 export type Theme = "light" | "dark";
 
