@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeScript } from "@/components/ThemeScript";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body className="min-h-full bg-sky-50 font-sans text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
         <ThemeToggle />
         {children}
+        <Analytics />
       </body>
     </html>
   );
