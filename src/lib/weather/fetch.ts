@@ -9,7 +9,9 @@ import type {
 
 const WEATHER_API_BASE = "https://videscentrs.lvgmc.lv/data";
 
-export const REVALIDATE_SECONDS = 1800;
+export const REVALIDATE_SECONDS = 900;
+
+export const STALE_REFRESH_MS = REVALIDATE_SECONDS * 1000;
 
 /** LVĢMC expects `laiks` in Europe/Riga local time (start of current hour). */
 export function formatLaiks(date: Date): string {

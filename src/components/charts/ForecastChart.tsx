@@ -130,7 +130,12 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
       </div>
       <ChartCard>
         <div className={`w-full ${isMultiDay ? "h-80 md:h-[400px]" : "h-64"}`}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            minWidth={0}
+            initialDimension={{ width: 520, height: isMultiDay ? 320 : 256 }}
+          >
             <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
               {isMultiDay &&
                 daySegments.slice(1).map((segment) => (
@@ -224,7 +229,6 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 }}
                 labelFormatter={formatChartTooltipLabel}
               />
-              <Legend wrapperStyle={{ color: colors.legend }} />
               <Bar
                 yAxisId="precip"
                 dataKey="precipitation"
@@ -242,6 +246,10 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
+              />
+              <Legend
+                wrapperStyle={{ color: colors.legend }}
+                itemSorter={(item) => (item.value === "Temperature" ? 0 : 1)}
               />
             </ComposedChart>
           </ResponsiveContainer>

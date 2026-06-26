@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ForecastError } from "@/components/ForecastError";
+import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { HourlyForecastList } from "@/components/HourlyForecast";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
 import { WeatherHeader } from "@/components/WeatherHeader";
@@ -51,6 +52,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
+      <StalePageRefresh />
       <WeatherHeader data={data} locations={locations} />
       <ForecastChartsSection forecasts={data.forecasts} />
       <HourlyForecastList forecasts={data.forecasts} />
@@ -65,7 +67,7 @@ export default async function Home({ searchParams }: HomeProps) {
         >
           LVĢMC
         </a>
-        . Updated every 30 minutes.
+        . Updated every 15 minutes.
       </footer>
     </main>
   );
