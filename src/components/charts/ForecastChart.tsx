@@ -30,6 +30,8 @@ import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 
+const CHART_MARGIN = { top: 8, right: 12, left: 4, bottom: 4 };
+
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
 }
@@ -146,7 +148,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
             minWidth={0}
             initialDimension={{ width: 520, height: isMultiDay ? 320 : 256 }}
           >
-            <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
+            <ComposedChart data={data} margin={CHART_MARGIN}>
               {isMultiDay &&
                 daySegments.slice(1).map((segment) => (
                   <ReferenceLine
@@ -220,8 +222,9 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 orientation="right"
                 tick={{ fontSize: 11, fill: colors.tick }}
                 unit=" mm"
-                width={48}
+                width="auto"
                 tickCount={6}
+                tickMargin={6}
               />
               <Tooltip
                 contentStyle={{
