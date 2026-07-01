@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
+import { AppToolbar } from "@/components/AppToolbar";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
 import { LocationSwitcher } from "@/components/LocationSwitcher";
 import { WindDirection } from "@/components/WindDirection";
@@ -29,21 +30,24 @@ export async function WeatherHeader({ data, locations }: WeatherHeaderProps) {
 
   return (
     <header className="space-y-4">
-      <div>
-        <LocationSwitcher locations={locations} selectedId={data.location.id} />
-        <p className="mt-1 text-slate-600 dark:text-slate-400">{data.location.region}</p>
-        {selectedLocation && (
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            <a
-              href={openStreetMapUrl(selectedLocation.lat, selectedLocation.lon)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono underline decoration-slate-300 underline-offset-2 hover:text-slate-700 dark:decoration-slate-600 dark:hover:text-slate-200"
-            >
-              {formatCoordinates(selectedLocation.lat, selectedLocation.lon)}
-            </a>
-          </p>
-        )}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <LocationSwitcher locations={locations} selectedId={data.location.id} />
+          <p className="mt-1 text-slate-600 dark:text-slate-400">{data.location.region}</p>
+          {selectedLocation && (
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <a
+                href={openStreetMapUrl(selectedLocation.lat, selectedLocation.lon)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono underline decoration-slate-300 underline-offset-2 hover:text-slate-700 dark:decoration-slate-600 dark:hover:text-slate-200"
+              >
+                {formatCoordinates(selectedLocation.lat, selectedLocation.lon)}
+              </a>
+            </p>
+          )}
+        </div>
+        <AppToolbar />
       </div>
 
       <div className="rounded-2xl bg-gradient-to-br from-sky-500 to-sky-700 p-6 text-white shadow-lg dark:from-sky-600 dark:to-sky-900 dark:shadow-sky-950/30">

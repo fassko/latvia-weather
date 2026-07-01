@@ -68,7 +68,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 pt-4 pb-8 sm:px-6">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8">
       <StalePageRefresh />
       <WeatherHeader data={data} locations={locations} />
       <ForecastChartsSection forecasts={data.forecasts} />
