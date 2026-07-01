@@ -22,7 +22,7 @@ export function LanguageSwitcher() {
 
   return (
     <div
-      className="fixed top-4 right-16 z-50 flex rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+      className="flex shrink-0 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
       role="group"
       aria-label="Language"
     >

@@ -29,10 +29,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <NextIntlClientProvider messages={messages}>
       <SetHtmlLang />
-      <Suspense fallback={null}>
-        <LanguageSwitcher />
-      </Suspense>
-      <ThemeToggle />
+      <div className="mx-auto flex w-full max-w-5xl justify-end gap-2 px-4 pt-4 sm:px-6">
+        <Suspense fallback={null}>
+          <LanguageSwitcher />
+        </Suspense>
+        <ThemeToggle />
+      </div>
       {children}
     </NextIntlClientProvider>
   );
