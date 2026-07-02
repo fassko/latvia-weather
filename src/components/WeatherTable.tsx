@@ -34,7 +34,7 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
               <th className="px-4 py-3 font-medium">{t("pressure")}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody>
             {dayGroups.map(({ date, forecasts: dayForecasts }) => {
               const summary = summarizeDay(dayForecasts);
 
@@ -45,10 +45,14 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                   summary={summary}
                   variant="detailed"
                 >
-                  {dayForecasts.map((forecast) => (
+                  {dayForecasts.map((forecast, index) => (
                     <tr
                       key={forecast.time.toISOString()}
-                      className="text-slate-700 transition-colors duration-150 hover:bg-sky-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                      className={`transition-colors duration-150 hover:bg-sky-200 dark:hover:bg-slate-700 ${
+                        index % 2 === 0
+                          ? "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                          : "bg-sky-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
+                      }`}
                     >
                       <td className="whitespace-nowrap px-4 py-2 tabular-nums">
                         {format(forecast.time, "HH:mm")}
