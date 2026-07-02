@@ -52,7 +52,7 @@ interface ChartCardProps {
 export function ChartCard({ children, className = "" }: ChartCardProps) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${className}`}
+      className={`rounded-2xl border border-slate-200 bg-white px-2 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${className}`}
     >
       {children}
     </div>
