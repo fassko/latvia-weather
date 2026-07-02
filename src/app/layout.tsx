@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { ThemeScript } from "@/components/ThemeScript";
 import { ThemeSync } from "@/components/ThemeSync";
 import { getSiteUrl } from "@/lib/site";
@@ -36,6 +37,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-sky-50 font-sans text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
         <ThemeSync />
+        <PullToRefresh />
         {children}
         <Analytics />
       </body>
