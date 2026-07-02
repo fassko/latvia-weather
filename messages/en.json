@@ -8,7 +8,11 @@
   "footer": {
     "dataFrom": "Data from",
     "updatedEvery": "Updated every 15 minutes.",
-    "lastUpdated": "Last updated {time}"
+    "lastUpdated": "Last updated {time}",
+    "developedBy": "Developed by",
+    "authorName": "Kristaps",
+    "onX": "X",
+    "onGitHub": "GitHub"
   },
   "header": {
     "humidity": "Humidity",

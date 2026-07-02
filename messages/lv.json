@@ -8,7 +8,11 @@
   "footer": {
     "dataFrom": "Dati no",
     "updatedEvery": "Atjaunināts ik pēc 15 minūtēm.",
-    "lastUpdated": "Pēdējoreiz atjaunināts {time}"
+    "lastUpdated": "Pēdējoreiz atjaunināts {time}",
+    "developedBy": "Izstrādāja",
+    "authorName": "Kristaps",
+    "onX": "X",
+    "onGitHub": "GitHub"
   },
   "header": {
     "humidity": "Mitrums",

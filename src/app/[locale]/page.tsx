@@ -151,6 +151,35 @@ export default async function Home({ params, searchParams }: HomeProps) {
           </a>
           . {tFooter("updatedEvery")}
         </p>
+        <p>
+          {tFooter("developedBy")}{" "}
+          <a
+            href="https://kristaps.me/"
+            className="underline hover:text-slate-700 dark:hover:text-slate-200"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {tFooter("authorName")}
+          </a>
+          {" · "}
+          <a
+            href="https://x.com/fassko"
+            className="underline hover:text-slate-700 dark:hover:text-slate-200"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {tFooter("onX")}
+          </a>
+          {" · "}
+          <a
+            href="https://github.com/fassko/latvia-weather"
+            className="underline hover:text-slate-700 dark:hover:text-slate-200"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {tFooter("onGitHub")}
+          </a>
+        </p>
       </footer>
     </main>
   );
