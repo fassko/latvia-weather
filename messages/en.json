@@ -7,13 +7,21 @@
   },
   "footer": {
     "dataFrom": "Data from",
-    "updatedEvery": "Updated every 15 minutes."
+    "updatedEvery": "Updated every 15 minutes.",
+    "lastUpdated": "Last updated {time}",
+    "developedBy": "Developed by",
+    "authorName": "Kristaps",
+    "onX": "X",
+    "onGitHub": "GitHub"
   },
   "header": {
     "humidity": "Humidity",
     "wind": "Wind",
     "gusts": "Gusts",
-    "rainChance": "Rain chance"
+    "rainChance": "Rain chance",
+    "cloudCover": "Cloud cover",
+    "uvIndex": "UV index",
+    "thunderChance": "Thunder chance"
   },
   "hourly": {
     "title": "Hourly forecast",
@@ -31,6 +39,7 @@
     "precip": "Precip",
     "rainPercent": "Rain %",
     "humidity": "Humidity",
+    "cloudCover": "Clouds",
     "wind": "Wind",
     "pressure": "Pressure"
   },
@@ -54,6 +63,7 @@
     "upToPercent": "Up to {value}%",
     "upToWind": "Up to {value} m/s",
     "avgHumidity": "Avg {value}%",
+    "avgCloudCover": "Avg {value}%",
     "avgPressure": "Avg {value} hPa"
   },
   "feelsLike": {
@@ -100,7 +110,15 @@
     "somethingWrong": "Something went wrong"
   },
   "location": {
-    "select": "Select location"
+    "select": "Select location",
+    "searchPlaceholder": "Search cities…",
+    "loading": "Loading locations…",
+    "loadError": "Could not load locations",
+    "noResults": "No matching locations"
+  },
+  "share": {
+    "label": "Share forecast",
+    "copied": "Link copied"
   },
   "theme": {
     "switchToLight": "Switch to light mode",

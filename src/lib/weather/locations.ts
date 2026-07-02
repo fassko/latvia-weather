@@ -62,3 +62,33 @@ export function resolveLocationId(
   }
   return DEFAULT_LOCATION_ID;
 }
+
+/** Region/address line when it adds detail beyond the location name. */
+export function getLocationSubtitle(
+  name: string,
+  region: string,
+  locale: string,
+): string | null {
+  const trimmedName = name.trim();
+  const trimmedRegion = region.trim();
+
+  if (!trimmedRegion) return null;
+
+  if (
+    trimmedRegion.localeCompare(trimmedName, locale, { sensitivity: "accent" }) === 0
+  ) {
+    return null;
+  }
+
+  const namePrefix = new RegExp(
+    `^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,\\s*`,
+    "iu",
+  );
+  const withoutNamePrefix = trimmedRegion.replace(namePrefix, "").trim();
+
+  if (withoutNamePrefix && withoutNamePrefix !== trimmedRegion) {
+    return withoutNamePrefix;
+  }
+
+  return trimmedRegion;
+}

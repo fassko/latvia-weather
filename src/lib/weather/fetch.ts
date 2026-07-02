@@ -1,5 +1,5 @@
 import { LOCATION_POINT_IDS } from "./locations";
-import { parseHourlyForecast, parseNumber } from "./parse";
+import { parseHourlyForecast, parseLaiks, parseNumber } from "./parse";
 import type {
   HourlyForecastRaw,
   WeatherData,
@@ -93,5 +93,6 @@ export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
       lon: 0,
     },
     forecasts: raw.map(parseHourlyForecast),
+    fetchedAt: parseLaiks(first.laiks),
   };
 }
