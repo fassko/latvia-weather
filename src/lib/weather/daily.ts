@@ -14,6 +14,7 @@ export interface DailySummary {
   totalPrecipitation: number;
   maxPrecipitationProbability: number;
   avgHumidity: number;
+  avgCloudCover: number;
   maxWindSpeed: number;
   windDirectionAtMaxWind: number;
   avgPressure: number;
@@ -65,6 +66,7 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
   let totalPrecipitation = 0;
   let maxPrecipitationProbability = 0;
   let humiditySum = 0;
+  let cloudCoverSum = 0;
   let maxWindSpeed = 0;
   let windDirectionAtMaxWind = forecasts[0].windDirection;
   let pressureSum = 0;
@@ -80,6 +82,7 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
       forecast.precipitationProbability,
     );
     humiditySum += forecast.humidity;
+    cloudCoverSum += forecast.cloudCover;
     if (forecast.windSpeed >= maxWindSpeed) {
       maxWindSpeed = forecast.windSpeed;
       windDirectionAtMaxWind = forecast.windDirection;
@@ -95,6 +98,7 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
     totalPrecipitation,
     maxPrecipitationProbability,
     avgHumidity: humiditySum / forecasts.length,
+    avgCloudCover: cloudCoverSum / forecasts.length,
     maxWindSpeed,
     windDirectionAtMaxWind,
     avgPressure: pressureSum / forecasts.length,

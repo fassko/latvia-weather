@@ -186,6 +186,9 @@ export function DailyHeaderRow({
       <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
         {t("avgHumidity", { value: Math.round(summary.avgHumidity) })}
       </td>
+      <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
+        {t("avgCloudCover", { value: Math.round(summary.avgCloudCover) })}
+      </td>
       <td
         className="whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums"
         {...toggleCellProps}

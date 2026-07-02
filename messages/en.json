@@ -59,6 +59,7 @@
     "upToPercent": "Up to {value}%",
     "upToWind": "Up to {value} m/s",
     "avgHumidity": "Avg {value}%",
+    "avgCloudCover": "Avg {value}%",
     "avgPressure": "Avg {value} hPa"
   },
   "feelsLike": {

@@ -59,6 +59,7 @@
     "upToPercent": "Līdz {value}%",
     "upToWind": "Līdz {value} m/s",
     "avgHumidity": "Vid. {value}%",
+    "avgCloudCover": "Vid. {value}%",
     "avgPressure": "Vid. {value} hPa"
   },
   "feelsLike": {
