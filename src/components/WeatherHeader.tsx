@@ -1,7 +1,10 @@
 import { format } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocationSwitcher } from "@/components/LocationSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { formatCoordinates, openStreetMapUrl } from "@/lib/weather/coordinates";
@@ -29,11 +32,21 @@ export async function WeatherHeader({ data, locations }: WeatherHeaderProps) {
 
   return (
     <header className="space-y-4">
-      <div>
-        <LocationSwitcher locations={locations} selectedId={data.location.id} />
-        <p className="mt-1 text-slate-600 dark:text-slate-400">{data.location.region}</p>
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="min-w-0 sm:flex-1">
+            <LocationSwitcher locations={locations} selectedId={data.location.id} />
+          </div>
+          <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+            <Suspense fallback={null}>
+              <LanguageSwitcher />
+            </Suspense>
+            <ThemeToggle />
+          </div>
+        </div>
+        <p className="text-slate-600 dark:text-slate-400">{data.location.region}</p>
         {selectedLocation && (
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             <a
               href={openStreetMapUrl(selectedLocation.lat, selectedLocation.lon)}
               target="_blank"
