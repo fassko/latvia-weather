@@ -30,7 +30,7 @@ import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 
-const CHART_MARGIN = { top: 8, right: 12, left: 4, bottom: 4 };
+const CHART_MARGIN = { top: 8, right: 4, left: 0, bottom: 4 };
 
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
