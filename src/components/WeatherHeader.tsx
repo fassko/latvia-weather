@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
+import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
 import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
 
@@ -74,7 +75,9 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
             <ThemeToggle />
           </div>
         </div>
-        <p className="text-slate-600 dark:text-slate-400">{data.location.region}</p>
+        {showRegion ? (
+          <p className="text-slate-600 dark:text-slate-400">{data.location.region}</p>
+        ) : null}
       </div>
 
       <div
