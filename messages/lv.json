@@ -7,13 +7,17 @@
   },
   "footer": {
     "dataFrom": "Dati no",
-    "updatedEvery": "Atjaunināts ik pēc 15 minūtēm."
+    "updatedEvery": "Atjaunināts ik pēc 15 minūtēm.",
+    "lastUpdated": "Pēdējoreiz atjaunināts {time}"
   },
   "header": {
     "humidity": "Mitrums",
     "wind": "Vējš",
     "gusts": "Brāzmas",
-    "rainChance": "Lietus iespēja"
+    "rainChance": "Lietus iespēja",
+    "cloudCover": "Mākoņu daudzums",
+    "uvIndex": "UV indekss",
+    "thunderChance": "Pērkona risks"
   },
   "hourly": {
     "title": "Stundu prognoze",
@@ -31,6 +35,7 @@
     "precip": "Nokrišņi",
     "rainPercent": "Lietus %",
     "humidity": "Mitrums",
+    "cloudCover": "Mākoņi",
     "wind": "Vējš",
     "pressure": "Spiediens"
   },
@@ -100,7 +105,15 @@
     "somethingWrong": "Kaut kas nogāja greizi"
   },
   "location": {
-    "select": "Izvēlēties vietu"
+    "select": "Izvēlēties vietu",
+    "searchPlaceholder": "Meklēt pilsētas…",
+    "loading": "Ielādē vietas…",
+    "loadError": "Neizdevās ielādēt vietas",
+    "noResults": "Nav atbilstošu vietu"
+  },
+  "share": {
+    "label": "Dalīties ar prognozi",
+    "copied": "Saite nokopēta"
   },
   "theme": {
     "switchToLight": "Pārslēgt uz gaišo režīmu",

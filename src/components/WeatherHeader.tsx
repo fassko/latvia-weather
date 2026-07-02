@@ -1,15 +1,16 @@
+import { Suspense } from "react";
 import { format } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Suspense } from "react";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { LocationSwitcher } from "@/components/LocationSwitcher";
+import { LocationCombobox } from "@/components/LocationCombobox";
+import { LocationCoordinates } from "@/components/LocationCoordinates";
+import { ShareButton } from "@/components/ShareButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
-import { formatCoordinates, openStreetMapUrl } from "@/lib/weather/coordinates";
 import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
-import type { HourlyForecast, WeatherData, WeatherLocationPoint } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
 
 function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
   const now = Date.now();
@@ -19,25 +20,47 @@ function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
 
 interface WeatherHeaderProps {
   data: WeatherData;
-  locations: WeatherLocationPoint[];
 }
 
-export async function WeatherHeader({ data, locations }: WeatherHeaderProps) {
+export async function WeatherHeader({ data }: WeatherHeaderProps) {
   const locale = await getLocale();
   const t = await getTranslations("header");
   const tConditions = await getTranslations("conditions");
   const dateLocale = getDateFnsLocale(locale);
   const current = findCurrentForecast(data.forecasts);
-  const selectedLocation = locations.find((location) => location.id === data.location.id);
+
+  const extraStats: Array<{ label: string; value: string }> = [];
+
+  extraStats.push({
+    label: t("cloudCover"),
+    value: `${Math.round(current.cloudCover)}%`,
+  });
+
+  if (current.uvIndex !== null) {
+    extraStats.push({
+      label: t("uvIndex"),
+      value: current.uvIndex.toFixed(1),
+    });
+  }
+
+  if (current.thunderProbability > 0) {
+    extraStats.push({
+      label: t("thunderChance"),
+      value: `${Math.round(current.thunderProbability)}%`,
+    });
+  }
 
   return (
     <header className="space-y-4">
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0 sm:flex-1">
-            <LocationSwitcher locations={locations} selectedId={data.location.id} />
+            <LocationCombobox selectedId={data.location.id} selectedName={data.location.name} />
           </div>
           <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+            <Suspense fallback={null}>
+              <ShareButton />
+            </Suspense>
             <Suspense fallback={null}>
               <LanguageSwitcher />
             </Suspense>
@@ -45,18 +68,7 @@ export async function WeatherHeader({ data, locations }: WeatherHeaderProps) {
           </div>
         </div>
         <p className="text-slate-600 dark:text-slate-400">{data.location.region}</p>
-        {selectedLocation && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            <a
-              href={openStreetMapUrl(selectedLocation.lat, selectedLocation.lon)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono underline decoration-slate-300 underline-offset-2 hover:text-slate-700 dark:decoration-slate-600 dark:hover:text-slate-200"
-            >
-              {formatCoordinates(selectedLocation.lat, selectedLocation.lon)}
-            </a>
-          </p>
-        )}
+        <LocationCoordinates locationId={data.location.id} />
       </div>
 
       <div className="rounded-2xl bg-gradient-to-br from-sky-500 to-sky-700 p-6 text-white shadow-lg dark:from-sky-600 dark:to-sky-900 dark:shadow-sky-950/30">
@@ -81,7 +93,7 @@ export async function WeatherHeader({ data, locations }: WeatherHeaderProps) {
           </span>
         </div>
 
-        <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <div>
             <dt className="text-xs text-sky-200">{t("humidity")}</dt>
             <dd className="text-lg font-semibold">{Math.round(current.humidity)}%</dd>
@@ -103,6 +115,12 @@ export async function WeatherHeader({ data, locations }: WeatherHeaderProps) {
               {Math.round(current.precipitationProbability)}%
             </dd>
           </div>
+          {extraStats.map((stat) => (
+            <div key={stat.label}>
+              <dt className="text-xs text-sky-200">{stat.label}</dt>
+              <dd className="text-lg font-semibold">{stat.value}</dd>
+            </div>
+          ))}
         </dl>
       </div>
     </header>

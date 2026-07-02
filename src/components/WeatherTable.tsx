@@ -29,6 +29,7 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
               <th className="px-4 py-3 font-medium">{t("precip")}</th>
               <th className="px-4 py-3 font-medium">{t("rainPercent")}</th>
               <th className="px-4 py-3 font-medium">{t("humidity")}</th>
+              <th className="px-4 py-3 font-medium">{t("cloudCover")}</th>
               <th className="px-4 py-3 font-medium">{t("wind")}</th>
               <th className="px-4 py-3 font-medium">{t("pressure")}</th>
             </tr>
@@ -72,6 +73,9 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                       </td>
                       <td className="px-4 py-2 tabular-nums">
                         {Math.round(forecast.humidity)}%
+                      </td>
+                      <td className="px-4 py-2 tabular-nums">
+                        {Math.round(forecast.cloudCover)}%
                       </td>
                       <td className="whitespace-nowrap px-4 py-2 tabular-nums">
                         {forecast.windSpeed.toFixed(1)} m/s{" "}
