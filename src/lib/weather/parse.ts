@@ -1,14 +1,12 @@
-import { parse } from "date-fns";
 import type { HourlyForecast, HourlyForecastRaw } from "./types";
+import { parseLaiks } from "./timezone";
+
+export { parseLaiks } from "./timezone";
 
 export function parseNumber(value: string | null | undefined): number {
   if (value == null || value === "") return 0;
   const num = Number.parseFloat(value);
   return Number.isFinite(num) ? num : 0;
-}
-
-export function parseLaiks(laiks: string): Date {
-  return parse(laiks, "yyyyMMddHHmm", new Date());
 }
 
 export function parseHourlyForecast(raw: HourlyForecastRaw): HourlyForecast {

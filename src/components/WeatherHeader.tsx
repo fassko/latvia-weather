@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { format } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -8,8 +7,8 @@ import { LocationCoordinates } from "@/components/LocationCoordinates";
 import { ShareButton } from "@/components/ShareButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { WindDirection } from "@/components/WindDirection";
-import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
+import { formatLatviaDateTime } from "@/lib/weather/timezone";
 import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
 import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
@@ -28,13 +27,13 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
   const locale = await getLocale();
   const t = await getTranslations("header");
   const tConditions = await getTranslations("conditions");
-  const dateLocale = getDateFnsLocale(locale);
   const current = findCurrentForecast(data.forecasts);
   const headerTheme = getWeatherHeaderTheme(current.iconCode);
-  const showRegion =
-    data.location.region.localeCompare(data.location.name, locale, {
-      sensitivity: "accent",
-    }) !== 0;
+  const locationSubtitle = getLocationSubtitle(
+    data.location.name,
+    data.location.region,
+    locale,
+  );
 
   const extraStats: Array<{ label: string; value: string }> = [];
 
@@ -75,8 +74,8 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
             <ThemeToggle />
           </div>
         </div>
-        {showRegion ? (
-          <p className="text-slate-600 dark:text-slate-400">{data.location.region}</p>
+        {locationSubtitle ? (
+          <p className="text-slate-600 dark:text-slate-400">{locationSubtitle}</p>
         ) : null}
       </div>
 
@@ -86,7 +85,7 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className={`text-base font-medium ${headerTheme.muted}`}>
-              {format(current.time, getDatePattern(locale, "headerDateTime"), { locale: dateLocale })}
+              {formatLatviaDateTime(new Date(), locale, "headerDateTime")}
             </p>
             <p className="mt-2 text-6xl font-bold tabular-nums sm:text-7xl">
               {Math.round(current.temperature)}°C
