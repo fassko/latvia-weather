@@ -19,6 +19,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  applicationName: "Latvia Weather",
+  creator: "Latvia Weather",
+  openGraph: {
+    siteName: "Latvia Weather",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

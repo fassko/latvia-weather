@@ -43,6 +43,21 @@
     "wind": "Vējš",
     "pressure": "Spiediens"
   },
+  "forecastViews": {
+    "ariaLabel": "Prognozes skati",
+    "hourly": "Pa stundām",
+    "detailed": "Detalizēti"
+  },
+  "insights": {
+    "title": "Šodien īsumā",
+    "warmest": "Siltākais",
+    "rain": "Lietus",
+    "wind": "Vēja brāzmas",
+    "temperatureAt": "{temp}°C plkst. {time}",
+    "rainAmount": "{amount} mm, līdz {chance}%",
+    "rainChance": "Līdz {chance}% plkst. {time}",
+    "windAt": "{speed} m/s plkst. {time}"
+  },
   "chart": {
     "title": "Temperatūra un nokrišņi",
     "noData": "Prognozes dati nav pieejami.",
@@ -114,7 +129,10 @@
     "searchPlaceholder": "Meklēt pilsētas…",
     "loading": "Ielādē vietas…",
     "loadError": "Neizdevās ielādēt vietas",
-    "noResults": "Nav atbilstošu vietu"
+    "noResults": "Nav atbilstošu vietu",
+    "useCurrent": "Lietot manu atrašanās vietu",
+    "locating": "Meklē tuvāko vietu...",
+    "locationError": "Neizdevās noteikt atrašanās vietu."
   },
   "share": {
     "label": "Dalīties ar prognozi",

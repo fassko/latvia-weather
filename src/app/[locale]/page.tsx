@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
+import { ForecastViewTabs } from "@/components/ForecastViewTabs";
 import { LastUpdated } from "@/components/LastUpdated";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { HourlyForecastList } from "@/components/HourlyForecast";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
+import { WeatherInsights } from "@/components/WeatherInsights";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { WeatherTable } from "@/components/WeatherTable";
 import { routing, type Locale } from "@/i18n/routing";
-import { getHourlyForecast } from "@/lib/weather/fetch";
+import {
+  getHourlyForecast,
+  getLocationPoints,
+  mergeForecastLocation,
+} from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { DEFAULT_LOCATION_ID, resolveLocationId } from "@/lib/weather/locations";
-import { getSiteUrl } from "@/lib/site";
+import { getSiteUrl, localizedPath } from "@/lib/site";
 
 interface HomeProps {
   params: Promise<{ locale: string }>;
@@ -26,6 +32,10 @@ function buildPagePath(locale: string, punkts?: string): string {
   return `/${locale}${query}`;
 }
 
+function getLocaleName(locale: string): "lv_LV" | "en_US" {
+  return locale === "lv" ? "lv_LV" : "en_US";
+}
+
 export async function generateMetadata({ params, searchParams }: HomeProps): Promise<Metadata> {
   const { locale } = await params;
   const { punkts } = await searchParams;
@@ -35,6 +45,13 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
   const baseUrl = getSiteUrl();
   const pagePath = buildPagePath(locale, locationId);
   const pageUrl = `${baseUrl}${pagePath}`;
+  const imageUrl = `${baseUrl}/${locale}/opengraph-image`;
+  const languages = Object.fromEntries(
+    routing.locales.map((altLocale) => [
+      altLocale,
+      `${baseUrl}${buildPagePath(altLocale, locationId)}`,
+    ]),
+  );
 
   try {
     const data = await getHourlyForecast(locationId);
@@ -46,27 +63,23 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
       description,
       alternates: {
         canonical: pageUrl,
-        languages: Object.fromEntries(
-          routing.locales.map((altLocale) => [
-            altLocale,
-            `${baseUrl}${buildPagePath(altLocale, locationId)}`,
-          ]),
-        ),
+        languages,
       },
       openGraph: {
         title,
         description,
         url: pageUrl,
         siteName: t("siteTitle"),
-        locale: locale === "lv" ? "lv_LV" : "en_US",
+        locale: getLocaleName(locale),
+        alternateLocale: locale === "lv" ? ["en_US"] : ["lv_LV"],
         type: "website",
-        images: [{ url: `${baseUrl}/${locale}/opengraph-image` }],
+        images: [{ url: imageUrl, width: 1200, height: 630 }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [`${baseUrl}/${locale}/opengraph-image`],
+        images: [imageUrl],
       },
     };
   } catch {
@@ -78,27 +91,23 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
       description,
       alternates: {
         canonical: pageUrl,
-        languages: Object.fromEntries(
-          routing.locales.map((altLocale) => [
-            altLocale,
-            `${baseUrl}${buildPagePath(altLocale, locationId)}`,
-          ]),
-        ),
+        languages,
       },
       openGraph: {
         title,
         description,
         url: pageUrl,
         siteName: title,
-        locale: locale === "lv" ? "lv_LV" : "en_US",
+        locale: getLocaleName(locale),
+        alternateLocale: locale === "lv" ? ["en_US"] : ["lv_LV"],
         type: "website",
-        images: [{ url: `${baseUrl}/${locale}/opengraph-image` }],
+        images: [{ url: imageUrl, width: 1200, height: 630 }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [`${baseUrl}/${locale}/opengraph-image`],
+        images: [imageUrl],
       },
     };
   }
@@ -118,23 +127,69 @@ export default async function Home({ params, searchParams }: HomeProps) {
   const locationId = resolveLocationId(punkts, savedPunkts);
   const t = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
+  const tViews = await getTranslations({ locale, namespace: "forecastViews" });
 
   let data;
+  let locations;
 
   try {
-    data = await getHourlyForecast(locationId);
+    [data, locations] = await Promise.all([
+      getHourlyForecast(locationId),
+      getLocationPoints(),
+    ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : t("loadWeatherData");
     return <ForecastError message={message} />;
   }
 
+  data = mergeForecastLocation(data, locations);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${data.location.name} Weather`,
+    url: `${getSiteUrl()}${localizedPath(
+      locale,
+      data.location.id === DEFAULT_LOCATION_ID ? undefined : data.location.id,
+    )}`,
+    about: {
+      "@type": "Place",
+      name: data.location.name,
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "LV",
+        addressRegion: data.location.region,
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: data.location.lat,
+        longitude: data.location.lon,
+      },
+    },
+    provider: {
+      "@type": "Organization",
+      name: "LVĢMC",
+      url: "https://videscentrs.lvgmc.lv/",
+    },
+  };
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 pt-4 pb-8 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <StalePageRefresh />
       <WeatherHeader data={data} />
+      <WeatherInsights forecasts={data.forecasts} />
       <ForecastChartsSection forecasts={data.forecasts} />
-      <HourlyForecastList forecasts={data.forecasts} />
-      <WeatherTable forecasts={data.forecasts} />
+      <ForecastViewTabs
+        ariaLabel={tViews("ariaLabel")}
+        hourlyLabel={tViews("hourly")}
+        detailedLabel={tViews("detailed")}
+        hourly={<HourlyForecastList forecasts={data.forecasts} />}
+        detailed={<WeatherTable forecasts={data.forecasts} />}
+      />
       <footer className="space-y-1 pb-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <p>
           <LastUpdated fetchedAt={data.fetchedAt} />

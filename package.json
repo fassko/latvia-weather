@@ -2,11 +2,13 @@
   "name": "latvia-weather",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test --experimental-strip-types --import ./tests/register-loader.mjs tests/*.test.mts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

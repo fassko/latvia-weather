@@ -11,3 +11,8 @@ export function getSiteUrl(): string {
 
   return DEFAULT_SITE_URL;
 }
+
+export function localizedPath(locale: string, locationId?: string): string {
+  const path = `/${locale}`;
+  return locationId ? `${path}?punkts=${encodeURIComponent(locationId)}` : path;
+}

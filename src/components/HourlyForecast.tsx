@@ -1,6 +1,7 @@
 import { format } from "date-fns";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { ForecastDaySection } from "@/components/ForecastDaySection";
+import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -10,7 +11,10 @@ interface HourlyForecastProps {
 }
 
 export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
+  const locale = await getLocale();
   const t = await getTranslations("hourly");
+  const tDaily = await getTranslations("daily");
+  const dateLocale = getDateFnsLocale(locale);
   const dayGroups = groupForecastsByDay(forecasts);
 
   return (
@@ -18,7 +22,62 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
       <h2 id="hourly-heading" className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
         {t("title")}
       </h2>
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="space-y-4 sm:hidden">
+        {dayGroups.map(({ date, forecasts: dayForecasts }) => {
+          const summary = summarizeDay(dayForecasts);
+
+          return (
+            <section
+              key={format(date, "yyyy-MM-dd")}
+              aria-label={tDaily("hourlyForecastFor", {
+                date: format(date, getDatePattern(locale, "longDate"), {
+                  locale: dateLocale,
+                }),
+              })}
+              className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+            >
+              <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                  {format(date, getDatePattern(locale, "longDate"), { locale: dateLocale })}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {Math.round(summary.minTemperature)}° / {Math.round(summary.maxTemperature)}° ·{" "}
+                  {tDaily("mmTotal", { value: summary.totalPrecipitation.toFixed(1) })}
+                </p>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {dayForecasts.map((forecast) => (
+                  <article
+                    key={forecast.time.toISOString()}
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3"
+                  >
+                    <time
+                      dateTime={forecast.time.toISOString()}
+                      className="font-mono text-sm text-slate-500 dark:text-slate-400"
+                    >
+                      {format(forecast.time, "HH:mm")}
+                    </time>
+                    <div className="min-w-0">
+                      <p className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                        {Math.round(forecast.temperature)}°C
+                      </p>
+                      <p className="text-sm tabular-nums text-sky-700 dark:text-sky-400">
+                        {forecast.precipitation > 0
+                          ? `${forecast.precipitation.toFixed(1)} mm`
+                          : t("chance", { value: Math.round(forecast.precipitationProbability) })}
+                      </p>
+                    </div>
+                    <span className="text-2xl" aria-hidden="true">
+                      {getConditionEmoji(forecast.iconCode)}
+                    </span>
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+      <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:block">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
             <tr>

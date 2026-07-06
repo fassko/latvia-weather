@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getHourlyForecast, REVALIDATE_SECONDS } from "@/lib/weather/fetch";
+import {
+  getHourlyForecast,
+  getLocationPoints,
+  mergeForecastLocation,
+  REVALIDATE_SECONDS,
+} from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { resolveLocationId } from "@/lib/weather/locations";
 
@@ -12,9 +17,12 @@ export async function GET(request: Request) {
   );
 
   try {
-    const data = await getHourlyForecast(locationId);
+    const [data, locations] = await Promise.all([
+      getHourlyForecast(locationId),
+      getLocationPoints(),
+    ]);
 
-    return NextResponse.json(data, {
+    return NextResponse.json(mergeForecastLocation(data, locations), {
       headers: {
         "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
       },

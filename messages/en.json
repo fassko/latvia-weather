@@ -43,6 +43,21 @@
     "wind": "Wind",
     "pressure": "Pressure"
   },
+  "forecastViews": {
+    "ariaLabel": "Forecast views",
+    "hourly": "Hourly",
+    "detailed": "Details"
+  },
+  "insights": {
+    "title": "Today at a glance",
+    "warmest": "Warmest",
+    "rain": "Rain",
+    "wind": "Wind gusts",
+    "temperatureAt": "{temp}°C at {time}",
+    "rainAmount": "{amount} mm, up to {chance}%",
+    "rainChance": "Up to {chance}% at {time}",
+    "windAt": "{speed} m/s at {time}"
+  },
   "chart": {
     "title": "Temperature & precipitation",
     "noData": "No forecast data available.",
@@ -114,7 +129,10 @@
     "searchPlaceholder": "Search cities…",
     "loading": "Loading locations…",
     "loadError": "Could not load locations",
-    "noResults": "No matching locations"
+    "noResults": "No matching locations",
+    "useCurrent": "Use my location",
+    "locating": "Finding nearest location...",
+    "locationError": "Could not use your location."
   },
   "share": {
     "label": "Share forecast",

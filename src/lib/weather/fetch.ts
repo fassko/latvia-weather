@@ -13,6 +13,38 @@ export const REVALIDATE_SECONDS = 900;
 
 export const STALE_REFRESH_MS = REVALIDATE_SECONDS * 1000;
 
+const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
+
+interface CachedValue<T> {
+  value: T;
+  storedAt: number;
+}
+
+const locationPointsCache: CachedValue<WeatherLocationPoint[]> = {
+  value: [],
+  storedAt: 0,
+};
+const hourlyForecastCache = new Map<string, CachedValue<WeatherData>>();
+
+function isUsableStaleValue<T>(
+  cache: CachedValue<T>,
+  isEmpty: (value: T) => boolean,
+): boolean {
+  return !isEmpty(cache.value) && Date.now() - cache.storedAt <= STALE_FALLBACK_MS;
+}
+
+function rememberLocationPoints(value: WeatherLocationPoint[]) {
+  locationPointsCache.value = value;
+  locationPointsCache.storedAt = Date.now();
+}
+
+function rememberHourlyForecast(punkts: string, value: WeatherData) {
+  hourlyForecastCache.set(punkts, {
+    value,
+    storedAt: Date.now(),
+  });
+}
+
 /** LVĢMC expects `laiks` in Europe/Riga local time (start of current hour). */
 export function formatLaiks(date: Date): string {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -38,61 +70,107 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
   const punkti = LOCATION_POINT_IDS.join(",");
   const url = `${WEATHER_API_BASE}/weather_points_forecast?laiks=${laiks}&punkti=${encodeURIComponent(punkti)}`;
 
-  const response = await fetch(url, {
-    next: { revalidate: REVALIDATE_SECONDS },
-  });
+  try {
+    const response = await fetch(url, {
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Location points API returned ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Location points API returned ${response.status}`);
+    }
+
+    const raw = (await response.json()) as WeatherPointForecastRaw[];
+
+    if (!Array.isArray(raw) || raw.length === 0) {
+      throw new Error("Location points API returned empty data");
+    }
+
+    const points = raw
+      .map((point) => ({
+        id: point.punkts,
+        name: point.nosaukums,
+        region: point.novads,
+        lat: parseNumber(point.lat),
+        lon: parseNumber(point.lon),
+        temperature: parseNumber(point.temperatura),
+        iconCode: point.laika_apstaklu_ikona,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "lv"));
+
+    rememberLocationPoints(points);
+    return points;
+  } catch (error) {
+    if (isUsableStaleValue(locationPointsCache, (value) => value.length === 0)) {
+      return locationPointsCache.value;
+    }
+
+    throw error;
   }
-
-  const raw = (await response.json()) as WeatherPointForecastRaw[];
-
-  if (!Array.isArray(raw) || raw.length === 0) {
-    throw new Error("Location points API returned empty data");
-  }
-
-  return raw
-    .map((point) => ({
-      id: point.punkts,
-      name: point.nosaukums,
-      region: point.novads,
-      lat: parseNumber(point.lat),
-      lon: parseNumber(point.lon),
-      temperature: parseNumber(point.temperatura),
-      iconCode: point.laika_apstaklu_ikona,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name, "lv"));
 }
 
 export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
   const url = `${WEATHER_API_BASE}/weather_forecast_for_location_hourly?punkts=${encodeURIComponent(punkts)}`;
 
-  const response = await fetch(url, {
-    next: { revalidate: REVALIDATE_SECONDS },
-  });
+  try {
+    const response = await fetch(url, {
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Weather API returned ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Weather API returned ${response.status}`);
+    }
+
+    const raw = (await response.json()) as HourlyForecastRaw[];
+
+    if (!Array.isArray(raw) || raw.length === 0) {
+      throw new Error("Weather API returned empty data");
+    }
+
+    const first = raw[0];
+    const data = {
+      location: {
+        id: first.punkts,
+        name: first.nosaukums,
+        region: first.novads,
+        lat: 0,
+        lon: 0,
+      },
+      forecasts: raw.map(parseHourlyForecast),
+      fetchedAt: parseLaiks(first.laiks),
+    };
+
+    rememberHourlyForecast(punkts, data);
+    return data;
+  } catch (error) {
+    const cached = hourlyForecastCache.get(punkts);
+
+    if (
+      cached &&
+      isUsableStaleValue(cached, (value) => value.forecasts.length === 0)
+    ) {
+      return cached.value;
+    }
+
+    throw error;
   }
+}
 
-  const raw = (await response.json()) as HourlyForecastRaw[];
+export function mergeForecastLocation(
+  data: WeatherData,
+  locations: WeatherLocationPoint[],
+): WeatherData {
+  const location = locations.find((point) => point.id === data.location.id);
 
-  if (!Array.isArray(raw) || raw.length === 0) {
-    throw new Error("Weather API returned empty data");
-  }
-
-  const first = raw[0];
+  if (!location) return data;
 
   return {
+    ...data,
     location: {
-      id: first.punkts,
-      name: first.nosaukums,
-      region: first.novads,
-      lat: 0,
-      lon: 0,
+      id: location.id,
+      name: location.name,
+      region: location.region,
+      lat: location.lat,
+      lon: location.lon,
     },
-    forecasts: raw.map(parseHourlyForecast),
-    fetchedAt: parseLaiks(first.laiks),
   };
 }

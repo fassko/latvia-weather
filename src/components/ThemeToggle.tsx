@@ -1,24 +1,41 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
-import { applyTheme, resolveTheme, type Theme } from "@/lib/theme";
+import { useTranslations } from "next-intl";
+import { useSyncExternalStore } from "react";
+import { applyTheme, getActiveTheme, type Theme } from "@/lib/theme";
+
+const THEME_CHANGE_EVENT = "latvia-theme-change";
+
+function subscribe(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(THEME_CHANGE_EVENT, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(THEME_CHANGE_EVENT, onStoreChange);
+  };
+}
+
+function getThemeSnapshot(): Theme {
+  return getActiveTheme();
+}
+
+function getServerThemeSnapshot(): Theme {
+  return "light";
+}
 
 export function ThemeToggle() {
   const t = useTranslations("theme");
-  const locale = useLocale();
-  const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setTheme(resolveTheme());
-    setMounted(true);
-  }, [locale]);
+  const theme = useSyncExternalStore(
+    subscribe,
+    getThemeSnapshot,
+    getServerThemeSnapshot,
+  );
 
   function toggleTheme() {
     const next: Theme = theme === "dark" ? "light" : "dark";
     applyTheme(next);
-    setTheme(next);
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
 
   return (
@@ -28,15 +45,7 @@ export function ThemeToggle() {
       aria-label={theme === "dark" ? t("switchToLight") : t("switchToDark")}
       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
     >
-      {mounted ? (
-        theme === "dark" ? (
-          <SunIcon />
-        ) : (
-          <MoonIcon />
-        )
-      ) : (
-        <span className="h-5 w-5" aria-hidden="true" />
-      )}
+      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
     </button>
   );
 }
