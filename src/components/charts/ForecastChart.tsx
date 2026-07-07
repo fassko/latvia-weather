@@ -27,10 +27,11 @@ import {
   sumPrecipitation,
   toChartPoints,
 } from "@/lib/weather/chart-data";
-import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
+import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
+type ChartSeriesKey = "temperature" | "precipitation" | "windSpeed";
 
 const CHART_MARGIN = { top: 28, right: 4, left: 0, bottom: 4 };
 
@@ -62,6 +63,12 @@ function getConditionIconMinGap(period: ForecastPeriod) {
   return 4;
 }
 
+function getWindDirectionIconStep(period: ForecastPeriod) {
+  if (period === 1) return 2;
+  if (period === 3) return 6;
+  return 12;
+}
+
 function getConditionIconIndexes(data: ChartPoint[], period: ForecastPeriod): Set<number> {
   const indexes = new Set<number>();
   const step = getConditionIconStep(period);
@@ -85,12 +92,34 @@ function isSvgCoordinate(value: number | string | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function getTodayRainPoint(data: ChartPoint[]): ChartPoint | null {
+  if (data.length === 0) return null;
+
+  const wettestByAmount = data.reduce((best, point) =>
+    point.precipitation > best.precipitation ? point : best,
+  );
+
+  if (wettestByAmount.precipitation > 0) return wettestByAmount;
+
+  const wettestByChance = data.reduce((best, point) =>
+    point.precipitationProbability > best.precipitationProbability ? point : best,
+  );
+
+  return wettestByChance.precipitationProbability > 0 ? wettestByChance : null;
+}
+
+function isChartSeriesKey(value: unknown): value is ChartSeriesKey {
+  return value === "temperature" || value === "precipitation" || value === "windSpeed";
+}
+
 export function ForecastChart({ forecasts }: ForecastChartProps) {
   const locale = useLocale();
   const t = useTranslations("chart");
   const tConditions = useTranslations("conditions");
+  const tWind = useTranslations("wind");
   const dateLocale = getDateFnsLocale(locale);
   const [period, setPeriod] = useState<ForecastPeriod>(1);
+  const [hiddenSeries, setHiddenSeries] = useState<Set<ChartSeriesKey>>(() => new Set());
   const colors = useChartColors();
 
   const periodOptions: { value: ForecastPeriod; label: string }[] = [
@@ -114,6 +143,10 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     () => getConditionIconIndexes(data, period),
     [data, period],
   );
+  const todayRainPoint = useMemo(
+    () => (period === 1 ? getTodayRainPoint(data) : null),
+    [data, period],
+  );
 
   const dayTickLabels = useMemo(
     () =>
@@ -133,6 +166,19 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
   const temperatureLabel = t("temperature");
   const precipitationLabel = t("precipitation");
   const windLabel = t("wind");
+  const toggleSeries = (dataKey: unknown) => {
+    if (!isChartSeriesKey(dataKey)) return;
+
+    setHiddenSeries((current) => {
+      const next = new Set(current);
+      if (next.has(dataKey)) {
+        next.delete(dataKey);
+      } else {
+        next.add(dataKey);
+      }
+      return next;
+    });
+  };
   const renderConditionDot = ({ cx, cy, index, payload }: ConditionDotProps) => {
     if (
       index == null ||
@@ -160,7 +206,40 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
       </g>
     );
   };
+  const renderWindDirectionDot = ({ cx, cy, index, payload }: ConditionDotProps) => {
+    if (
+      index == null ||
+      index % getWindDirectionIconStep(period) !== 0 ||
+      payload == null ||
+      !isSvgCoordinate(cx) ||
+      !isSvgCoordinate(cy)
+    ) {
+      return null;
+    }
 
+    const direction = getWindDirection(payload.windDirection);
+    return (
+      <g
+        transform={`translate(${cx}, ${cy + 20}) rotate(${payload.windDirection + 180})`}
+        pointerEvents="none"
+      >
+        <title>{tWind("from", { direction })}</title>
+        <text
+          y={5}
+          textAnchor="middle"
+          fontSize={18}
+          fontWeight={800}
+          fill="#047857"
+          stroke={colors.tooltipBg}
+          strokeWidth={3}
+          paintOrder="stroke fill"
+          fontFamily="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        >
+          ↑
+        </text>
+      </g>
+    );
+  };
   if (data.length === 0) {
     return (
       <section aria-labelledby="forecast-chart-heading">
@@ -193,6 +272,22 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
             <span className="font-medium text-slate-700 dark:text-slate-200">
               {t("mmTotal", { value: totalPrecip.toFixed(1) })}
             </span>
+            {todayRainPoint ? (
+              <span className="block">
+                {todayRainPoint.precipitation > 0
+                  ? t("rainPeak", {
+                      time: format(new Date(todayRainPoint.time), "HH:mm"),
+                      amount: todayRainPoint.precipitation.toFixed(1),
+                      chance: Math.round(todayRainPoint.precipitationProbability),
+                    })
+                  : t("rainChancePeak", {
+                      time: format(new Date(todayRainPoint.time), "HH:mm"),
+                      chance: Math.round(todayRainPoint.precipitationProbability),
+                    })}
+              </span>
+            ) : period === 1 ? (
+              <span className="block">{t("noRainExpected")}</span>
+            ) : null}
           </p>
         </div>
         <div
@@ -313,25 +408,59 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 tickMargin={6}
               />
               <Tooltip
+                wrapperStyle={{
+                  maxWidth: "none",
+                }}
                 contentStyle={{
                   borderRadius: "8px",
                   border: `1px solid ${colors.tooltipBorder}`,
                   backgroundColor: colors.tooltipBg,
                   color: colors.legend,
                   fontSize: "13px",
+                  whiteSpace: "nowrap",
                 }}
                 itemSorter={(item) => {
                   if (item.name === temperatureLabel) return 0;
                   if (item.name === precipitationLabel) return 1;
                   return 2;
                 }}
-                formatter={(value, name) => {
+                formatter={(value, name, item) => {
                   const num = typeof value === "number" ? value : 0;
+                  const point = item.payload as ChartPoint | undefined;
                   if (name === temperatureLabel) {
                     return [`${num.toFixed(1)}°C`, temperatureLabel];
                   }
                   if (name === windLabel) {
-                    return [`${num.toFixed(1)} m/s`, windLabel];
+                    if (point == null) return [`${num.toFixed(1)} m/s`, windLabel];
+
+                    const direction = getWindDirection(point.windDirection);
+
+                    return [
+                      <span
+                        key="wind-tooltip"
+                        className="inline-flex items-center gap-1"
+                      >
+                        <span>{num.toFixed(1)} m/s</span>
+                        <svg
+                          aria-hidden="true"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          style={{ transform: `rotate(${point.windDirection + 180}deg)` }}
+                        >
+                          <path
+                            d="M8 2v10M8 2L5 7M8 2l3 5"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <span>{tWind("from", { direction })}</span>
+                      </span>,
+                      windLabel,
+                    ];
                   }
                   return [`${num.toFixed(2)} mm`, precipitationLabel];
                 }}
@@ -352,6 +481,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 fill="#38bdf8"
                 fillOpacity={0.7}
                 radius={[2, 2, 0, 0]}
+                hide={hiddenSeries.has("precipitation")}
               />
               <Line
                 yAxisId="temp"
@@ -362,6 +492,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 strokeWidth={2}
                 dot={renderConditionDot}
                 activeDot={{ r: 4 }}
+                hide={hiddenSeries.has("temperature")}
               />
               <Line
                 yAxisId="wind"
@@ -370,12 +501,26 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 name={windLabel}
                 stroke="#10b981"
                 strokeWidth={2}
-                strokeDasharray="4 4"
-                dot={false}
+                dot={renderWindDirectionDot}
                 activeDot={{ r: 4 }}
+                hide={hiddenSeries.has("windSpeed")}
               />
               <Legend
-                wrapperStyle={{ color: colors.legend }}
+                wrapperStyle={{ color: colors.legend, cursor: "pointer" }}
+                onClick={(entry) => toggleSeries(entry.dataKey)}
+                formatter={(value, entry) => (
+                  <span
+                    style={{
+                      color: colors.legend,
+                      opacity:
+                        entry.dataKey != null && hiddenSeries.has(entry.dataKey as ChartSeriesKey)
+                          ? 0.45
+                          : 1,
+                    }}
+                  >
+                    {value}
+                  </span>
+                )}
                 itemSorter={(item) => {
                   if (item.value === temperatureLabel) return 0;
                   if (item.value === precipitationLabel) return 1;

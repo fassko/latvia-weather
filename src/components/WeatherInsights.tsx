@@ -1,5 +1,7 @@
 import { format } from "date-fns";
 import { getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
+import { WindDirection } from "@/components/WindDirection";
 import { getTodayForecasts, sumPrecipitation } from "@/lib/weather/chart-data";
 import type { HourlyForecast } from "@/lib/weather/types";
 
@@ -27,7 +29,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
   const windiest = maxBy(todayForecasts, (forecast) => forecast.windGust);
   const totalPrecipitation = sumPrecipitation(todayForecasts);
 
-  const items = [
+  const items: { label: string; value: ReactNode }[] = [
     {
       label: t("warmest"),
       value: t("temperatureAt", {
@@ -50,10 +52,17 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
     },
     {
       label: t("wind"),
-      value: t("windAt", {
-        speed: windiest.windGust.toFixed(1),
-        time: format(windiest.time, "HH:mm"),
-      }),
+      value: (
+        <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>
+            {t("windAt", {
+              speed: windiest.windGust.toFixed(1),
+              time: format(windiest.time, "HH:mm"),
+            })}
+          </span>
+          <WindDirection degrees={windiest.windDirection} />
+        </span>
+      ),
     },
   ];
 
@@ -65,7 +74,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
       >
         {t("title")}
       </h2>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <div
             key={item.label}

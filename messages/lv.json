@@ -68,7 +68,10 @@
     "sevenDays": "7 dienas",
     "temperature": "Temperatūra",
     "precipitation": "Nokrišņi",
-    "wind": "Vējš"
+    "wind": "Vējš",
+    "rainPeak": "Visvairāk lietus ap plkst. {time}: {amount} mm, {chance}% iespēja",
+    "rainChancePeak": "Lielākā lietus iespēja ap plkst. {time}: {chance}%",
+    "noRainExpected": "Šodien lietus nav gaidāms"
   },
   "daily": {
     "collapse": "Sakļaut",
