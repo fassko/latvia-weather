@@ -155,6 +155,13 @@ export function DailyHeaderRow({
         >
           {formatPrecipSummary()}
         </td>
+        <td
+          className="whitespace-nowrap px-2 py-2 text-sm font-semibold tabular-nums text-emerald-800 sm:px-4 dark:text-emerald-300"
+          {...toggleCellProps}
+        >
+          {t("upToWind", { value: summary.maxWindSpeed.toFixed(1) })}{" "}
+          <WindDirection degrees={summary.windDirectionAtMaxWind} size="sm" />
+        </td>
       </tr>
     );
   }
