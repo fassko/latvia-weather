@@ -146,7 +146,10 @@ export function DailyHeaderRow({
         <td className="px-2 py-2 sm:px-4" {...toggleCellProps}>
           <span aria-hidden="true">{getConditionEmoji(summary.representativeIconCode)}</span>
         </td>
-        <td className="px-2 py-2 text-sm font-semibold tabular-nums sm:px-4" {...toggleCellProps}>
+        <td
+          className="px-2 py-2 text-sm font-semibold tabular-nums text-orange-700 sm:px-4 dark:text-orange-300"
+          {...toggleCellProps}
+        >
           {formatRange(summary.minTemperature, summary.maxTemperature, "°C")}
         </td>
         <td
@@ -178,16 +181,28 @@ export function DailyHeaderRow({
           locale={locale}
         />
       </td>
-      <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
+      <td
+        className="px-4 py-2 text-sm font-semibold tabular-nums text-orange-700 dark:text-orange-300"
+        {...toggleCellProps}
+      >
         {formatRange(summary.minTemperature, summary.maxTemperature, "°C")}
       </td>
-      <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
+      <td
+        className="px-4 py-2 text-sm font-semibold tabular-nums text-orange-700 dark:text-orange-300"
+        {...toggleCellProps}
+      >
         {formatRange(summary.minFeelsLike, summary.maxFeelsLike, "°C")}
       </td>
-      <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
+      <td
+        className="px-4 py-2 text-sm font-semibold tabular-nums text-sky-800 dark:text-sky-300"
+        {...toggleCellProps}
+      >
         {summary.totalPrecipitation.toFixed(1)} mm
       </td>
-      <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
+      <td
+        className="px-4 py-2 text-sm font-semibold tabular-nums text-sky-800 dark:text-sky-300"
+        {...toggleCellProps}
+      >
         {t("upToPercent", { value: Math.round(summary.maxPrecipitationProbability) })}
       </td>
       <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
@@ -197,7 +212,7 @@ export function DailyHeaderRow({
         {t("avgCloudCover", { value: Math.round(summary.avgCloudCover) })}
       </td>
       <td
-        className="whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums"
+        className="whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums text-emerald-800 dark:text-emerald-300"
         {...toggleCellProps}
       >
         {t("upToWind", { value: summary.maxWindSpeed.toFixed(1) })}{" "}
