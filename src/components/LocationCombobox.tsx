@@ -160,9 +160,19 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   }
 
   return (
-    <div ref={containerRef} className={`relative ${open ? "w-full max-w-md" : "inline-block"}`}>
+    <div ref={containerRef} className="relative inline-block max-w-full">
+      <button
+        type="button"
+        onClick={handleOpen}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex max-w-full items-center gap-1.5 rounded-lg py-1 pr-1 pl-0 text-left text-lg font-bold tracking-tight text-slate-900 transition hover:text-sky-700 focus:text-sky-700 focus:ring-2 focus:ring-sky-500/20 focus:outline-none dark:text-slate-100 dark:hover:text-sky-300 dark:focus:text-sky-300"
+      >
+        <span className="truncate">{selectedName}</span>
+        <ChevronIcon />
+      </button>
       {open ? (
-        <div className="rounded-xl border border-sky-300 bg-white shadow-lg dark:border-sky-600 dark:bg-slate-900">
+        <div className="absolute top-full left-0 z-50 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-sky-300 bg-white shadow-lg dark:border-sky-600 dark:bg-slate-900">
           <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-700">
             <SearchIcon />
             <input
@@ -244,18 +254,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
             ))}
           </ul>
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={handleOpen}
-          aria-haspopup="listbox"
-          aria-expanded={false}
-          className="inline-flex items-center gap-1.5 rounded-lg py-1 pr-1 pl-0 text-left text-lg font-bold tracking-tight text-slate-900 transition hover:text-sky-700 focus:text-sky-700 focus:ring-2 focus:ring-sky-500/20 focus:outline-none dark:text-slate-100 dark:hover:text-sky-300 dark:focus:text-sky-300"
-        >
-          <span className="truncate">{selectedName}</span>
-          <ChevronIcon />
-        </button>
-      )}
+      ) : null}
     </div>
   );
 }
