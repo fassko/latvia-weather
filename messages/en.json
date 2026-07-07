@@ -29,6 +29,7 @@
     "condition": "Condition",
     "temp": "Temp",
     "precipRain": "Precip / Rain",
+    "wind": "Wind",
     "chance": "{value}% chance"
   },
   "table": {

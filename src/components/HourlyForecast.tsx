@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ForecastDaySection } from "@/components/ForecastDaySection";
+import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
@@ -66,6 +67,10 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                           ? `${forecast.precipitation.toFixed(1)} mm`
                           : t("chance", { value: Math.round(forecast.precipitationProbability) })}
                       </p>
+                      <p className="mt-0.5 text-sm tabular-nums text-emerald-700 dark:text-emerald-400">
+                        {forecast.windSpeed.toFixed(1)} m/s{" "}
+                        <WindDirection degrees={forecast.windDirection} size="sm" />
+                      </p>
                     </div>
                     <span className="text-2xl" aria-hidden="true">
                       {getConditionEmoji(forecast.iconCode)}
@@ -85,6 +90,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
               <th className="px-2 py-3 font-medium sm:px-4">{t("condition")}</th>
               <th className="px-2 py-3 font-medium sm:px-4">{t("temp")}</th>
               <th className="px-2 py-3 font-medium sm:px-4">{t("precipRain")}</th>
+              <th className="px-2 py-3 font-medium sm:px-4">{t("wind")}</th>
             </tr>
           </thead>
           <tbody>
@@ -122,6 +128,10 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                         {forecast.precipitation > 0
                           ? `${forecast.precipitation.toFixed(1)} mm`
                           : t("chance", { value: Math.round(forecast.precipitationProbability) })}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-2 tabular-nums text-emerald-700 sm:px-4 dark:text-emerald-400">
+                        {forecast.windSpeed.toFixed(1)} m/s{" "}
+                        <WindDirection degrees={forecast.windDirection} size="sm" />
                       </td>
                     </tr>
                   ))}

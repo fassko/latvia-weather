@@ -29,6 +29,7 @@
     "condition": "Apstākļi",
     "temp": "Temp.",
     "precipRain": "Nokrišņi / Lietus",
+    "wind": "Vējš",
     "chance": "{value}% iespēja"
   },
   "table": {
