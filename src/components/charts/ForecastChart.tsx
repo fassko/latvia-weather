@@ -20,20 +20,29 @@ import { getDateFnsLocale } from "@/lib/date-locale";
 import {
   filterForecastsByDayCount,
   formatChartTooltipLabel,
+  type ChartPoint,
   getDaySegments,
   getHourTicks,
   getTodayForecasts,
   sumPrecipitation,
   toChartPoints,
 } from "@/lib/weather/chart-data";
+import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 
-const CHART_MARGIN = { top: 8, right: 4, left: 0, bottom: 4 };
+const CHART_MARGIN = { top: 28, right: 4, left: 0, bottom: 4 };
 
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
+}
+
+interface ConditionDotProps {
+  cx?: number | string;
+  cy?: number | string;
+  index?: number;
+  payload?: ChartPoint;
 }
 
 function getForecastsForPeriod(forecasts: HourlyForecast[], period: ForecastPeriod) {
@@ -41,9 +50,45 @@ function getForecastsForPeriod(forecasts: HourlyForecast[], period: ForecastPeri
   return filterForecastsByDayCount(forecasts, period);
 }
 
+function getConditionIconStep(period: ForecastPeriod) {
+  if (period === 1) return 2;
+  if (period === 3) return 4;
+  return 8;
+}
+
+function getConditionIconMinGap(period: ForecastPeriod) {
+  if (period === 1) return 1;
+  if (period === 3) return 2;
+  return 4;
+}
+
+function getConditionIconIndexes(data: ChartPoint[], period: ForecastPeriod): Set<number> {
+  const indexes = new Set<number>();
+  const step = getConditionIconStep(period);
+  const minGap = getConditionIconMinGap(period);
+  let lastSelected = Number.NEGATIVE_INFINITY;
+
+  data.forEach((point, index) => {
+    const isConditionChange = index > 0 && point.iconCode !== data[index - 1]?.iconCode;
+    const isScheduledIcon = index % step === 0 || index === data.length - 1;
+
+    if (isScheduledIcon || (isConditionChange && index - lastSelected >= minGap)) {
+      indexes.add(index);
+      lastSelected = index;
+    }
+  });
+
+  return indexes;
+}
+
+function isSvgCoordinate(value: number | string | undefined): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 export function ForecastChart({ forecasts }: ForecastChartProps) {
   const locale = useLocale();
   const t = useTranslations("chart");
+  const tConditions = useTranslations("conditions");
   const dateLocale = getDateFnsLocale(locale);
   const [period, setPeriod] = useState<ForecastPeriod>(1);
   const colors = useChartColors();
@@ -65,6 +110,10 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
   );
   const totalPrecip = useMemo(() => sumPrecipitation(periodForecasts), [periodForecasts]);
   const hourTicks = useMemo(() => getHourTicks(data), [data]);
+  const conditionIconIndexes = useMemo(
+    () => getConditionIconIndexes(data, period),
+    [data, period],
+  );
 
   const dayTickLabels = useMemo(
     () =>
@@ -83,6 +132,34 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
   const isMultiDay = period > 1;
   const temperatureLabel = t("temperature");
   const precipitationLabel = t("precipitation");
+  const windLabel = t("wind");
+  const renderConditionDot = ({ cx, cy, index, payload }: ConditionDotProps) => {
+    if (
+      index == null ||
+      !payload?.iconCode ||
+      !conditionIconIndexes.has(index) ||
+      !isSvgCoordinate(cx) ||
+      !isSvgCoordinate(cy)
+    ) {
+      return null;
+    }
+
+    const condition = tConditions(getConditionKey(payload.iconCode));
+
+    return (
+      <g transform={`translate(${cx}, ${cy - 18})`} pointerEvents="none">
+        <title>{condition}</title>
+        <text
+          y={4}
+          textAnchor="middle"
+          fontSize={16}
+          fontFamily="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif"
+        >
+          {getConditionEmoji(payload.iconCode)}
+        </text>
+      </g>
+    );
+  };
 
   if (data.length === 0) {
     return (
@@ -226,6 +303,15 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 tickCount={6}
                 tickMargin={6}
               />
+              <YAxis
+                yAxisId="wind"
+                orientation="right"
+                tick={{ fontSize: 11, fill: colors.tick }}
+                unit=" m/s"
+                width="auto"
+                tickCount={6}
+                tickMargin={6}
+              />
               <Tooltip
                 contentStyle={{
                   borderRadius: "8px",
@@ -234,17 +320,30 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                   color: colors.legend,
                   fontSize: "13px",
                 }}
-                itemSorter={(item) => (item.name === temperatureLabel ? 0 : 1)}
+                itemSorter={(item) => {
+                  if (item.name === temperatureLabel) return 0;
+                  if (item.name === precipitationLabel) return 1;
+                  return 2;
+                }}
                 formatter={(value, name) => {
                   const num = typeof value === "number" ? value : 0;
                   if (name === temperatureLabel) {
                     return [`${num.toFixed(1)}°C`, temperatureLabel];
                   }
+                  if (name === windLabel) {
+                    return [`${num.toFixed(1)} m/s`, windLabel];
+                  }
                   return [`${num.toFixed(2)} mm`, precipitationLabel];
                 }}
-                labelFormatter={(label, payload) =>
-                  formatChartTooltipLabel(label, payload, dateLocale, locale)
-                }
+                labelFormatter={(label, payload) => {
+                  const point = payload[0]?.payload;
+                  const timeLabel = formatChartTooltipLabel(label, payload, dateLocale, locale);
+
+                  if (!point?.iconCode) return timeLabel;
+
+                  const condition = tConditions(getConditionKey(point.iconCode));
+                  return `${timeLabel} · ${getConditionEmoji(point.iconCode)} ${condition}`;
+                }}
               />
               <Bar
                 yAxisId="precip"
@@ -261,12 +360,27 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 name={temperatureLabel}
                 stroke="#f97316"
                 strokeWidth={2}
+                dot={renderConditionDot}
+                activeDot={{ r: 4 }}
+              />
+              <Line
+                yAxisId="wind"
+                type="monotone"
+                dataKey="windSpeed"
+                name={windLabel}
+                stroke="#10b981"
+                strokeWidth={2}
+                strokeDasharray="4 4"
                 dot={false}
                 activeDot={{ r: 4 }}
               />
               <Legend
                 wrapperStyle={{ color: colors.legend }}
-                itemSorter={(item) => (item.value === temperatureLabel ? 0 : 1)}
+                itemSorter={(item) => {
+                  if (item.value === temperatureLabel) return 0;
+                  if (item.value === precipitationLabel) return 1;
+                  return 2;
+                }}
               />
             </ComposedChart>
           </ResponsiveContainer>

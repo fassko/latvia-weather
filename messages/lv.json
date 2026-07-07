@@ -67,7 +67,8 @@
     "threeDays": "3 dienas",
     "sevenDays": "7 dienas",
     "temperature": "Temperatūra",
-    "precipitation": "Nokrišņi"
+    "precipitation": "Nokrišņi",
+    "wind": "Vējš"
   },
   "daily": {
     "collapse": "Sakļaut",

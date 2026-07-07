@@ -8,6 +8,8 @@ export interface ChartPoint {
   dayKey: string;
   temperature: number;
   precipitation: number;
+  windSpeed: number;
+  iconCode: string;
   time: string;
 }
 
@@ -56,6 +58,8 @@ export function toChartPoints(forecasts: HourlyForecast[]): ChartPoint[] {
     dayKey: dayKey(forecast.time),
     temperature: forecast.temperature,
     precipitation: forecast.precipitation,
+    windSpeed: forecast.windSpeed,
+    iconCode: forecast.iconCode,
     time: forecast.time.toISOString(),
   }));
 }

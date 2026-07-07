@@ -67,7 +67,8 @@
     "threeDays": "3 days",
     "sevenDays": "7 days",
     "temperature": "Temperature",
-    "precipitation": "Precipitation"
+    "precipitation": "Precipitation",
+    "wind": "Wind"
   },
   "daily": {
     "collapse": "Collapse",
