@@ -233,7 +233,12 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     [daySegments],
   );
 
-  const isMultiDay = period > 1;
+  const spansMultipleDays = useMemo(() => {
+    if (data.length === 0) return false;
+    const firstDay = data[0].dayKey;
+    return data.some((point) => point.dayKey !== firstDay);
+  }, [data]);
+  const isMultiDay = period > 1 || spansMultipleDays;
   const temperatureLabel = t("temperature");
   const precipitationLabel = t("precipitation");
   const windLabel = t("wind");

@@ -67,7 +67,7 @@
     "noData": "Prognozes dati nav pieejami.",
     "mmTotal": "kopā {value} mm",
     "periodLabel": "Prognozes periods",
-    "today": "Šodien",
+    "today": "24h",
     "threeDays": "3 dienas",
     "sevenDays": "7 dienas",
     "temperature": "Temperatūra",
@@ -75,7 +75,7 @@
     "wind": "Vējš",
     "rainPeak": "Visvairāk lietus ap plkst. {time}: {amount} mm, {chance}% iespēja",
     "rainChancePeak": "Lielākā lietus iespēja ap plkst. {time}: {chance}%",
-    "noRainExpected": "Šodien lietus nav gaidāms"
+    "noRainExpected": "Nākamajās 24 stundās lietus nav gaidāms"
   },
   "daily": {
     "collapse": "Sakļaut",

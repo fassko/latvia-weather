@@ -1,4 +1,4 @@
-import { addDays, format, startOfHour, type Locale } from "date-fns";
+import { addDays, addHours, format, startOfHour, type Locale } from "date-fns";
 import { getDatePattern } from "@/lib/date-locale";
 import { groupForecastsByDay } from "./daily";
 import type { HourlyForecast } from "./types";
@@ -45,16 +45,18 @@ export function getUpcomingTodayForecasts(
 ): HourlyForecast[] {
   if (forecasts.length === 0) return [];
 
-  const today = dayKey(now);
   const currentHour = startOfHour(now);
-  const todayForecasts = forecasts.filter((forecast) => dayKey(forecast.time) === today);
-  const upcomingTodayForecasts = todayForecasts.filter((forecast) => forecast.time >= currentHour);
+  const end = addHours(currentHour, 24);
+  const next24Hours = forecasts.filter(
+    (forecast) => forecast.time >= currentHour && forecast.time < end,
+  );
 
-  if (upcomingTodayForecasts.length > 0) return upcomingTodayForecasts;
-  if (todayForecasts.length > 0) return todayForecasts.slice(-1);
+  if (next24Hours.length > 0) return next24Hours;
 
-  const firstDay = groupForecastsByDay(forecasts)[0];
-  return firstDay?.forecasts ?? [];
+  const upcoming = forecasts.filter((forecast) => forecast.time >= currentHour);
+  if (upcoming.length > 0) return upcoming.slice(0, 24);
+
+  return forecasts.slice(-1);
 }
 
 export function filterForecastsByDayCount(

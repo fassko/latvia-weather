@@ -67,7 +67,7 @@ test("condition and wind helpers map display values", () => {
   assert.equal(getWindDirection(359), "N");
 });
 
-test("today chart forecasts start from the current hour", () => {
+test("24h chart forecasts cover the next 24 hours from the current hour", () => {
   const forecasts = [
     "202607080800",
     "202607081000",
@@ -104,7 +104,7 @@ test("today chart forecasts start from the current hour", () => {
 
   assert.deepEqual(
     upcoming.map((forecast) => formatLaiks(forecast.time)),
-    ["202607081000", "202607081200", "202607081400"],
+    ["202607081000", "202607081200", "202607081400", "202607090000"],
   );
 });
 
