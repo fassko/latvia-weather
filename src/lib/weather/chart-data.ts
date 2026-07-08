@@ -39,6 +39,19 @@ export function getTodayForecasts(forecasts: HourlyForecast[]): HourlyForecast[]
   return firstDay?.forecasts ?? [];
 }
 
+export function getUpcomingHourlyForecasts(
+  forecasts: HourlyForecast[],
+  now = new Date(),
+): HourlyForecast[] {
+  if (forecasts.length === 0) return [];
+
+  const currentHour = startOfHour(now);
+  const upcoming = forecasts.filter((forecast) => forecast.time >= currentHour);
+
+  if (upcoming.length > 0) return upcoming;
+  return forecasts.slice(-1);
+}
+
 export function getUpcomingTodayForecasts(
   forecasts: HourlyForecast[],
   now = new Date(),
@@ -47,13 +60,13 @@ export function getUpcomingTodayForecasts(
 
   const currentHour = startOfHour(now);
   const end = addHours(currentHour, 24);
-  const next24Hours = forecasts.filter(
-    (forecast) => forecast.time >= currentHour && forecast.time < end,
+  const next24Hours = getUpcomingHourlyForecasts(forecasts, now).filter(
+    (forecast) => forecast.time < end,
   );
 
   if (next24Hours.length > 0) return next24Hours;
 
-  const upcoming = forecasts.filter((forecast) => forecast.time >= currentHour);
+  const upcoming = getUpcomingHourlyForecasts(forecasts, now);
   if (upcoming.length > 0) return upcoming.slice(0, 24);
 
   return forecasts.slice(-1);

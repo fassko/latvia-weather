@@ -4,6 +4,7 @@ import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getConditionEmoji } from "@/lib/weather/parse";
+import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -17,7 +18,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
   const t = await getTranslations("hourly");
   const tDaily = await getTranslations("daily");
   const dateLocale = getDateFnsLocale(locale);
-  const dayGroups = groupForecastsByDay(forecasts);
+  const dayGroups = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts));
 
   return (
     <section aria-labelledby="hourly-heading">
