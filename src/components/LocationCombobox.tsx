@@ -14,12 +14,29 @@ interface LocationComboboxProps {
   selectedName: string;
 }
 
+const RECENT_LOCATION_STORAGE_KEY = "latvia-weather-recent-locations";
+const MAX_RECENT_LOCATIONS = 5;
+
+function getInitialRecentLocationIds(): string[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_LOCATION_STORAGE_KEY) ?? "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export function LocationCombobox({ selectedId, selectedName }: LocationComboboxProps) {
   const router = useRouter();
   const t = useTranslations("location");
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxRef = useRef<HTMLUListElement>(null);
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -28,6 +45,9 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   const [error, setError] = useState(false);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "error">("idle");
   const [highlightIndex, setHighlightIndex] = useState(0);
+  const [recentLocationIds, setRecentLocationIds] = useState<string[]>(
+    getInitialRecentLocationIds,
+  );
 
   const loadLocations = useCallback(async () => {
     if (locations !== null || loading) return;
@@ -47,12 +67,35 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     }
   }, [locations, loading]);
 
-  const filtered = (locations ?? []).filter((location) => {
+  const normalizedQuery = query.trim().toLowerCase();
+  const allLocations = locations ?? [];
+  const recentLocations =
+    normalizedQuery.length === 0
+      ? recentLocationIds
+          .map((id) => allLocations.find((location) => location.id === id))
+          .filter((location): location is WeatherLocationPoint => Boolean(location))
+      : [];
+  const recentLocationIdSet = new Set(recentLocations.map((location) => location.id));
+  const filtered = allLocations.filter((location) => {
     const haystack = `${location.name} ${location.region}`.toLowerCase();
-    return haystack.includes(query.trim().toLowerCase());
+    return haystack.includes(normalizedQuery) && !recentLocationIdSet.has(location.id);
   });
+  const optionLocations = [...recentLocations, ...filtered];
+
+  function rememberRecentLocation(nextId: string) {
+    setRecentLocationIds((current) => {
+      const next = [nextId, ...current.filter((id) => id !== nextId)].slice(
+        0,
+        MAX_RECENT_LOCATIONS,
+      );
+      localStorage.setItem(RECENT_LOCATION_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
 
   function selectLocation(nextId: string) {
+    rememberRecentLocation(nextId);
+
     if (nextId === selectedId) {
       setOpen(false);
       setQuery("");
@@ -134,6 +177,14 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    listboxRef.current
+      ?.querySelector(`[data-option-index="${highlightIndex}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [highlightIndex, open]);
+
   function onInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
       setOpen(false);
@@ -143,7 +194,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setHighlightIndex((index) => Math.min(index + 1, Math.max(filtered.length - 1, 0)));
+      setHighlightIndex((index) => Math.min(index + 1, Math.max(optionLocations.length - 1, 0)));
       return;
     }
 
@@ -153,10 +204,42 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
       return;
     }
 
-    if (event.key === "Enter" && filtered[highlightIndex]) {
+    if (event.key === "Enter" && optionLocations[highlightIndex]) {
       event.preventDefault();
-      selectLocation(filtered[highlightIndex].id);
+      selectLocation(optionLocations[highlightIndex].id);
     }
+  }
+
+  function renderLocationOption(location: WeatherLocationPoint, index: number) {
+    return (
+      <li
+        key={location.id}
+        role="option"
+        aria-selected={location.id === selectedId}
+        data-option-index={index}
+      >
+        <button
+          type="button"
+          onClick={() => selectLocation(location.id)}
+          onMouseEnter={() => setHighlightIndex(index)}
+          className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition ${
+            index === highlightIndex
+              ? "bg-sky-100 text-slate-900 dark:bg-sky-950 dark:text-slate-100"
+              : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          } ${location.id === selectedId ? "font-semibold" : ""}`}
+        >
+          <span>
+            <span className="block font-medium">{location.name}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {location.region}
+            </span>
+          </span>
+          <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-400">
+            {Math.round(location.temperature)}°C {getConditionEmoji(location.iconCode)}
+          </span>
+        </button>
+      </li>
+    );
   }
 
   return (
@@ -193,6 +276,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
             />
           </div>
           <ul
+            ref={listboxRef}
             id={listboxId}
             role="listbox"
             aria-label={t("select")}
@@ -223,35 +307,29 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
                 {t("loadError")}
               </li>
             )}
-            {!loading && !error && filtered.length === 0 && (
+            {!loading && !error && optionLocations.length === 0 && (
               <li className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
                 {t("noResults")}
               </li>
             )}
-            {filtered.map((location, index) => (
-              <li key={location.id} role="option" aria-selected={location.id === selectedId}>
-                <button
-                  type="button"
-                  onClick={() => selectLocation(location.id)}
-                  onMouseEnter={() => setHighlightIndex(index)}
-                  className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition ${
-                    index === highlightIndex
-                      ? "bg-sky-100 text-slate-900 dark:bg-sky-950 dark:text-slate-100"
-                      : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                  } ${location.id === selectedId ? "font-semibold" : ""}`}
-                >
-                  <span>
-                    <span className="block font-medium">{location.name}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {location.region}
-                    </span>
-                  </span>
-                  <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-400">
-                    {Math.round(location.temperature)}°C {getConditionEmoji(location.iconCode)}
-                  </span>
-                </button>
+            {recentLocations.length > 0 ? (
+              <li
+                role="presentation"
+                className="px-4 pt-2 pb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500"
+              >
+                {t("recent")}
               </li>
-            ))}
+            ) : null}
+            {recentLocations.map((location, index) => renderLocationOption(location, index))}
+            {recentLocations.length > 0 && filtered.length > 0 ? (
+              <li
+                role="presentation"
+                className="border-t border-slate-100 dark:border-slate-800"
+              />
+            ) : null}
+            {filtered.map((location, index) =>
+              renderLocationOption(location, index + recentLocations.length),
+            )}
           </ul>
         </div>
       ) : null}

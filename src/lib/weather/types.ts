@@ -76,4 +76,5 @@ export interface WeatherData {
   location: WeatherLocation;
   forecasts: HourlyForecast[];
   fetchedAt: Date;
+  isStale?: boolean;
 }

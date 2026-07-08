@@ -2,7 +2,7 @@
 
 import { format, isWeekend } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   CartesianGrid,
@@ -23,17 +23,19 @@ import {
   type ChartPoint,
   getDaySegments,
   getHourTicks,
-  getTodayForecasts,
+  getUpcomingTodayForecasts,
   sumPrecipitation,
   toChartPoints,
 } from "@/lib/weather/chart-data";
+import { METRIC_COLORS } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 type ChartSeriesKey = "temperature" | "precipitation" | "windSpeed";
 
-const CHART_MARGIN = { top: 28, right: 4, left: 0, bottom: 4 };
+const CHART_MARGIN = { top: 28, right: 4, left: 0, bottom: 8 };
+const CHART_PREFS_STORAGE_KEY = "latvia-weather-chart-prefs";
 
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
@@ -46,8 +48,13 @@ interface ConditionDotProps {
   payload?: ChartPoint;
 }
 
+interface ChartPreferences {
+  period: ForecastPeriod;
+  hiddenSeries: ChartSeriesKey[];
+}
+
 function getForecastsForPeriod(forecasts: HourlyForecast[], period: ForecastPeriod) {
-  if (period === 1) return getTodayForecasts(forecasts);
+  if (period === 1) return getUpcomingTodayForecasts(forecasts);
   return filterForecastsByDayCount(forecasts, period);
 }
 
@@ -69,6 +76,22 @@ function getWindDirectionIconStep(period: ForecastPeriod) {
   return 12;
 }
 
+function getHourTickStep(period: ForecastPeriod) {
+  return period === 1 ? 1 : 8;
+}
+
+function getConditionIconSize(period: ForecastPeriod) {
+  if (period === 1) return 16;
+  if (period === 3) return 14;
+  return 12;
+}
+
+function getWindDirectionIconSize(period: ForecastPeriod) {
+  if (period === 1) return 18;
+  if (period === 3) return 16;
+  return 14;
+}
+
 function getConditionIconIndexes(data: ChartPoint[], period: ForecastPeriod): Set<number> {
   const indexes = new Set<number>();
   const step = getConditionIconStep(period);
@@ -86,6 +109,17 @@ function getConditionIconIndexes(data: ChartPoint[], period: ForecastPeriod): Se
   });
 
   return indexes;
+}
+
+function getHourTicksForPeriod(data: ChartPoint[], period: ForecastPeriod): number[] {
+  if (period === 1) return getHourTicks(data, getHourTickStep(period));
+
+  const dayPartHours = new Set([0, 8, 16]);
+  const ticks = data
+    .filter((point) => dayPartHours.has(Number(format(new Date(point.time), "H"))))
+    .map((point) => point.xIndex);
+
+  return ticks.length > 0 ? ticks : getHourTicks(data, getHourTickStep(period));
 }
 
 function isSvgCoordinate(value: number | string | undefined): value is number {
@@ -112,14 +146,51 @@ function isChartSeriesKey(value: unknown): value is ChartSeriesKey {
   return value === "temperature" || value === "precipitation" || value === "windSpeed";
 }
 
+function isForecastPeriod(value: unknown): value is ForecastPeriod {
+  return value === 1 || value === 3 || value === 7;
+}
+
+function parseChartPreferences(value: string | null): ChartPreferences | null {
+  if (!value) return null;
+
+  try {
+    const parsed = JSON.parse(value) as Partial<ChartPreferences>;
+    return {
+      period: isForecastPeriod(parsed.period) ? parsed.period : 1,
+      hiddenSeries: Array.isArray(parsed.hiddenSeries)
+        ? parsed.hiddenSeries.filter(isChartSeriesKey)
+        : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getInitialChartPreferences(): ChartPreferences {
+  if (typeof window === "undefined") {
+    return { period: 1, hiddenSeries: [] };
+  }
+
+  return (
+    parseChartPreferences(localStorage.getItem(CHART_PREFS_STORAGE_KEY)) ?? {
+      period: 1,
+      hiddenSeries: [],
+    }
+  );
+}
+
 export function ForecastChart({ forecasts }: ForecastChartProps) {
   const locale = useLocale();
   const t = useTranslations("chart");
   const tConditions = useTranslations("conditions");
   const tWind = useTranslations("wind");
   const dateLocale = getDateFnsLocale(locale);
-  const [period, setPeriod] = useState<ForecastPeriod>(1);
-  const [hiddenSeries, setHiddenSeries] = useState<Set<ChartSeriesKey>>(() => new Set());
+  const [period, setPeriod] = useState<ForecastPeriod>(
+    () => getInitialChartPreferences().period,
+  );
+  const [hiddenSeries, setHiddenSeries] = useState<Set<ChartSeriesKey>>(
+    () => new Set(getInitialChartPreferences().hiddenSeries),
+  );
   const colors = useChartColors();
 
   const periodOptions: { value: ForecastPeriod; label: string }[] = [
@@ -138,7 +209,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     [data, dateLocale, locale],
   );
   const totalPrecip = useMemo(() => sumPrecipitation(periodForecasts), [periodForecasts]);
-  const hourTicks = useMemo(() => getHourTicks(data), [data]);
+  const hourTicks = useMemo(() => getHourTicksForPeriod(data, period), [data, period]);
   const conditionIconIndexes = useMemo(
     () => getConditionIconIndexes(data, period),
     [data, period],
@@ -166,6 +237,17 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
   const temperatureLabel = t("temperature");
   const precipitationLabel = t("precipitation");
   const windLabel = t("wind");
+
+  useEffect(() => {
+    localStorage.setItem(
+      CHART_PREFS_STORAGE_KEY,
+      JSON.stringify({
+        period,
+        hiddenSeries: Array.from(hiddenSeries),
+      }),
+    );
+  }, [hiddenSeries, period]);
+
   const toggleSeries = (dataKey: unknown) => {
     if (!isChartSeriesKey(dataKey)) return;
 
@@ -191,14 +273,15 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     }
 
     const condition = tConditions(getConditionKey(payload.iconCode));
+    const iconSize = getConditionIconSize(period);
 
     return (
-      <g transform={`translate(${cx}, ${cy - 18})`} pointerEvents="none">
+      <g transform={`translate(${cx}, ${cy - iconSize - 2})`} pointerEvents="none">
         <title>{condition}</title>
         <text
-          y={4}
+          y={iconSize / 4}
           textAnchor="middle"
-          fontSize={16}
+          fontSize={iconSize}
           fontFamily="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif"
         >
           {getConditionEmoji(payload.iconCode)}
@@ -218,16 +301,17 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     }
 
     const direction = getWindDirection(payload.windDirection);
+    const iconSize = getWindDirectionIconSize(period);
     return (
       <g
-        transform={`translate(${cx}, ${cy + 20}) rotate(${payload.windDirection + 180})`}
+        transform={`translate(${cx}, ${cy + iconSize + 2}) rotate(${payload.windDirection + 180})`}
         pointerEvents="none"
       >
         <title>{tWind("from", { direction })}</title>
         <text
           y={5}
           textAnchor="middle"
-          fontSize={18}
+          fontSize={iconSize}
           fontWeight={800}
           fill="#047857"
           stroke={colors.tooltipBg}
@@ -313,24 +397,19 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
         </div>
       </div>
       <ChartCard>
-        <div className={`w-full ${isMultiDay ? "h-80 md:h-[400px]" : "h-64"}`}>
-          <ResponsiveContainer
-            width="100%"
-            height="100%"
-            minWidth={0}
-            initialDimension={{ width: 520, height: isMultiDay ? 320 : 256 }}
+        <div className="overflow-x-auto pb-1">
+          <div
+            className={`min-w-[700px] sm:min-w-0 ${
+              isMultiDay ? "h-80 md:h-[400px]" : "h-64"
+            }`}
           >
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              initialDimension={{ width: 700, height: isMultiDay ? 320 : 256 }}
+            >
             <ComposedChart data={data} margin={CHART_MARGIN}>
-              {isMultiDay &&
-                daySegments.slice(1).map((segment) => (
-                  <ReferenceLine
-                    key={`divider-${segment.dayKey}`}
-                    x={segment.start}
-                    yAxisId="temp"
-                    stroke={colors.dayDivider}
-                    strokeWidth={1.5}
-                  />
-                ))}
               <CartesianGrid
                 yAxisId="temp"
                 stroke={colors.grid}
@@ -338,50 +417,74 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 vertical={false}
                 syncWithTicks
               />
+              {hourTicks.map((tick) => (
+                <ReferenceLine
+                  key={`hour-${tick}`}
+                  x={tick}
+                  yAxisId="temp"
+                  stroke={colors.grid}
+                  strokeWidth={1}
+                  strokeDasharray="2 4"
+                />
+              ))}
+              {isMultiDay &&
+                daySegments.slice(1).map((segment) => (
+                  <ReferenceLine
+                    key={`divider-${segment.dayKey}`}
+                    x={segment.start}
+                    yAxisId="temp"
+                    stroke={colors.dayDivider}
+                    strokeWidth={1}
+                  />
+                ))}
               <XAxis
                 dataKey="xIndex"
                 type="number"
                 domain={[0, Math.max(data.length - 1, 0)]}
-                ticks={
-                  isMultiDay ? daySegments.map((segment) => segment.midIndex) : hourTicks
-                }
-                tick={
-                  isMultiDay
-                    ? ({ x, y, payload }) => {
-                        const tick = dayTickLabels.get(Number(payload.value));
-                        if (!tick) return null;
-
-                        return (
-                          <text
-                            x={x}
-                            y={y}
-                            dy={8}
-                            textAnchor="middle"
-                            fill={tick.isWeekendDay ? WEEKEND_TICK_COLOR : colors.tick}
-                            fontSize={12}
-                            fontWeight={500}
-                          >
-                            {tick.label}
-                          </text>
-                        );
-                      }
-                    : {
-                        fontSize: 11,
-                        fill: colors.tick,
-                      }
-                }
-                tickFormatter={
-                  isMultiDay
-                    ? undefined
-                    : (index) => {
-                        const point = data[Number(index)];
-                        if (!point) return "";
-                        return format(new Date(point.time), "HH:mm");
-                      }
-                }
+                ticks={hourTicks}
+                tick={{
+                  fontSize: isMultiDay ? 10 : 11,
+                  fill: colors.tick,
+                }}
+                tickFormatter={(index) => {
+                  const point = data[Number(index)];
+                  if (!point) return "";
+                  return format(new Date(point.time), "HH:mm");
+                }}
                 axisLine={{ stroke: colors.dayDivider }}
                 tickLine={false}
+                height={isMultiDay ? 20 : undefined}
               />
+              {isMultiDay ? (
+                <XAxis
+                  xAxisId="days"
+                  dataKey="xIndex"
+                  type="number"
+                  domain={[0, Math.max(data.length - 1, 0)]}
+                  ticks={daySegments.map((segment) => segment.midIndex)}
+                  tick={({ x, y, payload }) => {
+                    const tick = dayTickLabels.get(Number(payload.value));
+                    if (!tick) return null;
+
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        dy={8}
+                        textAnchor="middle"
+                        fill={tick.isWeekendDay ? WEEKEND_TICK_COLOR : colors.tick}
+                        fontSize={12}
+                        fontWeight={500}
+                      >
+                        {tick.label}
+                      </text>
+                    );
+                  }}
+                  axisLine={false}
+                  tickLine={false}
+                  height={24}
+                />
+              ) : null}
               <YAxis
                 yAxisId="temp"
                 tick={{ fontSize: 11, fill: colors.tick }}
@@ -478,7 +581,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 yAxisId="precip"
                 dataKey="precipitation"
                 name={precipitationLabel}
-                fill="#38bdf8"
+                fill={METRIC_COLORS.precipitation}
                 fillOpacity={0.7}
                 radius={[2, 2, 0, 0]}
                 hide={hiddenSeries.has("precipitation")}
@@ -488,7 +591,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 type="monotone"
                 dataKey="temperature"
                 name={temperatureLabel}
-                stroke="#f97316"
+                stroke={METRIC_COLORS.temperature}
                 strokeWidth={2}
                 dot={renderConditionDot}
                 activeDot={{ r: 4 }}
@@ -499,7 +602,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 type="monotone"
                 dataKey="windSpeed"
                 name={windLabel}
-                stroke="#10b981"
+                stroke={METRIC_COLORS.wind}
                 strokeWidth={2}
                 dot={renderWindDirectionDot}
                 activeDot={{ r: 4 }}
@@ -528,7 +631,8 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 }}
               />
             </ComposedChart>
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+          </div>
         </div>
       </ChartCard>
     </section>

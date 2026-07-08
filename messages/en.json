@@ -9,6 +9,7 @@
     "dataFrom": "Data from",
     "updatedEvery": "Updated every 15 minutes.",
     "lastUpdated": "Last updated {time}",
+    "staleData": "Showing cached forecast data because the weather service is temporarily unavailable.",
     "developedBy": "Developed by",
     "authorName": "Kristaps",
     "onX": "X",
@@ -56,6 +57,8 @@
     "wind": "Wind gusts",
     "temperatureAt": "{temp}°C at {time}",
     "rainAmount": "{amount} mm, up to {chance}%",
+    "rainAmountAt": "{amount} mm around {time}, up to {chance}%",
+    "rainPeriod": "{amount} mm mostly {start}-{end}, up to {chance}%",
     "rainChance": "Up to {chance}% at {time}",
     "windAt": "{speed} m/s at {time}"
   },
@@ -135,6 +138,7 @@
     "loading": "Loading locations…",
     "loadError": "Could not load locations",
     "noResults": "No matching locations",
+    "recent": "Recent locations",
     "useCurrent": "Use my location",
     "locating": "Finding nearest location...",
     "locationError": "Could not use your location."

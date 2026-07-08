@@ -5,6 +5,7 @@ import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
+import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyForecastProps {
@@ -59,15 +60,15 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                       {format(forecast.time, "HH:mm")}
                     </time>
                     <div className="min-w-0">
-                      <p className="font-semibold tabular-nums text-orange-700 dark:text-orange-300">
+                      <p className={`font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                         {Math.round(forecast.temperature)}°C
                       </p>
-                      <p className="text-sm tabular-nums text-sky-700 dark:text-sky-400">
+                      <p className={`text-sm tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                         {forecast.precipitation > 0
                           ? `${forecast.precipitation.toFixed(1)} mm`
                           : t("chance", { value: Math.round(forecast.precipitationProbability) })}
                       </p>
-                      <p className="mt-0.5 text-sm tabular-nums text-emerald-700 dark:text-emerald-400">
+                      <p className={`mt-0.5 text-sm tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}>
                         {forecast.windSpeed.toFixed(1)} m/s{" "}
                         <WindDirection degrees={forecast.windDirection} size="sm" />
                       </p>
@@ -121,15 +122,15 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                       <td className="px-2 py-2 sm:px-4">
                         <span aria-hidden="true">{getConditionEmoji(forecast.iconCode)}</span>
                       </td>
-                      <td className="px-2 py-2 font-semibold tabular-nums text-orange-700 sm:px-4 dark:text-orange-300">
+                      <td className={`px-2 py-2 font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                         {Math.round(forecast.temperature)}°C
                       </td>
-                      <td className="px-2 py-2 tabular-nums text-sky-700 sm:px-4 dark:text-sky-400">
+                      <td className={`px-2 py-2 tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                         {forecast.precipitation > 0
                           ? `${forecast.precipitation.toFixed(1)} mm`
                           : t("chance", { value: Math.round(forecast.precipitationProbability) })}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-2 tabular-nums text-emerald-700 sm:px-4 dark:text-emerald-400">
+                      <td className={`whitespace-nowrap px-2 py-2 tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.wind}`}>
                         {forecast.windSpeed.toFixed(1)} m/s{" "}
                         <WindDirection degrees={forecast.windDirection} size="sm" />
                       </td>

@@ -18,6 +18,28 @@ function maxBy(
   );
 }
 
+function getMainRainPeriod(forecasts: HourlyForecast[]): HourlyForecast[] {
+  const periods: HourlyForecast[][] = [];
+  let current: HourlyForecast[] = [];
+
+  for (const forecast of forecasts) {
+    if (forecast.precipitation > 0) {
+      current.push(forecast);
+    } else if (current.length > 0) {
+      periods.push(current);
+      current = [];
+    }
+  }
+
+  if (current.length > 0) periods.push(current);
+
+  return periods.reduce<HourlyForecast[]>((best, period) => {
+    const bestAmount = sumPrecipitation(best);
+    const periodAmount = sumPrecipitation(period);
+    return periodAmount > bestAmount ? period : best;
+  }, []);
+}
+
 export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
   const t = await getTranslations("insights");
   const todayForecasts = getTodayForecasts(forecasts);
@@ -28,6 +50,13 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
   const wettest = maxBy(todayForecasts, (forecast) => forecast.precipitationProbability);
   const windiest = maxBy(todayForecasts, (forecast) => forecast.windGust);
   const totalPrecipitation = sumPrecipitation(todayForecasts);
+  const mainRainPeriod = getMainRainPeriod(todayForecasts);
+  const mainRainStart = mainRainPeriod[0];
+  const mainRainEnd = mainRainPeriod[mainRainPeriod.length - 1];
+  const mainRainChance = mainRainPeriod.reduce(
+    (max, forecast) => Math.max(max, forecast.precipitationProbability),
+    0,
+  );
 
   const items: { label: string; value: ReactNode }[] = [
     {
@@ -40,7 +69,20 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
     {
       label: t("rain"),
       value:
-        totalPrecipitation > 0
+        mainRainStart && mainRainEnd && mainRainStart !== mainRainEnd
+          ? t("rainPeriod", {
+              start: format(mainRainStart.time, "HH:mm"),
+              end: format(mainRainEnd.time, "HH:mm"),
+              amount: sumPrecipitation(mainRainPeriod).toFixed(1),
+              chance: Math.round(mainRainChance),
+            })
+          : mainRainStart
+            ? t("rainAmountAt", {
+                time: format(mainRainStart.time, "HH:mm"),
+                amount: mainRainStart.precipitation.toFixed(1),
+                chance: Math.round(mainRainStart.precipitationProbability),
+              })
+            : totalPrecipitation > 0
           ? t("rainAmount", {
               amount: totalPrecipitation.toFixed(1),
               chance: Math.round(wettest.precipitationProbability),

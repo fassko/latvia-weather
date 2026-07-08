@@ -4,6 +4,7 @@ import { FeelsLikeText } from "@/components/FeelsLikeText";
 import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { WindDirection } from "@/components/WindDirection";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
+import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface WeatherTableProps {
@@ -57,10 +58,10 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                       <td className="whitespace-nowrap px-4 py-2 tabular-nums">
                         {format(forecast.time, "HH:mm")}
                       </td>
-                      <td className="px-4 py-2 tabular-nums text-orange-700 dark:text-orange-300">
+                      <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                         {forecast.temperature.toFixed(1)}°C
                       </td>
-                      <td className="px-4 py-2 tabular-nums text-orange-700 dark:text-orange-300">
+                      <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                         <FeelsLikeText
                           temperature={forecast.temperature}
                           feelsLike={forecast.feelsLike}
@@ -69,10 +70,10 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                           showLabel={false}
                         />
                       </td>
-                      <td className="px-4 py-2 tabular-nums text-sky-700 dark:text-sky-400">
+                      <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                         {forecast.precipitation.toFixed(1)} mm
                       </td>
-                      <td className="px-4 py-2 tabular-nums text-sky-700 dark:text-sky-400">
+                      <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                         {Math.round(forecast.precipitationProbability)}%
                       </td>
                       <td className="px-4 py-2 tabular-nums">
@@ -81,7 +82,7 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                       <td className="px-4 py-2 tabular-nums">
                         {Math.round(forecast.cloudCover)}%
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 tabular-nums text-emerald-700 dark:text-emerald-400">
+                      <td className={`whitespace-nowrap px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}>
                         {forecast.windSpeed.toFixed(1)} m/s{" "}
                         <WindDirection degrees={forecast.windDirection} size="sm" />
                       </td>

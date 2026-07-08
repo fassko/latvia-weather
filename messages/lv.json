@@ -9,6 +9,7 @@
     "dataFrom": "Dati no",
     "updatedEvery": "Atjaunināts ik pēc 15 minūtēm.",
     "lastUpdated": "Pēdējoreiz atjaunināts {time}",
+    "staleData": "Rādīti kešoti prognozes dati, jo laikapstākļu serviss īslaicīgi nav pieejams.",
     "developedBy": "Izstrādāja",
     "authorName": "Kristaps",
     "onX": "X",
@@ -56,6 +57,8 @@
     "wind": "Vēja brāzmas",
     "temperatureAt": "{temp}°C plkst. {time}",
     "rainAmount": "{amount} mm, līdz {chance}%",
+    "rainAmountAt": "{amount} mm ap plkst. {time}, līdz {chance}%",
+    "rainPeriod": "{amount} mm galvenokārt {start}-{end}, līdz {chance}%",
     "rainChance": "Līdz {chance}% plkst. {time}",
     "windAt": "{speed} m/s plkst. {time}"
   },
@@ -135,6 +138,7 @@
     "loading": "Ielādē vietas…",
     "loadError": "Neizdevās ielādēt vietas",
     "noResults": "Nav atbilstošu vietu",
+    "recent": "Nesenās vietas",
     "useCurrent": "Lietot manu atrašanās vietu",
     "locating": "Meklē tuvāko vietu...",
     "locationError": "Neizdevās noteikt atrašanās vietu."

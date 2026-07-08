@@ -6,6 +6,7 @@ import type { KeyboardEvent } from "react";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getConditionEmoji } from "@/lib/weather/parse";
+import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import type { DailySummary } from "@/lib/weather/daily";
 
 const headerRowClassName =
@@ -147,19 +148,19 @@ export function DailyHeaderRow({
           <span aria-hidden="true">{getConditionEmoji(summary.representativeIconCode)}</span>
         </td>
         <td
-          className="px-2 py-2 text-sm font-semibold tabular-nums text-orange-700 sm:px-4 dark:text-orange-300"
+          className={`px-2 py-2 text-sm font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.temperature}`}
           {...toggleCellProps}
         >
           {formatRange(summary.minTemperature, summary.maxTemperature, "°C")}
         </td>
         <td
-          className="px-2 py-2 text-sm font-semibold tabular-nums text-sky-800 sm:px-4 dark:text-sky-300"
+          className={`px-2 py-2 text-sm font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.precipitationStrong}`}
           {...toggleCellProps}
         >
           {formatPrecipSummary()}
         </td>
         <td
-          className="whitespace-nowrap px-2 py-2 text-sm font-semibold tabular-nums text-emerald-800 sm:px-4 dark:text-emerald-300"
+          className={`whitespace-nowrap px-2 py-2 text-sm font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.windStrong}`}
           {...toggleCellProps}
         >
           {t("upToWind", { value: summary.maxWindSpeed.toFixed(1) })}{" "}
@@ -182,25 +183,25 @@ export function DailyHeaderRow({
         />
       </td>
       <td
-        className="px-4 py-2 text-sm font-semibold tabular-nums text-orange-700 dark:text-orange-300"
+        className={`px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
         {...toggleCellProps}
       >
         {formatRange(summary.minTemperature, summary.maxTemperature, "°C")}
       </td>
       <td
-        className="px-4 py-2 text-sm font-semibold tabular-nums text-orange-700 dark:text-orange-300"
+        className={`px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
         {...toggleCellProps}
       >
         {formatRange(summary.minFeelsLike, summary.maxFeelsLike, "°C")}
       </td>
       <td
-        className="px-4 py-2 text-sm font-semibold tabular-nums text-sky-800 dark:text-sky-300"
+        className={`px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitationStrong}`}
         {...toggleCellProps}
       >
         {summary.totalPrecipitation.toFixed(1)} mm
       </td>
       <td
-        className="px-4 py-2 text-sm font-semibold tabular-nums text-sky-800 dark:text-sky-300"
+        className={`px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitationStrong}`}
         {...toggleCellProps}
       >
         {t("upToPercent", { value: Math.round(summary.maxPrecipitationProbability) })}
@@ -212,7 +213,7 @@ export function DailyHeaderRow({
         {t("avgCloudCover", { value: Math.round(summary.avgCloudCover) })}
       </td>
       <td
-        className="whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums text-emerald-800 dark:text-emerald-300"
+        className={`whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.windStrong}`}
         {...toggleCellProps}
       >
         {t("upToWind", { value: summary.maxWindSpeed.toFixed(1) })}{" "}

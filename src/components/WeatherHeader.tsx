@@ -59,18 +59,20 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
   return (
     <header className="space-y-4">
       <div className="space-y-3">
-        <div className="flex items-center justify-end gap-2">
-          <Suspense fallback={null}>
-            <LanguageSwitcher />
-          </Suspense>
-          <ThemeToggle />
-          <Suspense fallback={null}>
-            <ShareButton />
-          </Suspense>
-        </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <LocationCombobox selectedId={data.location.id} selectedName={data.location.name} />
-          <LocationCoordinates locationId={data.location.id} />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <LocationCombobox selectedId={data.location.id} selectedName={data.location.name} />
+            <LocationCoordinates locationId={data.location.id} />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Suspense fallback={null}>
+              <LanguageSwitcher />
+            </Suspense>
+            <ThemeToggle />
+            <Suspense fallback={null}>
+              <ShareButton />
+            </Suspense>
+          </div>
         </div>
         {locationSubtitle ? (
           <p className="text-slate-600 dark:text-slate-400">{locationSubtitle}</p>
@@ -78,14 +80,14 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
       </div>
 
       <div
-        className={`rounded-2xl p-7 sm:p-8 ${headerTheme.card} ${headerTheme.shadow} ${headerTheme.text}`}
+        className={`rounded-2xl p-5 sm:p-6 ${headerTheme.card} ${headerTheme.shadow} ${headerTheme.text}`}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className={`text-base font-medium ${headerTheme.muted}`}>
               {formatLatviaDateTime(new Date(), locale, "headerDateTime")}
             </p>
-            <p className="mt-2 text-6xl font-bold tabular-nums sm:text-7xl">
+            <p className="mt-2 text-5xl font-bold tabular-nums sm:text-6xl">
               {Math.round(current.temperature)}°C
             </p>
             <p className={`mt-2 text-base sm:text-lg ${headerTheme.muted}`}>
@@ -96,37 +98,37 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
               · {tConditions(getConditionKey(current.iconCode))}
             </p>
           </div>
-          <span className="text-6xl sm:text-7xl" aria-hidden="true">
+          <span className="text-5xl sm:text-6xl" aria-hidden="true">
             {getConditionEmoji(current.iconCode)}
           </span>
         </div>
 
-        <dl className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
+        <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("humidity")}</dt>
-            <dd className="text-xl font-semibold">{Math.round(current.humidity)}%</dd>
+            <dd className="text-lg font-semibold">{Math.round(current.humidity)}%</dd>
           </div>
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("wind")}</dt>
-            <dd className="text-xl font-semibold">
+            <dd className="text-lg font-semibold">
               {current.windSpeed.toFixed(1)} m/s{" "}
               <WindDirection degrees={current.windDirection} />
             </dd>
           </div>
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("gusts")}</dt>
-            <dd className="text-xl font-semibold">{current.windGust.toFixed(1)} m/s</dd>
+            <dd className="text-lg font-semibold">{current.windGust.toFixed(1)} m/s</dd>
           </div>
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("rainChance")}</dt>
-            <dd className="text-xl font-semibold">
+            <dd className="text-lg font-semibold">
               {Math.round(current.precipitationProbability)}%
             </dd>
           </div>
           {extraStats.map((stat) => (
             <div key={stat.label}>
               <dt className={`text-sm ${headerTheme.statLabel}`}>{stat.label}</dt>
-              <dd className="text-xl font-semibold">{stat.value}</dd>
+              <dd className="text-lg font-semibold">{stat.value}</dd>
             </div>
           ))}
         </dl>

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { distanceKm } from "../src/lib/weather/coordinates.ts";
 import { formatLaiks, getHourlyForecast } from "../src/lib/weather/fetch.ts";
+import { getUpcomingTodayForecasts } from "../src/lib/weather/chart-data.ts";
 import {
   getConditionKey,
   getWindDirection,
@@ -64,6 +65,47 @@ test("condition and wind helpers map display values", () => {
   assert.equal(getWindDirection(0), "N");
   assert.equal(getWindDirection(225), "SW");
   assert.equal(getWindDirection(359), "N");
+});
+
+test("today chart forecasts start from the current hour", () => {
+  const forecasts = [
+    "202607080800",
+    "202607081000",
+    "202607081200",
+    "202607081400",
+    "202607090000",
+  ].map((laiks) =>
+    parseHourlyForecast({
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks,
+      temperatura: "21",
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: "21",
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    }),
+  );
+
+  const upcoming = getUpcomingTodayForecasts(
+    forecasts,
+    new Date("2026-07-08T07:30:00.000Z"),
+  );
+
+  assert.deepEqual(
+    upcoming.map((forecast) => formatLaiks(forecast.time)),
+    ["202607081000", "202607081200", "202607081400"],
+  );
 });
 
 test("distanceKm returns near-zero for identical coordinates and realistic Riga distance", () => {

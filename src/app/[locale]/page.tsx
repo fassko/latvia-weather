@@ -181,6 +181,11 @@ export default async function Home({ params, searchParams }: HomeProps) {
       />
       <StalePageRefresh />
       <WeatherHeader data={data} />
+      {data.isStale ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
+          {tFooter("staleData")}
+        </p>
+      ) : null}
       <WeatherInsights forecasts={data.forecasts} />
       <ForecastChartsSection forecasts={data.forecasts} />
       <ForecastViewTabs

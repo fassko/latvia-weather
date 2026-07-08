@@ -137,6 +137,7 @@ export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
       },
       forecasts: raw.map(parseHourlyForecast),
       fetchedAt: parseLaiks(first.laiks),
+      isStale: false,
     };
 
     rememberHourlyForecast(punkts, data);
@@ -148,7 +149,10 @@ export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
       cached &&
       isUsableStaleValue(cached, (value) => value.forecasts.length === 0)
     ) {
-      return cached.value;
+      return {
+        ...cached.value,
+        isStale: true,
+      };
     }
 
     throw error;
