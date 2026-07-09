@@ -96,19 +96,27 @@ export function HourlyForecastMobileDay({
               >
                 {formatLatviaTime(forecast.time, "HH:mm")}
               </time>
-              <div className="min-w-0">
-                <p className={`font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
+              <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto text-sm tabular-nums [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <span className={`shrink-0 font-semibold ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                   {Math.round(forecast.temperature)}°C
-                </p>
-                <p className={`text-sm tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
+                </span>
+                <span aria-hidden="true" className="shrink-0 text-slate-300 dark:text-slate-600">
+                  ·
+                </span>
+                <span className={`shrink-0 ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                   {forecast.precipitation > 0
                     ? `${forecast.precipitation.toFixed(1)} mm`
                     : t("chance", { value: Math.round(forecast.precipitationProbability) })}
-                </p>
-                <p className={`mt-0.5 text-sm tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}>
-                  {forecast.windSpeed.toFixed(1)} m/s{" "}
-                  <WindDirection degrees={forecast.windDirection} size="sm" />
-                </p>
+                </span>
+                <span aria-hidden="true" className="shrink-0 text-slate-300 dark:text-slate-600">
+                  ·
+                </span>
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1 ${METRIC_TEXT_CLASS_NAMES.wind}`}
+                >
+                  {forecast.windSpeed.toFixed(1)} m/s
+                  <WindDirection degrees={forecast.windDirection} size="sm" showLabel={false} />
+                </span>
               </div>
               <span className="text-2xl" aria-hidden="true">
                 {getConditionEmoji(forecast.iconCode)}
