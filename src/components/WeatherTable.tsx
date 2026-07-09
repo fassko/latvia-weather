@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { getTranslations } from "next-intl/server";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
 import { ForecastDaySection } from "@/components/ForecastDaySection";
@@ -37,12 +36,12 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
             </tr>
           </thead>
           <tbody>
-            {dayGroups.map(({ date, forecasts: dayForecasts }) => {
+            {dayGroups.map(({ dayKey, date, forecasts: dayForecasts }) => {
               const summary = summarizeDay(dayForecasts);
 
               return (
                 <ForecastDaySection
-                  key={format(date, "yyyy-MM-dd")}
+                  key={dayKey}
                   date={date}
                   summary={summary}
                   variant="detailed"
