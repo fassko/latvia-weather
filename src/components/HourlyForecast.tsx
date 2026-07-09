@@ -28,12 +28,12 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
         {t("title")}
       </h2>
       <div className="space-y-4 sm:hidden">
-        {dayGroups.map(({ date, forecasts: dayForecasts }) => {
+        {dayGroups.map(({ dayKey, date, forecasts: dayForecasts }) => {
           const summary = summarizeDay(dayForecasts);
 
           return (
             <section
-              key={format(date, "yyyy-MM-dd")}
+              key={dayKey}
               aria-label={tDaily("hourlyForecastFor", {
                 date: format(date, getDatePattern(locale, "longDate"), {
                   locale: dateLocale,
@@ -98,16 +98,16 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
             </tr>
           </thead>
           <tbody>
-            {dayGroups.map(({ date, forecasts: dayForecasts }) => {
+            {dayGroups.map(({ dayKey, date, forecasts: dayForecasts }) => {
               const summary = summarizeDay(dayForecasts);
 
               return (
                 <ForecastDaySection
-                  key={format(date, "yyyy-MM-dd")}
+                  key={dayKey}
                   date={date}
                   summary={summary}
                   variant="hourly"
-                  defaultExpanded={getLatviaDayKey(date) === todayKey}
+                  defaultExpanded={dayKey === todayKey}
                 >
                   {dayForecasts.map((forecast, index) => (
                     <tr

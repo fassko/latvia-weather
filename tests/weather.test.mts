@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { distanceKm } from "../src/lib/weather/coordinates.ts";
+import { groupForecastsByDay } from "../src/lib/weather/daily.ts";
 import { formatLaiks, getHourlyForecast } from "../src/lib/weather/fetch.ts";
 import { getUpcomingHourlyForecasts, getUpcomingTodayForecasts } from "../src/lib/weather/chart-data.ts";
 import {
@@ -65,6 +66,43 @@ test("condition and wind helpers map display values", () => {
   assert.equal(getWindDirection(0), "N");
   assert.equal(getWindDirection(225), "SW");
   assert.equal(getWindDirection(359), "N");
+});
+
+test("groupForecastsByDay uses Latvia day keys and wall-clock dates", () => {
+  const forecasts = ["202607092100", "202607100100", "202607100300"].map((laiks) =>
+    parseHourlyForecast({
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks,
+      temperatura: "21",
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: "21",
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    }),
+  );
+
+  const groups = groupForecastsByDay(forecasts);
+
+  assert.equal(groups.length, 2);
+  assert.deepEqual(
+    groups.map((group) => group.dayKey),
+    ["2026-07-09", "2026-07-10"],
+  );
+  assert.deepEqual(
+    groups.map((group) => group.forecasts.length),
+    [1, 2],
+  );
 });
 
 test("hourly forecast list starts from the current Latvia hour", () => {

@@ -1,8 +1,9 @@
 import { format } from "date-fns";
 import type { HourlyForecast } from "./types";
-import { getLatviaDayKey } from "./timezone";
+import { getLatviaDayKey, getLatviaWallClock } from "./timezone";
 
 export interface DailyForecastGroup {
+  dayKey: string;
   date: Date;
   forecasts: HourlyForecast[];
 }
@@ -41,7 +42,8 @@ export function groupForecastsByDay(
     }
 
     groups.set(key, {
-      date: forecast.time,
+      dayKey: key,
+      date: getLatviaWallClock(forecast.time),
       forecasts: [forecast],
     });
   }
