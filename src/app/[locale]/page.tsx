@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
 import { ForecastViewTabs } from "@/components/ForecastViewTabs";
-import { LastUpdated } from "@/components/LastUpdated";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { HourlyForecastList } from "@/components/HourlyForecast";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
@@ -196,9 +195,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
         detailed={<WeatherTable forecasts={data.forecasts} />}
       />
       <footer className="space-y-1 pb-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        <p>
-          <LastUpdated fetchedAt={data.fetchedAt} />
-        </p>
         <p>
           {tFooter("dataFrom")}{" "}
           <a
