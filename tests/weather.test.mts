@@ -67,6 +67,47 @@ test("condition and wind helpers map display values", () => {
   assert.equal(getWindDirection(359), "N");
 });
 
+test("hourly forecast list starts from the current Latvia hour", () => {
+  const forecasts = [
+    "202607090300",
+    "202607090400",
+    "202607090500",
+    "202607090600",
+    "202607090700",
+  ].map((laiks) =>
+    parseHourlyForecast({
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks,
+      temperatura: "21",
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: "21",
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    }),
+  );
+
+  const upcoming = getUpcomingHourlyForecasts(
+    forecasts,
+    new Date("2026-07-09T03:45:00.000Z"),
+  );
+
+  assert.deepEqual(
+    upcoming.map((forecast) => formatLaiks(forecast.time)),
+    ["202607090600", "202607090700"],
+  );
+});
+
 test("hourly forecast list starts from the current hour", () => {
   const forecasts = [
     "202607080800",

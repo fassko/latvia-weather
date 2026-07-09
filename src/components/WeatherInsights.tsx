@@ -1,8 +1,8 @@
-import { format } from "date-fns";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { WindDirection } from "@/components/WindDirection";
 import { getTodayForecasts, sumPrecipitation } from "@/lib/weather/chart-data";
+import { formatLatviaTime } from "@/lib/weather/timezone";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface WeatherInsightsProps {
@@ -63,7 +63,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
       label: t("warmest"),
       value: t("temperatureAt", {
         temp: Math.round(warmest.temperature),
-        time: format(warmest.time, "HH:mm"),
+        time: formatLatviaTime(warmest.time, "HH:mm"),
       }),
     },
     {
@@ -71,14 +71,14 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
       value:
         mainRainStart && mainRainEnd && mainRainStart !== mainRainEnd
           ? t("rainPeriod", {
-              start: format(mainRainStart.time, "HH:mm"),
-              end: format(mainRainEnd.time, "HH:mm"),
+              start: formatLatviaTime(mainRainStart.time, "HH:mm"),
+              end: formatLatviaTime(mainRainEnd.time, "HH:mm"),
               amount: sumPrecipitation(mainRainPeriod).toFixed(1),
               chance: Math.round(mainRainChance),
             })
           : mainRainStart
             ? t("rainAmountAt", {
-                time: format(mainRainStart.time, "HH:mm"),
+                time: formatLatviaTime(mainRainStart.time, "HH:mm"),
                 amount: mainRainStart.precipitation.toFixed(1),
                 chance: Math.round(mainRainStart.precipitationProbability),
               })
@@ -89,7 +89,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
             })
           : t("rainChance", {
               chance: Math.round(wettest.precipitationProbability),
-              time: format(wettest.time, "HH:mm"),
+              time: formatLatviaTime(wettest.time, "HH:mm"),
             }),
     },
     {
@@ -99,7 +99,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
           <span>
             {t("windAt", {
               speed: windiest.windGust.toFixed(1),
-              time: format(windiest.time, "HH:mm"),
+              time: formatLatviaTime(windiest.time, "HH:mm"),
             })}
           </span>
           <WindDirection degrees={windiest.windDirection} />
