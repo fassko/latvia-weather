@@ -1,7 +1,13 @@
-import { addDays, addHours, format, startOfHour, type Locale } from "date-fns";
+import { addDays, addHours, type Locale } from "date-fns";
 import { getDatePattern } from "@/lib/date-locale";
 import { groupForecastsByDay } from "./daily";
 import type { HourlyForecast } from "./types";
+import {
+  formatLatviaTime,
+  getLatviaDayKey,
+  getLatviaStartOfHour,
+  getLatviaWallClock,
+} from "./timezone";
 
 export interface ChartPoint {
   xIndex: number;
@@ -24,7 +30,7 @@ export interface DaySegment {
 }
 
 function dayKey(time: Date): string {
-  return format(time, "yyyy-MM-dd");
+  return getLatviaDayKey(time);
 }
 
 export function getTodayForecasts(forecasts: HourlyForecast[]): HourlyForecast[] {
@@ -45,8 +51,10 @@ export function getUpcomingHourlyForecasts(
 ): HourlyForecast[] {
   if (forecasts.length === 0) return [];
 
-  const currentHour = startOfHour(now);
-  const upcoming = forecasts.filter((forecast) => forecast.time >= currentHour);
+  const currentHour = getLatviaStartOfHour(now);
+  const upcoming = forecasts.filter(
+    (forecast) => getLatviaWallClock(forecast.time) >= currentHour,
+  );
 
   if (upcoming.length > 0) return upcoming;
   return forecasts.slice(-1);
@@ -58,10 +66,10 @@ export function getUpcomingTodayForecasts(
 ): HourlyForecast[] {
   if (forecasts.length === 0) return [];
 
-  const currentHour = startOfHour(now);
+  const currentHour = getLatviaStartOfHour(now);
   const end = addHours(currentHour, 24);
   const next24Hours = getUpcomingHourlyForecasts(forecasts, now).filter(
-    (forecast) => forecast.time < end,
+    (forecast) => getLatviaWallClock(forecast.time) < end,
   );
 
   if (next24Hours.length > 0) return next24Hours;
@@ -112,7 +120,9 @@ export function getDaySegments(data: ChartPoint[], dateLocale: Locale, locale: s
       if (current) segments.push(current);
       current = {
         dayKey: point.dayKey,
-        label: format(new Date(point.time), getDatePattern(locale, "chartDay"), { locale: dateLocale }),
+        label: formatLatviaTime(new Date(point.time), getDatePattern(locale, "chartDay"), {
+          locale: dateLocale,
+        }),
         start: point.xIndex,
         end: point.xIndex,
         midIndex: point.xIndex,
@@ -135,7 +145,9 @@ export function formatChartTooltipLabel(
 ): string {
   const point = payload[0]?.payload;
   if (!point?.time) return String(_label ?? "");
-  return format(new Date(point.time), getDatePattern(locale, "chartTooltip"), { locale: dateLocale });
+  return formatLatviaTime(new Date(point.time), getDatePattern(locale, "chartTooltip"), {
+    locale: dateLocale,
+  });
 }
 
 export function getHourTicks(data: ChartPoint[], step = 2): number[] {

@@ -1,4 +1,4 @@
-import { format, parse } from "date-fns";
+import { format, parse, startOfHour, type FormatOptions, type Locale } from "date-fns";
 import { getDateFnsLocale, getDatePattern, type DatePatternKey } from "@/lib/date-locale";
 
 export const LATVIA_TIME_ZONE = "Europe/Riga";
@@ -75,6 +75,22 @@ export function getLatviaWallClock(date: Date): Date {
     "yyyy-MM-dd HH:mm",
     new Date(),
   );
+}
+
+export function getLatviaStartOfHour(date: Date): Date {
+  return startOfHour(getLatviaWallClock(date));
+}
+
+export function getLatviaDayKey(date: Date): string {
+  return format(getLatviaWallClock(date), "yyyy-MM-dd");
+}
+
+export function formatLatviaTime(
+  date: Date,
+  pattern: string,
+  options?: FormatOptions & { locale?: Locale },
+): string {
+  return format(getLatviaWallClock(date), pattern, options);
 }
 
 export function formatLatviaDateTime(

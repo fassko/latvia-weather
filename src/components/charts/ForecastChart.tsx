@@ -29,6 +29,7 @@ import {
 } from "@/lib/weather/chart-data";
 import { METRIC_COLORS } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
+import { formatLatviaTime } from "@/lib/weather/timezone";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
@@ -116,7 +117,7 @@ function getHourTicksForPeriod(data: ChartPoint[], period: ForecastPeriod): numb
 
   const dayPartHours = new Set([0, 8, 16]);
   const ticks = data
-    .filter((point) => dayPartHours.has(Number(format(new Date(point.time), "H"))))
+    .filter((point) => dayPartHours.has(Number(formatLatviaTime(new Date(point.time), "H"))))
     .map((point) => point.xIndex);
 
   return ticks.length > 0 ? ticks : getHourTicks(data, getHourTickStep(period));
@@ -365,12 +366,12 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
               <span className="block">
                 {todayRainPoint.precipitation > 0
                   ? t("rainPeak", {
-                      time: format(new Date(todayRainPoint.time), "HH:mm"),
+                      time: formatLatviaTime(new Date(todayRainPoint.time), "HH:mm"),
                       amount: todayRainPoint.precipitation.toFixed(1),
                       chance: Math.round(todayRainPoint.precipitationProbability),
                     })
                   : t("rainChancePeak", {
-                      time: format(new Date(todayRainPoint.time), "HH:mm"),
+                      time: formatLatviaTime(new Date(todayRainPoint.time), "HH:mm"),
                       chance: Math.round(todayRainPoint.precipitationProbability),
                     })}
               </span>
@@ -454,7 +455,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 tickFormatter={(index) => {
                   const point = data[Number(index)];
                   if (!point) return "";
-                  return format(new Date(point.time), "HH:mm");
+                  return formatLatviaTime(new Date(point.time), "HH:mm");
                 }}
                 axisLine={{ stroke: colors.dayDivider }}
                 tickLine={false}

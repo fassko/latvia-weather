@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import type { HourlyForecast } from "./types";
+import { getLatviaDayKey } from "./timezone";
 
 export interface DailyForecastGroup {
   date: Date;
@@ -22,7 +23,7 @@ export interface DailySummary {
 }
 
 function dayKey(time: Date): string {
-  return format(time, "yyyy-MM-dd");
+  return getLatviaDayKey(time);
 }
 
 export function groupForecastsByDay(

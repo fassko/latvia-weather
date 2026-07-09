@@ -5,6 +5,7 @@ import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { WindDirection } from "@/components/WindDirection";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
+import { formatLatviaTime } from "@/lib/weather/timezone";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface WeatherTableProps {
@@ -56,7 +57,7 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                       }`}
                     >
                       <td className="whitespace-nowrap px-4 py-2 tabular-nums">
-                        {format(forecast.time, "HH:mm")}
+                        {formatLatviaTime(forecast.time, "HH:mm")}
                       </td>
                       <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                         {forecast.temperature.toFixed(1)}°C

@@ -7,6 +7,7 @@ import { getConditionEmoji } from "@/lib/weather/parse";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
+import { formatLatviaTime } from "@/lib/weather/timezone";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyForecastProps {
@@ -58,7 +59,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                       dateTime={forecast.time.toISOString()}
                       className="font-mono text-sm text-slate-500 dark:text-slate-400"
                     >
-                      {format(forecast.time, "HH:mm")}
+                      {formatLatviaTime(forecast.time, "HH:mm")}
                     </time>
                     <div className="min-w-0">
                       <p className={`font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
@@ -117,7 +118,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                     >
                       <td className="whitespace-nowrap px-2 py-2 tabular-nums sm:px-4">
                         <time dateTime={forecast.time.toISOString()}>
-                          {format(forecast.time, "HH:mm")}
+                          {formatLatviaTime(forecast.time, "HH:mm")}
                         </time>
                       </td>
                       <td className="px-2 py-2 sm:px-4">
