@@ -7,7 +7,7 @@ import { getConditionEmoji } from "@/lib/weather/parse";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
-import { formatLatviaTime } from "@/lib/weather/timezone";
+import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyForecastProps {
@@ -20,6 +20,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
   const tDaily = await getTranslations("daily");
   const dateLocale = getDateFnsLocale(locale);
   const dayGroups = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts));
+  const todayKey = getLatviaDayKey(new Date());
 
   return (
     <section aria-labelledby="hourly-heading">
@@ -106,6 +107,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                   date={date}
                   summary={summary}
                   variant="hourly"
+                  defaultExpanded={getLatviaDayKey(date) === todayKey}
                 >
                   {dayForecasts.map((forecast, index) => (
                     <tr
