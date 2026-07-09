@@ -55,7 +55,6 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                   date={date}
                   summary={summary}
                   variant="hourly"
-                  defaultExpanded={dayKey === todayKey}
                 >
                   {dayForecasts.map((forecast, index) => (
                     <tr
