@@ -45,7 +45,7 @@ test("parseHourlyForecast maps raw LVGMC fields", () => {
     laika_apstaklu_ikona: "1102",
     spiediens: "1012.4",
     sajutu_temperatura: "25.1",
-    sniegs: null,
+    sniegs: "1.2",
     makoni: "34",
     nokrisnu_varbutiba: "42",
     uvi_indekss: "5",
@@ -55,6 +55,7 @@ test("parseHourlyForecast maps raw LVGMC fields", () => {
   assert.equal(forecast.temperature, 24.7);
   assert.equal(forecast.feelsLike, 25.1);
   assert.equal(forecast.precipitationProbability, 42);
+  assert.equal(forecast.snow, 1.2);
   assert.equal(forecast.uvIndex, 5);
   assert.equal(forecast.thunderProbability, 7);
 });

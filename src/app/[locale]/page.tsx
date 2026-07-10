@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
 import { ForecastViewTabs } from "@/components/ForecastViewTabs";
+import { LastUpdated } from "@/components/LastUpdated";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { HourlyForecastList } from "@/components/HourlyForecast";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
@@ -31,6 +32,14 @@ function buildPagePath(locale: string, punkts?: string): string {
   return `/${locale}${query}`;
 }
 
+function buildOgImagePath(locale: string, punkts?: string): string {
+  const query =
+    punkts && punkts !== DEFAULT_LOCATION_ID
+      ? `?punkts=${encodeURIComponent(punkts)}`
+      : "";
+  return `/${locale}/opengraph-image${query}`;
+}
+
 function getLocaleName(locale: string): "lv_LV" | "en_US" {
   return locale === "lv" ? "lv_LV" : "en_US";
 }
@@ -44,7 +53,7 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
   const baseUrl = getSiteUrl();
   const pagePath = buildPagePath(locale, locationId);
   const pageUrl = `${baseUrl}${pagePath}`;
-  const imageUrl = `${baseUrl}/${locale}/opengraph-image`;
+  const imageUrl = `${baseUrl}${buildOgImagePath(locale, locationId)}`;
   const languages = Object.fromEntries(
     routing.locales.map((altLocale) => [
       altLocale,
@@ -205,7 +214,8 @@ export default async function Home({ params, searchParams }: HomeProps) {
           >
             LVĢMC
           </a>
-          . {tFooter("updatedEvery")}
+          . {tFooter("updatedEvery")}{" "}
+          <LastUpdated fetchedAt={data.fetchedAt} />
         </p>
         <p>
           {tFooter("developedBy")}{" "}

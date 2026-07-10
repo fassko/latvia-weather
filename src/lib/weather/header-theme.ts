@@ -172,3 +172,45 @@ export function getWeatherHeaderTheme(iconCode: string): WeatherHeaderTheme {
   const period = isNightIcon(iconCode) ? "night" : "day";
   return themes[group][period];
 }
+
+const ogGradients: Record<ConditionGroup, { day: string; night: string }> = {
+  clear: {
+    day: "linear-gradient(135deg, #fcd34d 0%, #38bdf8 45%, #0284c7 100%)",
+    night: "linear-gradient(135deg, #312e81 0%, #1e293b 55%, #020617 100%)",
+  },
+  "partly-cloudy": {
+    day: "linear-gradient(135deg, #bae6fd 0%, #7dd3fc 50%, #0284c7 100%)",
+    night: "linear-gradient(135deg, #1e3a8a 0%, #1e293b 60%, #0f172a 100%)",
+  },
+  cloudy: {
+    day: "linear-gradient(135deg, #94a3b8 0%, #64748b 55%, #334155 100%)",
+    night: "linear-gradient(135deg, #334155 0%, #1e293b 60%, #0f172a 100%)",
+  },
+  fog: {
+    day: "linear-gradient(135deg, #cbd5e1 0%, #94a3b8 55%, #64748b 100%)",
+    night: "linear-gradient(135deg, #475569 0%, #334155 60%, #1e293b 100%)",
+  },
+  rain: {
+    day: "linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #1e40af 100%)",
+    night: "linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 55%, #0f172a 100%)",
+  },
+  thunder: {
+    day: "linear-gradient(135deg, #6366f1 0%, #4338ca 50%, #1e1b4b 100%)",
+    night: "linear-gradient(135deg, #4338ca 0%, #312e81 55%, #020617 100%)",
+  },
+  snow: {
+    day: "linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 50%, #0369a1 100%)",
+    night: "linear-gradient(135deg, #0c4a6e 0%, #1e3a8a 55%, #0f172a 100%)",
+  },
+  drizzle: {
+    day: "linear-gradient(135deg, #7dd3fc 0%, #38bdf8 50%, #0284c7 100%)",
+    night: "linear-gradient(135deg, #0369a1 0%, #1e3a8a 55%, #0f172a 100%)",
+  },
+};
+
+export function getOgImageGradient(iconCode: string): string {
+  const group = getConditionGroup(iconCode);
+  const period = isNightIcon(iconCode) ? "night" : "day";
+  return ogGradients[group][period];
+}
+

@@ -1,12 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { HourlyForecastMobileDay } from "@/components/HourlyForecastMobileDay";
+import { ConditionEmojiServer } from "@/components/ConditionEmojiServer";
 import { WindDirection } from "@/components/WindDirection";
-import { getConditionEmoji } from "@/lib/weather/parse";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
+import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
+import { formatWindSpeed } from "@/lib/weather/wind-units";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyForecastProps {
@@ -17,6 +19,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
   const t = await getTranslations("hourly");
   const dayGroups = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts));
   const todayKey = getLatviaDayKey(new Date());
+  const windUnit = await getWindUnitsCookie();
 
   return (
     <section aria-labelledby="hourly-heading">
@@ -55,11 +58,12 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                   date={date}
                   summary={summary}
                   variant="hourly"
+                  defaultExpanded={dayKey === todayKey}
                 >
                   {dayForecasts.map((forecast, index) => (
                     <tr
                       key={forecast.time.toISOString()}
-                      className={`transition-colors duration-150 hover:bg-sky-200 dark:hover:bg-slate-700 ${
+                      className={`motion-reduce:transition-none transition-colors duration-150 hover:bg-sky-200 dark:hover:bg-slate-700 ${
                         index % 2 === 0
                           ? "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300"
                           : "bg-sky-50 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
@@ -71,7 +75,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                         </time>
                       </td>
                       <td className="px-2 py-2 sm:px-4">
-                        <span aria-hidden="true">{getConditionEmoji(forecast.iconCode)}</span>
+                        <ConditionEmojiServer iconCode={forecast.iconCode} />
                       </td>
                       <td className={`px-2 py-2 font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
                         {Math.round(forecast.temperature)}°C
@@ -82,7 +86,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                           : t("chance", { value: Math.round(forecast.precipitationProbability) })}
                       </td>
                       <td className={`whitespace-nowrap px-2 py-2 tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.wind}`}>
-                        {forecast.windSpeed.toFixed(1)} m/s{" "}
+                        {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
                         <WindDirection degrees={forecast.windDirection} size="sm" />
                       </td>
                     </tr>

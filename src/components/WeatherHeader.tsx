@@ -6,11 +6,14 @@ import { LocationCombobox } from "@/components/LocationCombobox";
 import { LocationCoordinates } from "@/components/LocationCoordinates";
 import { ShareButton } from "@/components/ShareButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { WindUnitsToggle } from "@/components/WindUnitsToggle";
 import { WindDirection } from "@/components/WindDirection";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
 import { formatLatviaDateTime } from "@/lib/weather/timezone";
 import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
+import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
+import { formatWindSpeed } from "@/lib/weather/wind-units";
 import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
 
 function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
@@ -27,6 +30,7 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
   const locale = await getLocale();
   const t = await getTranslations("header");
   const tConditions = await getTranslations("conditions");
+  const windUnit = await getWindUnitsCookie();
   const current = findCurrentForecast(data.forecasts);
   const headerTheme = getWeatherHeaderTheme(current.iconCode);
   const locationSubtitle = getLocationSubtitle(
@@ -65,6 +69,7 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
             <LocationCoordinates locationId={data.location.id} />
           </div>
           <div className="flex items-center justify-end gap-2">
+            <WindUnitsToggle />
             <Suspense fallback={null}>
               <LanguageSwitcher />
             </Suspense>
@@ -111,13 +116,13 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("wind")}</dt>
             <dd className="text-lg font-semibold">
-              {current.windSpeed.toFixed(1)} m/s{" "}
+              {formatWindSpeed(current.windSpeed, windUnit)}{" "}
               <WindDirection degrees={current.windDirection} />
             </dd>
           </div>
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("gusts")}</dt>
-            <dd className="text-lg font-semibold">{current.windGust.toFixed(1)} m/s</dd>
+            <dd className="text-lg font-semibold">{formatWindSpeed(current.windGust, windUnit)}</dd>
           </div>
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("rainChance")}</dt>
