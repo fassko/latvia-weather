@@ -72,7 +72,7 @@ export function HourlyForecastMobileDay({
         onKeyDown={handleKeyDown}
         aria-expanded={expanded}
         aria-label={`${expanded ? tDaily("collapse") : tDaily("expand")} ${tDaily("hourlyForecastFor", { date: dateLabel })}`}
-        className="flex w-full items-start gap-2 border-b border-slate-100 px-4 py-3 text-left transition-colors duration-150 hover:bg-sky-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
+        className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left transition-colors duration-150 hover:bg-sky-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
       >
         <ExpandArrow expanded={expanded} />
         <span className="min-w-0 flex-1">
@@ -81,6 +81,9 @@ export function HourlyForecastMobileDay({
             {Math.round(summary.minTemperature)}° / {Math.round(summary.maxTemperature)}° ·{" "}
             {tDaily("mmTotal", { value: summary.totalPrecipitation.toFixed(1) })}
           </span>
+        </span>
+        <span className="shrink-0 text-2xl" aria-hidden="true">
+          {getConditionEmoji(summary.representativeIconCode)}
         </span>
       </button>
       {expanded ? (
