@@ -1,0 +1,166 @@
+"use client";
+
+import { format } from "date-fns";
+import { useLocale, useTranslations } from "next-intl";
+import { useState, type KeyboardEvent } from "react";
+import { ConditionEmoji } from "@/components/ConditionEmoji";
+import { FeelsLikeText } from "@/components/FeelsLikeText";
+import { WindDirection } from "@/components/WindDirection";
+import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
+import type { DailySummary } from "@/lib/weather/daily";
+import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
+import { formatLatviaTime } from "@/lib/weather/timezone";
+import { formatWindSpeed } from "@/lib/weather/wind-units";
+import { useWindUnit } from "@/lib/weather/use-wind-unit";
+import type { HourlyForecast } from "@/lib/weather/types";
+
+interface DetailedForecastMobileDayProps {
+  date: Date;
+  summary: DailySummary;
+  forecasts: HourlyForecast[];
+  defaultExpanded?: boolean;
+}
+
+function ExpandArrow({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`h-4 w-4 shrink-0 motion-reduce:transition-none transition-transform duration-150 ${
+        expanded ? "rotate-90" : ""
+      }`}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+export function DetailedForecastMobileDay({
+  date,
+  summary,
+  forecasts,
+  defaultExpanded = false,
+}: DetailedForecastMobileDayProps) {
+  const locale = useLocale();
+  const t = useTranslations("table");
+  const tDaily = useTranslations("daily");
+  const dateLocale = getDateFnsLocale(locale);
+  const windUnit = useWindUnit();
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const dateLabel = format(date, getDatePattern(locale, "longDate"), { locale: dateLocale });
+
+  function toggleExpanded() {
+    setExpanded((value) => !value);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleExpanded();
+    }
+  }
+
+  return (
+    <section
+      aria-label={tDaily("detailedForecastFor", { date: dateLabel })}
+      className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+    >
+      <button
+        type="button"
+        onClick={toggleExpanded}
+        onKeyDown={handleKeyDown}
+        aria-expanded={expanded}
+        aria-label={`${expanded ? tDaily("collapse") : tDaily("expand")} ${tDaily("detailedForecastFor", { date: dateLabel })}`}
+        className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left motion-reduce:transition-none transition-colors duration-150 hover:bg-sky-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
+      >
+        <ExpandArrow expanded={expanded} />
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-slate-900 dark:text-slate-100">{dateLabel}</span>
+          <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">
+            {Math.round(summary.minTemperature)}° / {Math.round(summary.maxTemperature)}° ·{" "}
+            {tDaily("mmTotal", { value: summary.totalPrecipitation.toFixed(1) })}
+          </span>
+        </span>
+        <ConditionEmoji iconCode={summary.representativeIconCode} className="shrink-0 text-2xl" />
+      </button>
+      {expanded ? (
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {forecasts.map((forecast) => (
+            <article key={forecast.time.toISOString()} className="space-y-2 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <time
+                  dateTime={forecast.time.toISOString()}
+                  className="font-mono text-sm font-medium text-slate-700 dark:text-slate-200"
+                >
+                  {formatLatviaTime(forecast.time, "HH:mm")}
+                </time>
+                <ConditionEmoji iconCode={forecast.iconCode} className="text-2xl" />
+              </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("temp")}</dt>
+                  <dd className={`font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
+                    {forecast.temperature.toFixed(1)}°C
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("feels")}</dt>
+                  <dd className={`tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}>
+                    <FeelsLikeText
+                      temperature={forecast.temperature}
+                      feelsLike={forecast.feelsLike}
+                      precision={1}
+                      variant="table"
+                      showLabel={false}
+                    />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("precip")}</dt>
+                  <dd className={`tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
+                    {forecast.precipitation.toFixed(1)} mm
+                    {forecast.snow > 0
+                      ? ` · ${forecast.snow.toFixed(1)} cm`
+                      : null}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("rainPercent")}</dt>
+                  <dd className={`tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
+                    {Math.round(forecast.precipitationProbability)}%
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("humidity")}</dt>
+                  <dd className="tabular-nums">{Math.round(forecast.humidity)}%</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("cloudCover")}</dt>
+                  <dd className="tabular-nums">{Math.round(forecast.cloudCover)}%</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("wind")}</dt>
+                  <dd
+                    className={`inline-flex items-center gap-1 tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
+                  >
+                    {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
+                    <WindDirection degrees={forecast.windDirection} size="sm" showLabel={false} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">{t("pressure")}</dt>
+                  <dd className="tabular-nums">{forecast.pressure.toFixed(1)} hPa</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}

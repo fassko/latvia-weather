@@ -24,6 +24,7 @@ export interface HourlyForecast {
   temperature: number;
   feelsLike: number;
   precipitation: number;
+  snow: number;
   humidity: number;
   windSpeed: number;
   windGust: number;

@@ -30,12 +30,18 @@ import {
 import { METRIC_COLORS } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import { formatLatviaTime } from "@/lib/weather/timezone";
+import {
+  convertWindSpeed,
+  formatWindSpeed,
+  getWindSpeedUnitSuffix,
+} from "@/lib/weather/wind-units";
+import { useWindUnit } from "@/lib/weather/use-wind-unit";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 type ChartSeriesKey = "temperature" | "precipitation" | "windSpeed";
 
-const CHART_MARGIN = { top: 28, right: 4, left: 0, bottom: 8 };
+const CHART_MARGIN = { top: 28, right: 12, left: 4, bottom: 8 };
 const CHART_PREFS_STORAGE_KEY = "latvia-weather-chart-prefs";
 
 interface ForecastChartProps {
@@ -193,6 +199,8 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     () => new Set(getInitialChartPreferences().hiddenSeries),
   );
   const colors = useChartColors();
+  const windUnit = useWindUnit();
+  const windAxisUnit = getWindSpeedUnitSuffix(windUnit);
 
   const periodOptions: { value: ForecastPeriod; label: string }[] = [
     { value: 1, label: t("today") },
@@ -511,10 +519,11 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 yAxisId="wind"
                 orientation="right"
                 tick={{ fontSize: 11, fill: colors.tick }}
-                unit=" m/s"
+                unit={` ${windAxisUnit}`}
                 width="auto"
                 tickCount={6}
                 tickMargin={6}
+                tickFormatter={(value) => convertWindSpeed(Number(value), windUnit).toFixed(1)}
               />
               <Tooltip
                 wrapperStyle={{
@@ -540,7 +549,9 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                     return [`${num.toFixed(1)}°C`, temperatureLabel];
                   }
                   if (name === windLabel) {
-                    if (point == null) return [`${num.toFixed(1)} m/s`, windLabel];
+                    if (point == null) {
+                      return [formatWindSpeed(num, windUnit), windLabel];
+                    }
 
                     const direction = getWindDirection(point.windDirection);
 
@@ -549,7 +560,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                         key="wind-tooltip"
                         className="inline-flex items-center gap-1"
                       >
-                        <span>{num.toFixed(1)} m/s</span>
+                        <span>{formatWindSpeed(num, windUnit)}</span>
                         <svg
                           aria-hidden="true"
                           width="14"

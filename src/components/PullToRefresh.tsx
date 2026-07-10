@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const PULL_THRESHOLD = 80;
 const MAX_PULL = 120;
@@ -31,6 +32,7 @@ function getServerSnapshot() {
 
 export function PullToRefresh() {
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
@@ -67,10 +69,14 @@ export function PullToRefresh() {
     
     if (diff > 0) {
       e.preventDefault();
-      const distance = Math.min(diff / RESISTANCE, MAX_PULL);
+      const distance = prefersReducedMotion
+        ? diff >= PULL_THRESHOLD
+          ? PULL_THRESHOLD
+          : 0
+        : Math.min(diff / RESISTANCE, MAX_PULL);
       setPullDistance(distance);
     }
-  }, [isRefreshing]);
+  }, [isRefreshing, prefersReducedMotion]);
 
   const handleTouchEnd = useCallback(() => {
     if (!isPullingRef.current) return;
@@ -111,15 +117,15 @@ export function PullToRefresh() {
   }
 
   const progress = Math.min(pullDistance / PULL_THRESHOLD, 1);
-  const rotation = progress * 180;
-  const transition = isPulling ? "none" : "all 0.3s ease-out";
+  const rotation = prefersReducedMotion ? 0 : progress * 180;
+  const transition = isPulling || prefersReducedMotion ? "none" : "all 0.3s ease-out";
 
   return (
     <div
       className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center"
       style={{
-        transform: `translateY(${pullDistance - 40}px)`,
-        opacity: progress,
+        transform: prefersReducedMotion ? undefined : `translateY(${pullDistance - 40}px)`,
+        opacity: prefersReducedMotion ? 1 : progress,
         transition,
       }}
     >
@@ -154,8 +160,8 @@ export function PullToRefresh() {
             stroke="currentColor"
             strokeWidth={2}
             style={{
-              transform: `rotate(${rotation}deg)`,
-              transition: isPulling ? "none" : "transform 0.3s ease-out",
+              transform: prefersReducedMotion ? undefined : `rotate(${rotation}deg)`,
+              transition: isPulling || prefersReducedMotion ? "none" : "transform 0.3s ease-out",
             }}
           >
             <path

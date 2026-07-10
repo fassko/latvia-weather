@@ -5,9 +5,11 @@ import { useLocale, useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
-import { getConditionEmoji } from "@/lib/weather/parse";
+import { ConditionEmoji } from "@/components/ConditionEmoji";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import type { DailySummary } from "@/lib/weather/daily";
+import { formatWindSpeed } from "@/lib/weather/wind-units";
+import { useWindUnit } from "@/lib/weather/use-wind-unit";
 
 const headerRowClassName =
   "border-t-2 border-sky-300 bg-sky-100 text-sky-900 transition-colors duration-150 hover:bg-sky-300 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-200 dark:hover:bg-sky-800";
@@ -40,7 +42,7 @@ function ExpandArrow({ expanded }: { expanded: boolean }) {
   return (
     <svg
       aria-hidden="true"
-      className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 ${
+      className={`h-3.5 w-3.5 shrink-0 motion-reduce:transition-none transition-transform duration-150 ${
         expanded ? "rotate-90" : ""
       }`}
       viewBox="0 0 20 20"
@@ -99,6 +101,7 @@ export function DailyHeaderRow({
   const locale = useLocale();
   const t = useTranslations("daily");
   const dateLocale = getDateFnsLocale(locale);
+  const windUnit = useWindUnit();
   const label = format(date, getDatePattern(locale, "longDate"), { locale: dateLocale });
   const rowClassName = onToggle
     ? `${headerRowClassName} cursor-pointer`
@@ -145,7 +148,7 @@ export function DailyHeaderRow({
           />
         </td>
         <td className="px-2 py-2 sm:px-4" {...toggleCellProps}>
-          <span aria-hidden="true">{getConditionEmoji(summary.representativeIconCode)}</span>
+          <ConditionEmoji iconCode={summary.representativeIconCode} />
         </td>
         <td
           className={`px-2 py-2 text-sm font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.temperature}`}
@@ -163,7 +166,7 @@ export function DailyHeaderRow({
           className={`whitespace-nowrap px-2 py-2 text-sm font-semibold tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.windStrong}`}
           {...toggleCellProps}
         >
-          {t("upToWind", { value: summary.maxWindSpeed.toFixed(1) })}{" "}
+          {t("upToWind", { speed: formatWindSpeed(summary.maxWindSpeed, windUnit) })}{" "}
           <WindDirection degrees={summary.windDirectionAtMaxWind} size="sm" />
         </td>
       </tr>
@@ -216,7 +219,7 @@ export function DailyHeaderRow({
         className={`whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.windStrong}`}
         {...toggleCellProps}
       >
-        {t("upToWind", { value: summary.maxWindSpeed.toFixed(1) })}{" "}
+        {t("upToWind", { speed: formatWindSpeed(summary.maxWindSpeed, windUnit) })}{" "}
         <WindDirection degrees={summary.windDirectionAtMaxWind} size="sm" />
       </td>
       <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>

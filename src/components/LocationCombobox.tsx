@@ -15,13 +15,15 @@ interface LocationComboboxProps {
 }
 
 const RECENT_LOCATION_STORAGE_KEY = "latvia-weather-recent-locations";
+const FAVORITE_LOCATION_STORAGE_KEY = "latvia-weather-favorite-locations";
 const MAX_RECENT_LOCATIONS = 5;
+const MAX_FAVORITE_LOCATIONS = 5;
 
-function getInitialRecentLocationIds(): string[] {
+function getStoredLocationIds(key: string): string[] {
   if (typeof window === "undefined") return [];
 
   try {
-    const parsed = JSON.parse(localStorage.getItem(RECENT_LOCATION_STORAGE_KEY) ?? "[]");
+    const parsed = JSON.parse(localStorage.getItem(key) ?? "[]");
     return Array.isArray(parsed)
       ? parsed.filter((id): id is string => typeof id === "string")
       : [];
@@ -46,7 +48,10 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "error">("idle");
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [recentLocationIds, setRecentLocationIds] = useState<string[]>(
-    getInitialRecentLocationIds,
+    () => getStoredLocationIds(RECENT_LOCATION_STORAGE_KEY),
+  );
+  const [favoriteLocationIds, setFavoriteLocationIds] = useState<string[]>(
+    () => getStoredLocationIds(FAVORITE_LOCATION_STORAGE_KEY),
   );
 
   const loadLocations = useCallback(async () => {
@@ -69,18 +74,33 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
 
   const normalizedQuery = query.trim().toLowerCase();
   const allLocations = locations ?? [];
+  const favoriteLocationIdSet = new Set(favoriteLocationIds);
+  const favoriteLocations =
+    normalizedQuery.length === 0
+      ? favoriteLocationIds
+          .map((id) => allLocations.find((location) => location.id === id))
+          .filter((location): location is WeatherLocationPoint => Boolean(location))
+      : [];
   const recentLocations =
     normalizedQuery.length === 0
       ? recentLocationIds
+          .filter((id) => !favoriteLocationIdSet.has(id))
           .map((id) => allLocations.find((location) => location.id === id))
           .filter((location): location is WeatherLocationPoint => Boolean(location))
       : [];
   const recentLocationIdSet = new Set(recentLocations.map((location) => location.id));
   const filtered = allLocations.filter((location) => {
     const haystack = `${location.name} ${location.region}`.toLowerCase();
-    return haystack.includes(normalizedQuery) && !recentLocationIdSet.has(location.id);
+    if (!haystack.includes(normalizedQuery)) return false;
+    if (normalizedQuery.length > 0) return true;
+    return (
+      !favoriteLocationIdSet.has(location.id) && !recentLocationIdSet.has(location.id)
+    );
   });
-  const optionLocations = [...recentLocations, ...filtered];
+  const optionLocations =
+    normalizedQuery.length > 0
+      ? filtered
+      : [...favoriteLocations, ...recentLocations, ...filtered];
 
   function rememberRecentLocation(nextId: string) {
     setRecentLocationIds((current) => {
@@ -89,6 +109,17 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         MAX_RECENT_LOCATIONS,
       );
       localStorage.setItem(RECENT_LOCATION_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function toggleFavorite(nextId: string) {
+    setFavoriteLocationIds((current) => {
+      const isFavorite = current.includes(nextId);
+      const next = isFavorite
+        ? current.filter((id) => id !== nextId)
+        : [nextId, ...current.filter((id) => id !== nextId)].slice(0, MAX_FAVORITE_LOCATIONS);
+      localStorage.setItem(FAVORITE_LOCATION_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
   }
@@ -211,6 +242,8 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   }
 
   function renderLocationOption(location: WeatherLocationPoint, index: number) {
+    const isFavorite = favoriteLocationIdSet.has(location.id);
+
     return (
       <li
         key={location.id}
@@ -218,26 +251,45 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         aria-selected={location.id === selectedId}
         data-option-index={index}
       >
-        <button
-          type="button"
-          onClick={() => selectLocation(location.id)}
-          onMouseEnter={() => setHighlightIndex(index)}
-          className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition ${
+        <div
+          className={`flex w-full items-center gap-1 transition ${
             index === highlightIndex
               ? "bg-sky-100 text-slate-900 dark:bg-sky-950 dark:text-slate-100"
               : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
           } ${location.id === selectedId ? "font-semibold" : ""}`}
         >
-          <span>
-            <span className="block font-medium">{location.name}</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {location.region}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleFavorite(location.id);
+            }}
+            aria-label={isFavorite ? t("removeFavorite") : t("addFavorite")}
+            className={`shrink-0 px-2 py-2.5 transition ${
+              isFavorite
+                ? "text-amber-500 hover:text-amber-600 dark:text-amber-400"
+                : "text-slate-300 hover:text-amber-500 dark:text-slate-600"
+            }`}
+          >
+            <StarIcon filled={isFavorite} />
+          </button>
+          <button
+            type="button"
+            onClick={() => selectLocation(location.id)}
+            onMouseEnter={() => setHighlightIndex(index)}
+            className="flex min-w-0 flex-1 items-center justify-between gap-3 py-2.5 pr-4 text-left text-sm"
+          >
+            <span>
+              <span className="block font-medium">{location.name}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {location.region}
+              </span>
             </span>
-          </span>
-          <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-400">
-            {Math.round(location.temperature)}°C {getConditionEmoji(location.iconCode)}
-          </span>
-        </button>
+            <span className="shrink-0 tabular-nums text-slate-600 dark:text-slate-400">
+              {Math.round(location.temperature)}°C {getConditionEmoji(location.iconCode)}
+            </span>
+          </button>
+        </div>
       </li>
     );
   }
@@ -312,6 +364,21 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
                 {t("noResults")}
               </li>
             )}
+            {favoriteLocations.length > 0 ? (
+              <li
+                role="presentation"
+                className="px-4 pt-2 pb-1 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500"
+              >
+                {t("favorites")}
+              </li>
+            ) : null}
+            {favoriteLocations.map((location, index) => renderLocationOption(location, index))}
+            {favoriteLocations.length > 0 && (recentLocations.length > 0 || filtered.length > 0) ? (
+              <li
+                role="presentation"
+                className="border-t border-slate-100 dark:border-slate-800"
+              />
+            ) : null}
             {recentLocations.length > 0 ? (
               <li
                 role="presentation"
@@ -328,7 +395,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
               />
             ) : null}
             {filtered.map((location, index) =>
-              renderLocationOption(location, index + recentLocations.length),
+              renderLocationOption(location, index + favoriteLocations.length + recentLocations.length),
             )}
           </ul>
         </div>
@@ -369,6 +436,22 @@ function ChevronIcon() {
         d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
         clipRule="evenodd"
       />
+    </svg>
+  );
+}
+
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 1.5}
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" />
     </svg>
   );
 }

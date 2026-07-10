@@ -44,7 +44,7 @@ export function ForecastViewTabs({
             aria-controls={tab.panelId}
             aria-selected={view === tab.view}
             onClick={() => setView(tab.view)}
-            className={`rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-1.5 text-center text-sm font-medium motion-reduce:transition-none transition-colors ${
               view === tab.view
                 ? "bg-sky-500 text-white"
                 : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"

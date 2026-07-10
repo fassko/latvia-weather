@@ -3,12 +3,14 @@
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type KeyboardEvent } from "react";
+import { ConditionEmoji } from "@/components/ConditionEmoji";
 import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
-import { getConditionEmoji } from "@/lib/weather/parse";
 import type { DailySummary } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { formatLatviaTime } from "@/lib/weather/timezone";
+import { formatWindSpeed } from "@/lib/weather/wind-units";
+import { useWindUnit } from "@/lib/weather/use-wind-unit";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyForecastMobileDayProps {
@@ -22,7 +24,7 @@ function ExpandArrow({ expanded }: { expanded: boolean }) {
   return (
     <svg
       aria-hidden="true"
-      className={`h-4 w-4 shrink-0 transition-transform duration-150 ${
+      className={`h-4 w-4 shrink-0 motion-reduce:transition-none transition-transform duration-150 ${
         expanded ? "rotate-90" : ""
       }`}
       viewBox="0 0 20 20"
@@ -47,6 +49,7 @@ export function HourlyForecastMobileDay({
   const t = useTranslations("hourly");
   const tDaily = useTranslations("daily");
   const dateLocale = getDateFnsLocale(locale);
+  const windUnit = useWindUnit();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const dateLabel = format(date, getDatePattern(locale, "longDate"), { locale: dateLocale });
 
@@ -72,7 +75,7 @@ export function HourlyForecastMobileDay({
         onKeyDown={handleKeyDown}
         aria-expanded={expanded}
         aria-label={`${expanded ? tDaily("collapse") : tDaily("expand")} ${tDaily("hourlyForecastFor", { date: dateLabel })}`}
-        className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left transition-colors duration-150 hover:bg-sky-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
+        className="flex w-full items-center gap-2 border-b border-slate-100 px-4 py-3 text-left motion-reduce:transition-none transition-colors duration-150 hover:bg-sky-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
       >
         <ExpandArrow expanded={expanded} />
         <span className="min-w-0 flex-1">
@@ -82,9 +85,7 @@ export function HourlyForecastMobileDay({
             {tDaily("mmTotal", { value: summary.totalPrecipitation.toFixed(1) })}
           </span>
         </span>
-        <span className="shrink-0 text-2xl" aria-hidden="true">
-          {getConditionEmoji(summary.representativeIconCode)}
-        </span>
+        <ConditionEmoji iconCode={summary.representativeIconCode} className="shrink-0 text-2xl" />
       </button>
       {expanded ? (
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -117,13 +118,11 @@ export function HourlyForecastMobileDay({
                 <span
                   className={`inline-flex shrink-0 items-center gap-1 ${METRIC_TEXT_CLASS_NAMES.wind}`}
                 >
-                  {forecast.windSpeed.toFixed(1)} m/s
+                  {formatWindSpeed(forecast.windSpeed, windUnit)}
                   <WindDirection degrees={forecast.windDirection} size="sm" showLabel={false} />
                 </span>
               </div>
-              <span className="text-2xl" aria-hidden="true">
-                {getConditionEmoji(forecast.iconCode)}
-              </span>
+              <ConditionEmoji iconCode={forecast.iconCode} className="text-2xl" />
             </article>
           ))}
         </div>

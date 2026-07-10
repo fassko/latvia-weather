@@ -51,16 +51,22 @@
     "detailed": "Detalizēti"
   },
   "insights": {
-    "title": "Šodien īsumā",
+    "title": "Nākamās 24 stundas",
     "warmest": "Siltākais",
     "rain": "Lietus",
     "wind": "Vēja brāzmas",
+    "thunder": "Pērkons",
+    "snow": "Sniegs",
     "temperatureAt": "{temp}°C plkst. {time}",
     "rainAmount": "{amount} mm, līdz {chance}%",
     "rainAmountAt": "{amount} mm ap plkst. {time}, līdz {chance}%",
     "rainPeriod": "{amount} mm galvenokārt {start}-{end}, līdz {chance}%",
     "rainChance": "Līdz {chance}% plkst. {time}",
-    "windAt": "{speed} m/s plkst. {time}"
+    "windAt": "{speed} plkst. {time}",
+    "thunderAt": "Līdz {chance}% plkst. {time}",
+    "snowAmount": "Kopā {amount} cm",
+    "snowAmountAt": "{amount} cm ap plkst. {time}",
+    "snowPeriod": "{amount} cm galvenokārt {start}-{end}"
   },
   "chart": {
     "title": "Temperatūra un nokrišņi",
@@ -84,7 +90,7 @@
     "detailedForecastFor": "detalizēta prognoze: {date}",
     "mmTotal": "kopā {value} mm",
     "upToPercent": "Līdz {value}%",
-    "upToWind": "Līdz {value} m/s",
+    "upToWind": "Līdz {speed}",
     "avgHumidity": "Vid. {value}%",
     "avgCloudCover": "Vid. {value}%",
     "avgPressure": "Vid. {value} hPa"
@@ -139,6 +145,9 @@
     "loadError": "Neizdevās ielādēt vietas",
     "noResults": "Nav atbilstošu vietu",
     "recent": "Nesenās vietas",
+    "favorites": "Izlase",
+    "addFavorite": "Pievienot izlasei",
+    "removeFavorite": "Noņemt no izlases",
     "useCurrent": "Lietot manu atrašanās vietu",
     "locating": "Meklē tuvāko vietu...",
     "locationError": "Neizdevās noteikt atrašanās vietu."
@@ -150,6 +159,10 @@
   "theme": {
     "switchToLight": "Pārslēgt uz gaišo režīmu",
     "switchToDark": "Pārslēgt uz tumšo režīmu"
+  },
+  "windUnits": {
+    "switchToKmh": "Pārslēgt vēja ātrumu uz km/h",
+    "switchToMs": "Pārslēgt vēja ātrumu uz m/s"
   },
   "language": {
     "switchTo": "Pārslēgt uz {locale}",

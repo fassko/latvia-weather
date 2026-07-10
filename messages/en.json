@@ -51,16 +51,22 @@
     "detailed": "Details"
   },
   "insights": {
-    "title": "Today at a glance",
+    "title": "Next 24 hours",
     "warmest": "Warmest",
     "rain": "Rain",
     "wind": "Wind gusts",
+    "thunder": "Thunder",
+    "snow": "Snow",
     "temperatureAt": "{temp}°C at {time}",
     "rainAmount": "{amount} mm, up to {chance}%",
     "rainAmountAt": "{amount} mm around {time}, up to {chance}%",
     "rainPeriod": "{amount} mm mostly {start}-{end}, up to {chance}%",
     "rainChance": "Up to {chance}% at {time}",
-    "windAt": "{speed} m/s at {time}"
+    "windAt": "{speed} at {time}",
+    "thunderAt": "Up to {chance}% at {time}",
+    "snowAmount": "{amount} cm total",
+    "snowAmountAt": "{amount} cm around {time}",
+    "snowPeriod": "{amount} cm mostly {start}-{end}"
   },
   "chart": {
     "title": "Temperature & precipitation",
@@ -84,7 +90,7 @@
     "detailedForecastFor": "detailed forecast for {date}",
     "mmTotal": "{value} mm total",
     "upToPercent": "Up to {value}%",
-    "upToWind": "Up to {value} m/s",
+    "upToWind": "Up to {speed}",
     "avgHumidity": "Avg {value}%",
     "avgCloudCover": "Avg {value}%",
     "avgPressure": "Avg {value} hPa"
@@ -139,6 +145,9 @@
     "loadError": "Could not load locations",
     "noResults": "No matching locations",
     "recent": "Recent locations",
+    "favorites": "Favorites",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
     "useCurrent": "Use my location",
     "locating": "Finding nearest location...",
     "locationError": "Could not use your location."
@@ -150,6 +159,10 @@
   "theme": {
     "switchToLight": "Switch to light mode",
     "switchToDark": "Switch to dark mode"
+  },
+  "windUnits": {
+    "switchToKmh": "Switch wind speed to km/h",
+    "switchToMs": "Switch wind speed to m/s"
   },
   "language": {
     "switchTo": "Switch to {locale}",

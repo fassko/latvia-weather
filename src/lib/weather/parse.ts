@@ -15,6 +15,7 @@ export function parseHourlyForecast(raw: HourlyForecastRaw): HourlyForecast {
     temperature: parseNumber(raw.temperatura),
     feelsLike: parseNumber(raw.sajutu_temperatura),
     precipitation: parseNumber(raw.nokrisni_1h),
+    snow: parseNumber(raw.sniegs),
     humidity: parseNumber(raw.relativais_mitrums),
     windSpeed: parseNumber(raw.veja_atrums),
     windGust: parseNumber(raw.brazmas),
