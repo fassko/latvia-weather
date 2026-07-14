@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
 import { ForecastViewTabs } from "@/components/ForecastViewTabs";
-import { LastUpdated } from "@/components/LastUpdated";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { HourlyForecastList } from "@/components/HourlyForecast";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
@@ -214,8 +213,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
           >
             LVĢMC
           </a>
-          . {tFooter("updatedEvery")}{" "}
-          <LastUpdated fetchedAt={data.fetchedAt} />
+          . {tFooter("updatedEvery")}
         </p>
         <p>
           {tFooter("developedBy")}{" "}
