@@ -8,7 +8,6 @@
   "footer": {
     "dataFrom": "Data from",
     "updatedEvery": "Updated every 15 minutes.",
-    "lastUpdated": "Last updated {time}",
     "staleData": "Showing cached forecast data because the weather service is temporarily unavailable.",
     "developedBy": "Developed by",
     "authorName": "Kristaps",
