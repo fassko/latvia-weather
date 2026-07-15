@@ -3,7 +3,7 @@ import { after, test } from "node:test";
 import { distanceKm } from "../src/lib/weather/coordinates.ts";
 import { groupForecastsByDay } from "../src/lib/weather/daily.ts";
 import { formatLaiks, getHourlyForecast } from "../src/lib/weather/fetch.ts";
-import { getUpcomingHourlyForecasts, getUpcomingTodayForecasts } from "../src/lib/weather/forecast-period.ts";
+import { getUpcomingHourlyForecasts, getUpcomingTodayForecasts } from "../src/lib/weather/chart-data.ts";
 import {
   getConditionKey,
   getWindDirection,
@@ -188,7 +188,7 @@ test("hourly forecast list starts from the current hour", () => {
   );
 });
 
-test("24h forecasts cover the next 24 hours from the current hour", () => {
+test("24h chart forecasts cover the next 24 hours from the current hour", () => {
   const forecasts = [
     "202607080800",
     "202607081000",

@@ -2,14 +2,6 @@
 
 Hourly weather forecast for locations across Latvia, powered by [LVĢMC](https://videscentrs.lvgmc.lv/) data.
 
-## Features
-
-- Hourly and detailed forecast views for every LVĢMC location
-- 24-hour weather insights (temperature, rain, wind, thunder, snow)
-- Location search with saved preference
-- Latvian and English UI
-- Public MCP server for AI clients
-
 ## Getting Started
 
 ```bash

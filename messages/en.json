@@ -67,6 +67,21 @@
     "snowAmountAt": "{amount} cm around {time}",
     "snowPeriod": "{amount} cm mostly {start}-{end}"
   },
+  "chart": {
+    "title": "Temperature & precipitation",
+    "noData": "No forecast data available.",
+    "mmTotal": "{value} mm total",
+    "periodLabel": "Forecast period",
+    "today": "24h",
+    "threeDays": "3 days",
+    "sevenDays": "7 days",
+    "temperature": "Temperature",
+    "precipitation": "Precipitation",
+    "wind": "Wind",
+    "rainPeak": "Rain mostly around {time}: {amount} mm, {chance}% chance",
+    "rainChancePeak": "Highest rain chance around {time}: {chance}%",
+    "noRainExpected": "No rain expected in the next 24 hours"
+  },
   "daily": {
     "collapse": "Collapse",
     "expand": "Expand",

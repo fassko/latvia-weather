@@ -4,6 +4,8 @@ const DATE_PATTERNS = {
   headerDateTime: { en: "EEEE, d MMMM · HH:mm", lv: "cccc, d. LLLL · HH:mm" },
   longDate: { en: "EEEE, MMMM d", lv: "cccc, d. LLLL" },
   shortDate: { en: "EEE, MMM d", lv: "ccc, d. LLL" },
+  chartDay: { en: "EEE d", lv: "d. ccc" },
+  chartTooltip: { en: "EEE, MMM d · HH:mm", lv: "ccc, d. LLL · HH:mm" },
 } as const;
 
 export type DatePatternKey = keyof typeof DATE_PATTERNS;

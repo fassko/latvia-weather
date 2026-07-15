@@ -4,7 +4,7 @@ import { WindDirection } from "@/components/WindDirection";
 import {
   getUpcomingTodayForecasts,
   sumPrecipitation,
-} from "@/lib/weather/forecast-period";
+} from "@/lib/weather/chart-data";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { formatLatviaTime } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";

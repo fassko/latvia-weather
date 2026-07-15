@@ -4,6 +4,7 @@ import { ForecastError } from "@/components/ForecastError";
 import { ForecastViewTabs } from "@/components/ForecastViewTabs";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { HourlyForecastList } from "@/components/HourlyForecast";
+import { ForecastChartsSection } from "@/components/ForecastChartsSection";
 import { WeatherInsights } from "@/components/WeatherInsights";
 import { WeatherHeader } from "@/components/WeatherHeader";
 import { WeatherTable } from "@/components/WeatherTable";
@@ -193,6 +194,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
         </p>
       ) : null}
       <WeatherInsights forecasts={data.forecasts} />
+      <ForecastChartsSection forecasts={data.forecasts} />
       <ForecastViewTabs
         ariaLabel={tViews("ariaLabel")}
         hourlyLabel={tViews("hourly")}
