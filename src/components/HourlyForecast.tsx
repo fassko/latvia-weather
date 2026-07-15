@@ -3,7 +3,7 @@ import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { HourlyForecastMobileDay } from "@/components/HourlyForecastMobileDay";
 import { ConditionEmojiServer } from "@/components/ConditionEmojiServer";
 import { WindDirection } from "@/components/WindDirection";
-import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
+import { getUpcomingHourlyForecasts } from "@/lib/weather/forecast-period";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
