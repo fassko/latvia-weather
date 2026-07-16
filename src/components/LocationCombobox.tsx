@@ -38,9 +38,15 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
 
   const [open, setOpen] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<WeatherLocationPoint[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -187,9 +193,26 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     }
   }
 
+  const updatePanelPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const margin = 16;
+    const available = window.innerWidth - margin * 2;
+    const width = Math.min(448, available);
+    const left = Math.min(
+      Math.max(rect.left, margin),
+      window.innerWidth - margin - width,
+    );
+
+    setPanelPosition({ top: rect.bottom + 8, left, width });
+  }, []);
+
   function handleOpen() {
     setOpen(true);
     setHighlightIndex(0);
+    updatePanelPosition();
     void loadLocations();
     requestAnimationFrame(() => inputRef.current?.focus());
   }
@@ -207,6 +230,18 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    updatePanelPosition();
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
+    };
+  }, [open, updatePanelPosition]);
 
   useEffect(() => {
     if (!open) return;
@@ -297,6 +332,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   return (
     <div ref={containerRef} className="relative inline-block max-w-full">
       <button
+        ref={triggerRef}
         type="button"
         onClick={handleOpen}
         aria-haspopup="listbox"
@@ -312,8 +348,15 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         </span>
         <ChevronIcon />
       </button>
-      {open ? (
-        <div className="absolute top-full left-0 z-50 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-sky-300 bg-white shadow-lg dark:border-sky-600 dark:bg-slate-900">
+      {open && panelPosition ? (
+        <div
+          className="fixed z-50 rounded-xl border border-sky-300 bg-white shadow-lg dark:border-sky-600 dark:bg-slate-900"
+          style={{
+            top: panelPosition.top,
+            left: panelPosition.left,
+            width: panelPosition.width,
+          }}
+        >
           <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-700">
             <SearchIcon />
             <input
