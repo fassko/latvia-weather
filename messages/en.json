@@ -156,6 +156,10 @@
     "label": "Share forecast",
     "copied": "Link copied"
   },
+  "refresh": {
+    "label": "Refresh data",
+    "refreshing": "Refreshing…"
+  },
   "theme": {
     "switchToLight": "Switch to light mode",
     "switchToDark": "Switch to dark mode",

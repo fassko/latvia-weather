@@ -156,6 +156,10 @@
     "label": "Dalīties ar prognozi",
     "copied": "Saite nokopēta"
   },
+  "refresh": {
+    "label": "Atjaunināt datus",
+    "refreshing": "Atjaunina…"
+  },
   "theme": {
     "switchToLight": "Pārslēgt uz gaišo režīmu",
     "switchToDark": "Pārslēgt uz tumšo režīmu",

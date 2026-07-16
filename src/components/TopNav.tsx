@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocationCombobox } from "@/components/LocationCombobox";
+import { RefreshButton } from "@/components/RefreshButton";
 import { ShareButton } from "@/components/ShareButton";
 import { ThemeSegmentedToggle } from "@/components/ThemeSegmentedToggle";
 import { WindUnitsToggle } from "@/components/WindUnitsToggle";
@@ -25,6 +26,7 @@ export async function TopNav({ locationId, locationName }: TopNavProps) {
           <LocationCombobox selectedId={locationId} selectedName={locationName} />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <RefreshButton />
           <WindUnitsToggle />
           <Suspense fallback={null}>
             <LanguageSwitcher />
