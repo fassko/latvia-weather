@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "latvia-weather": {
-      "url": "http://localhost:3000/api/mcp"
+      "url": "https://latvia-weather.com/api/mcp"
     }
   }
 }
