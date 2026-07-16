@@ -6,6 +6,8 @@ const DATE_PATTERNS = {
   shortDate: { en: "EEE, MMM d", lv: "ccc, d. LLL" },
   chartDay: { en: "EEE d", lv: "d. ccc" },
   chartTooltip: { en: "EEE, MMM d · HH:mm", lv: "ccc, d. LLL · HH:mm" },
+  dailyWeekday: { en: "EEE", lv: "ccc" },
+  dailyDate: { en: "d MMM", lv: "d. LLL" },
 } as const;
 
 export type DatePatternKey = keyof typeof DATE_PATTERNS;

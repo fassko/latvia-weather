@@ -139,6 +139,7 @@
   },
   "location": {
     "select": "Izvēlēties vietu",
+    "country": "Latvija",
     "searchPlaceholder": "Meklēt pilsētas…",
     "loading": "Ielādē vietas…",
     "loadError": "Neizdevās ielādēt vietas",
@@ -157,7 +158,10 @@
   },
   "theme": {
     "switchToLight": "Pārslēgt uz gaišo režīmu",
-    "switchToDark": "Pārslēgt uz tumšo režīmu"
+    "switchToDark": "Pārslēgt uz tumšo režīmu",
+    "groupLabel": "Motīvs",
+    "light": "Gaišs",
+    "dark": "Tumšs"
   },
   "windUnits": {
     "switchToKmh": "Pārslēgt vēja ātrumu uz km/h",
@@ -167,5 +171,96 @@
     "switchTo": "Pārslēgt uz {locale}",
     "en": "EN",
     "lv": "LV"
+  },
+  "nav": {
+    "brand": "Laika prognoze",
+    "home": "Sākums"
+  },
+  "hero": {
+    "feelsLike": "Šķiet kā {temp}°",
+    "highLow": "Augst. {high}° · Zem. {low}°"
+  },
+  "summary": {
+    "cond": {
+      "clearDay": "Skaidrs un saulains",
+      "clearNight": "Skaidra nakts",
+      "partlyCloudy": "Saule un mākoņi",
+      "cloudy": "Apmācies",
+      "overcast": "Pelēks un apmācies",
+      "fog": "Migla",
+      "rain": "Gaidāms lietus",
+      "drizzle": "Viegls smidzināšana",
+      "snow": "Snieg",
+      "thunder": "Iespējams pērkona negaiss"
+    },
+    "advice": {
+      "freezing": "Ģērbies silti — ir saldējošs aukstums.",
+      "cold": "Pirms iziešanas apģērbies silti.",
+      "cool": "Viegla jaka noderēs.",
+      "mild": "Lieliska diena pastaigai.",
+      "warm": "Lielisks laiks būt ārā.",
+      "hot": "Uzturi vēsumu un dzer ūdeni.",
+      "rain": "Paņem līdzi lietussargu.",
+      "snow": "Uzmanies no slidenām takām.",
+      "thunder": "Labāk palikt telpās.",
+      "fog": "Esi uzmanīgs uz ceļa."
+    }
+  },
+  "metrics": {
+    "sectionLabel": "Pašreizējie apstākļi",
+    "feels": "Šķiet",
+    "humidity": "Mitrums",
+    "wind": "Vējš",
+    "gusts": "Brāzmas",
+    "rain": "Lietus",
+    "clouds": "Mākoņi",
+    "uvIndex": "UV indekss",
+    "pressure": "Spiediens",
+    "hpa": "hPa",
+    "direction": "{direction} virziens",
+    "rainNextHour": "Iespēja nākamajā stundā",
+    "feelsBand": {
+      "warmer": "Siltāk",
+      "colder": "Vēsāk",
+      "same": "Kā reāli"
+    },
+    "humidityBand": {
+      "dry": "Sauss",
+      "comfortable": "Komfortabls",
+      "humid": "Mitrs"
+    },
+    "windBand": {
+      "light": "Viegls",
+      "moderate": "Mērens",
+      "strong": "Stiprs",
+      "gale": "Vētrains"
+    },
+    "cloudBand": {
+      "clear": "Skaidrs",
+      "partly": "Daļēji apmācies",
+      "cloudy": "Apmācies",
+      "overcast": "Pilnīgi apmācies"
+    },
+    "uvBand": {
+      "low": "Zems",
+      "moderate": "Mērens",
+      "high": "Augsts",
+      "veryHigh": "Ļoti augsts",
+      "extreme": "Ekstrēms"
+    }
+  },
+  "highlights": {
+    "warmest": "Siltākais",
+    "peakRain": "Lietus maksimums",
+    "windGusts": "Vēja brāzmas",
+    "at": "plkst. {time}"
+  },
+  "hourlyCard": {
+    "title": "Pa stundām · Temperatūra un lietus",
+    "now": "Tagad"
+  },
+  "dailyList": {
+    "title": "10 dienu prognoze",
+    "today": "Šodien"
   }
 }

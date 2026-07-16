@@ -301,9 +301,15 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         onClick={handleOpen}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex max-w-full items-center gap-1.5 rounded-lg py-1 pr-1 pl-0 text-left text-lg font-bold tracking-tight text-slate-900 transition hover:text-sky-700 focus:text-sky-700 focus:ring-2 focus:ring-sky-500/20 focus:outline-none dark:text-slate-100 dark:hover:text-sky-300 dark:focus:text-sky-300"
+        className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-1.5 pr-1.5 pl-2.5 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
       >
-        <span className="truncate">{selectedName}</span>
+        <PinIcon />
+        <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {selectedName}
+        </span>
+        <span className="hidden text-sm text-slate-400 dark:text-slate-500 sm:inline">
+          {t("country")}
+        </span>
         <ChevronIcon />
       </button>
       {open ? (
@@ -416,6 +422,24 @@ function SearchIcon() {
       <path
         fillRule="evenodd"
         d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-4 w-4 shrink-0 text-sky-500 dark:text-sky-400"
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        d="M9.69 18.933c.196.072.34.146.395.72.055-.026.199-.048.395-.72C12.72 18.03 16 15.13 16 8A6 6 0 0 0 4 8c0 7.13 3.28 10.03 5.52 10.933ZM10 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
         clipRule="evenodd"
       />
     </svg>
