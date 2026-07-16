@@ -139,6 +139,7 @@
   },
   "location": {
     "select": "Select location",
+    "country": "Latvia",
     "searchPlaceholder": "Search cities…",
     "loading": "Loading locations…",
     "loadError": "Could not load locations",
@@ -157,7 +158,10 @@
   },
   "theme": {
     "switchToLight": "Switch to light mode",
-    "switchToDark": "Switch to dark mode"
+    "switchToDark": "Switch to dark mode",
+    "groupLabel": "Theme",
+    "light": "Light",
+    "dark": "Dark"
   },
   "windUnits": {
     "switchToKmh": "Switch wind speed to km/h",
@@ -167,5 +171,96 @@
     "switchTo": "Switch to {locale}",
     "en": "EN",
     "lv": "LV"
+  },
+  "nav": {
+    "brand": "Latvia Weather",
+    "home": "Home"
+  },
+  "hero": {
+    "feelsLike": "Feels like {temp}°",
+    "highLow": "H {high}° · L {low}°"
+  },
+  "summary": {
+    "cond": {
+      "clearDay": "Clear and sunny",
+      "clearNight": "Clear skies tonight",
+      "partlyCloudy": "A mix of sun and clouds",
+      "cloudy": "Cloudy skies",
+      "overcast": "Grey and overcast",
+      "fog": "Foggy conditions",
+      "rain": "Rain in the forecast",
+      "drizzle": "Light drizzle around",
+      "snow": "Snow is falling",
+      "thunder": "Thunderstorms possible"
+    },
+    "advice": {
+      "freezing": "Bundle up — it's freezing out.",
+      "cold": "Dress warm before heading out.",
+      "cool": "A light jacket will do.",
+      "mild": "A fine day to be outside.",
+      "warm": "Great weather to be out.",
+      "hot": "Stay cool and hydrated.",
+      "rain": "Keep an umbrella handy.",
+      "snow": "Watch for slippery paths.",
+      "thunder": "Best to stay indoors.",
+      "fog": "Take care on the roads."
+    }
+  },
+  "metrics": {
+    "sectionLabel": "Current conditions",
+    "feels": "Feels",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "gusts": "Gusts",
+    "rain": "Rain",
+    "clouds": "Clouds",
+    "uvIndex": "UV Index",
+    "pressure": "Pressure",
+    "hpa": "hPa",
+    "direction": "{direction} direction",
+    "rainNextHour": "Chance next hour",
+    "feelsBand": {
+      "warmer": "Warmer",
+      "colder": "Colder",
+      "same": "As actual"
+    },
+    "humidityBand": {
+      "dry": "Dry",
+      "comfortable": "Comfortable",
+      "humid": "Humid"
+    },
+    "windBand": {
+      "light": "Light",
+      "moderate": "Moderate",
+      "strong": "Strong",
+      "gale": "Gale"
+    },
+    "cloudBand": {
+      "clear": "Clear",
+      "partly": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "overcast": "Overcast"
+    },
+    "uvBand": {
+      "low": "Low",
+      "moderate": "Moderate",
+      "high": "High",
+      "veryHigh": "Very high",
+      "extreme": "Extreme"
+    }
+  },
+  "highlights": {
+    "warmest": "Warmest",
+    "peakRain": "Peak rain",
+    "windGusts": "Wind gusts",
+    "at": "at {time}"
+  },
+  "hourlyCard": {
+    "title": "Hourly · Temperature & rain",
+    "now": "Now"
+  },
+  "dailyList": {
+    "title": "10-day forecast",
+    "today": "Today"
   }
 }

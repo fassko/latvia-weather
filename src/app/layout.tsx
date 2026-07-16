@@ -45,7 +45,7 @@ export default function RootLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className="min-h-full bg-sky-50 font-sans text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+      <body className="min-h-full bg-slate-100 font-sans text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
         <ThemeSync />
         <PullToRefresh />
         {children}

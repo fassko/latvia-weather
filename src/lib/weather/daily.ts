@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import type { HourlyForecast } from "./types";
 import { getLatviaDayKey, getLatviaWallClock } from "./timezone";
 

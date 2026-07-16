@@ -1,9 +1,10 @@
 "use client";
 
-import { format, isWeekend } from "date-fns";
+import { isWeekend } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Area,
   Bar,
   CartesianGrid,
   ComposedChart,
@@ -15,7 +16,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartCard, useChartColors, WEEKEND_TICK_COLOR } from "@/components/charts/chart-theme";
+import { useChartColors, WEEKEND_TICK_COLOR } from "@/components/charts/chart-theme";
 import { getDateFnsLocale } from "@/lib/date-locale";
 import {
   filterForecastsByDayCount,
@@ -24,10 +25,8 @@ import {
   getDaySegments,
   getHourTicks,
   getUpcomingTodayForecasts,
-  sumPrecipitation,
   toChartPoints,
 } from "@/lib/weather/chart-data";
-import { METRIC_COLORS } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import { formatLatviaTime } from "@/lib/weather/timezone";
 import {
@@ -41,8 +40,16 @@ import type { HourlyForecast } from "@/lib/weather/types";
 type ForecastPeriod = 1 | 3 | 7;
 type ChartSeriesKey = "temperature" | "precipitation" | "windSpeed";
 
-const CHART_MARGIN = { top: 28, right: 12, left: 4, bottom: 8 };
+const CHART_MARGIN = { top: 12, right: 12, left: 4, bottom: 8 };
 const CHART_PREFS_STORAGE_KEY = "latvia-weather-chart-prefs";
+
+/** Chart series colours tuned to the Skyline design (blue temp, violet wind). */
+const CHART_SERIES = {
+  temperature: "#2563eb",
+  precipitation: "#bae6fd",
+  wind: "#a78bfa",
+} as const;
+const WIND_ARROW_COLOR = "#7c3aed";
 
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
@@ -133,22 +140,6 @@ function isSvgCoordinate(value: number | string | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-function getTodayRainPoint(data: ChartPoint[]): ChartPoint | null {
-  if (data.length === 0) return null;
-
-  const wettestByAmount = data.reduce((best, point) =>
-    point.precipitation > best.precipitation ? point : best,
-  );
-
-  if (wettestByAmount.precipitation > 0) return wettestByAmount;
-
-  const wettestByChance = data.reduce((best, point) =>
-    point.precipitationProbability > best.precipitationProbability ? point : best,
-  );
-
-  return wettestByChance.precipitationProbability > 0 ? wettestByChance : null;
-}
-
 function isChartSeriesKey(value: unknown): value is ChartSeriesKey {
   return value === "temperature" || value === "precipitation" || value === "windSpeed";
 }
@@ -217,14 +208,9 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     () => getDaySegments(data, dateLocale, locale),
     [data, dateLocale, locale],
   );
-  const totalPrecip = useMemo(() => sumPrecipitation(periodForecasts), [periodForecasts]);
   const hourTicks = useMemo(() => getHourTicksForPeriod(data, period), [data, period]);
   const conditionIconIndexes = useMemo(
     () => getConditionIconIndexes(data, period),
-    [data, period],
-  );
-  const todayRainPoint = useMemo(
-    () => (period === 1 ? getTodayRainPoint(data) : null),
     [data, period],
   );
 
@@ -327,7 +313,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
           textAnchor="middle"
           fontSize={iconSize}
           fontWeight={800}
-          fill="#047857"
+          fill={WIND_ARROW_COLOR}
           stroke={colors.tooltipBg}
           strokeWidth={3}
           paintOrder="stroke fill"
@@ -340,56 +326,20 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
   };
   if (data.length === 0) {
     return (
-      <section aria-labelledby="forecast-chart-heading">
-        <h2
-          id="forecast-chart-heading"
-          className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100"
-        >
-          {t("title")}
-        </h2>
-        <ChartCard>
-          <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-            {t("noData")}
-          </p>
-        </ChartCard>
-      </section>
+      <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        {t("noData")}
+      </p>
     );
   }
 
   return (
-    <section aria-labelledby="forecast-chart-heading">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2
-            id="forecast-chart-heading"
-            className="text-lg font-semibold text-slate-900 dark:text-slate-100"
-          >
-            {t("title")}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            <span className="font-medium text-slate-700 dark:text-slate-200">
-              {t("mmTotal", { value: totalPrecip.toFixed(1) })}
-            </span>
-            {todayRainPoint ? (
-              <span className="block">
-                {todayRainPoint.precipitation > 0
-                  ? t("rainPeak", {
-                      time: formatLatviaTime(new Date(todayRainPoint.time), "HH:mm"),
-                      amount: todayRainPoint.precipitation.toFixed(1),
-                      chance: Math.round(todayRainPoint.precipitationProbability),
-                    })
-                  : t("rainChancePeak", {
-                      time: formatLatviaTime(new Date(todayRainPoint.time), "HH:mm"),
-                      chance: Math.round(todayRainPoint.precipitationProbability),
-                    })}
-              </span>
-            ) : period === 1 ? (
-              <span className="block">{t("noRainExpected")}</span>
-            ) : null}
-          </p>
-        </div>
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {t("title")}
+        </h2>
         <div
-          className="grid w-full grid-cols-3 rounded-lg border border-slate-200 p-0.5 dark:border-slate-700 sm:inline-flex sm:w-auto"
+          className="grid grid-cols-3 rounded-lg border border-slate-200 p-0.5 dark:border-slate-700 sm:inline-flex"
           role="group"
           aria-label={t("periodLabel")}
         >
@@ -410,11 +360,10 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
           ))}
         </div>
       </div>
-      <ChartCard>
-        <div className="overflow-x-auto pb-1">
+      <div className="overflow-x-auto pb-1">
           <div
             className={`min-w-[700px] sm:min-w-0 ${
-              isMultiDay ? "h-80 md:h-[400px]" : "h-64"
+              isMultiDay ? "h-80 md:h-[400px]" : "h-72"
             }`}
           >
             <ResponsiveContainer
@@ -505,6 +454,10 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 unit="°C"
                 width={48}
                 tickCount={6}
+                domain={[
+                  (min: number) => Math.min(0, Math.floor(min)),
+                  (max: number) => Math.ceil(max) + 5,
+                ]}
               />
               <YAxis
                 yAxisId="precip"
@@ -514,6 +467,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 width="auto"
                 tickCount={6}
                 tickMargin={6}
+                domain={[0, (max: number) => Math.max(2, Math.ceil(max * 1.5))]}
               />
               <YAxis
                 yAxisId="wind"
@@ -523,6 +477,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 width="auto"
                 tickCount={6}
                 tickMargin={6}
+                domain={[0, (max: number) => Math.max(1, Math.ceil(max * 1.6))]}
                 tickFormatter={(value) => convertWindSpeed(Number(value), windUnit).toFixed(1)}
               />
               <Tooltip
@@ -594,22 +549,40 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                   return `${timeLabel} · ${getConditionEmoji(point.iconCode)} ${condition}`;
                 }}
               />
+              <defs>
+                <linearGradient id="temperatureFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_SERIES.temperature} stopOpacity={0.28} />
+                  <stop offset="100%" stopColor={CHART_SERIES.temperature} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <Bar
                 yAxisId="precip"
                 dataKey="precipitation"
                 name={precipitationLabel}
-                fill={METRIC_COLORS.precipitation}
-                fillOpacity={0.7}
-                radius={[2, 2, 0, 0]}
+                fill={CHART_SERIES.precipitation}
+                fillOpacity={0.9}
+                radius={[3, 3, 0, 0]}
                 hide={hiddenSeries.has("precipitation")}
+              />
+              <Area
+                yAxisId="temp"
+                type="monotone"
+                dataKey="temperature"
+                fill="url(#temperatureFill)"
+                stroke="none"
+                legendType="none"
+                tooltipType="none"
+                isAnimationActive={false}
+                activeDot={false}
+                hide={hiddenSeries.has("temperature")}
               />
               <Line
                 yAxisId="temp"
                 type="monotone"
                 dataKey="temperature"
                 name={temperatureLabel}
-                stroke={METRIC_COLORS.temperature}
-                strokeWidth={2}
+                stroke={CHART_SERIES.temperature}
+                strokeWidth={2.5}
                 dot={renderConditionDot}
                 activeDot={{ r: 4 }}
                 hide={hiddenSeries.has("temperature")}
@@ -619,14 +592,21 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                 type="monotone"
                 dataKey="windSpeed"
                 name={windLabel}
-                stroke={METRIC_COLORS.wind}
+                stroke={CHART_SERIES.wind}
                 strokeWidth={2}
+                strokeDasharray="5 4"
                 dot={renderWindDirectionDot}
                 activeDot={{ r: 4 }}
                 hide={hiddenSeries.has("windSpeed")}
               />
               <Legend
-                wrapperStyle={{ color: colors.legend, cursor: "pointer" }}
+                verticalAlign="top"
+                align="left"
+                wrapperStyle={{
+                  color: colors.legend,
+                  cursor: "pointer",
+                  paddingBottom: "12px",
+                }}
                 onClick={(entry) => toggleSeries(entry.dataKey)}
                 formatter={(value, entry) => (
                   <span
@@ -651,7 +631,6 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
             </ResponsiveContainer>
           </div>
         </div>
-      </ChartCard>
-    </section>
+    </div>
   );
 }
