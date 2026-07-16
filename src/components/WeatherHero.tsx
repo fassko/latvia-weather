@@ -73,7 +73,7 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute top-2 right-2 -z-10 text-8xl opacity-95 drop-shadow-[0_2px_16px_rgba(0,0,0,0.15)] sm:right-6 sm:text-9xl"
+          className="pointer-events-none absolute top-2 right-2 -z-10 text-6xl opacity-95 drop-shadow-[0_2px_16px_rgba(0,0,0,0.15)] sm:right-6 sm:text-9xl"
         >
           {getConditionEmoji(current.iconCode)}
         </span>
