@@ -13,13 +13,13 @@ Open [http://localhost:3000](http://localhost:3000) to view the forecast.
 
 ## Deploy
 
-Deployed on [Vercel](https://vercel.com). Production URL: [latvia-weather.vercel.app](https://latvia-weather.vercel.app)
+Deployed on [Vercel](https://vercel.com). Production URL: [latvia-weather.com](https://latvia-weather.com/)
 
 ## MCP
 
 This app exposes a public [Model Context Protocol](https://modelcontextprotocol.io/) server for AI clients.
 
-**Endpoint:** `https://latvia-weather.vercel.app/api/mcp`
+**Endpoint:** `https://latvia-weather.com/api/mcp`
 
 ### Tools
 
@@ -39,7 +39,7 @@ Add to **Cursor Settings → MCP**:
 {
   "mcpServers": {
     "latvia-weather": {
-      "url": "https://latvia-weather.vercel.app/api/mcp"
+      "url": "https://latvia-weather.com/api/mcp"
     }
   }
 }
@@ -54,7 +54,7 @@ Clients that only support stdio can bridge via [`mcp-remote`](https://www.npmjs.
   "mcpServers": {
     "latvia-weather": {
       "command": "npx",
-      "args": ["mcp-remote", "https://latvia-weather.vercel.app/api/mcp"]
+      "args": ["mcp-remote", "https://latvia-weather.com/api/mcp"]
     }
   }
 }
