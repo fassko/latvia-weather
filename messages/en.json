@@ -163,9 +163,11 @@
   "theme": {
     "switchToLight": "Switch to light mode",
     "switchToDark": "Switch to dark mode",
+    "switchToSystem": "Match device light or dark mode",
     "groupLabel": "Theme",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "system": "Auto"
   },
   "windUnits": {
     "switchToKmh": "Switch wind speed to km/h",

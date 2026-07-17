@@ -163,9 +163,11 @@
   "theme": {
     "switchToLight": "Pārslēgt uz gaišo režīmu",
     "switchToDark": "Pārslēgt uz tumšo režīmu",
+    "switchToSystem": "Izmantot ierīces gaišo vai tumšo režīmu",
     "groupLabel": "Motīvs",
     "light": "Gaišs",
-    "dark": "Tumšs"
+    "dark": "Tumšs",
+    "system": "Auto"
   },
   "windUnits": {
     "switchToKmh": "Pārslēgt vēja ātrumu uz km/h",
