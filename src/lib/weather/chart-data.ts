@@ -80,6 +80,25 @@ export function getUpcomingTodayForecasts(
   return forecasts.slice(-1);
 }
 
+export function getRemainingTodayForecasts(
+  forecasts: HourlyForecast[],
+  now = new Date(),
+): HourlyForecast[] {
+  if (forecasts.length === 0) return [];
+
+  const currentHour = getLatviaStartOfHour(now);
+  const today = getLatviaDayKey(now);
+  const remainingToday = forecasts.filter((forecast) => {
+    const wallClock = getLatviaWallClock(forecast.time);
+    return wallClock >= currentHour && dayKey(forecast.time) === today;
+  });
+
+  if (remainingToday.length > 0) return remainingToday;
+
+  const upcoming = getUpcomingHourlyForecasts(forecasts, now);
+  return upcoming.length > 0 ? upcoming.slice(0, 1) : forecasts.slice(-1);
+}
+
 export function filterForecastsByDayCount(
   forecasts: HourlyForecast[],
   days: number,
