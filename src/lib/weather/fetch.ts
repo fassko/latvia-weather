@@ -14,6 +14,7 @@ export const REVALIDATE_SECONDS = 900;
 export const STALE_REFRESH_MS = REVALIDATE_SECONDS * 1000;
 
 const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
+const LOCATION_POINTS_BATCH_SIZE = 80;
 
 interface CachedValue<T> {
   value: T;
@@ -45,6 +46,16 @@ function rememberHourlyForecast(punkts: string, value: WeatherData) {
   });
 }
 
+function chunkArray<T>(items: readonly T[], size: number): T[][] {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
 /** LVĢMC expects `laiks` in Europe/Riga local time (start of current hour). */
 export function formatLaiks(date: Date): string {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -67,19 +78,27 @@ export function formatLaiks(date: Date): string {
 
 export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoint[]> {
   const laiks = formatLaiks(time ?? new Date());
-  const punkti = LOCATION_POINT_IDS.join(",");
-  const url = `${WEATHER_API_BASE}/weather_points_forecast?laiks=${laiks}&punkti=${encodeURIComponent(punkti)}`;
 
   try {
-    const response = await fetch(url, {
-      next: { revalidate: REVALIDATE_SECONDS },
-    });
+    const raw = (
+      await Promise.all(
+        chunkArray(LOCATION_POINT_IDS, LOCATION_POINTS_BATCH_SIZE).map(
+          async (batch) => {
+            const punkti = batch.join(",");
+            const url = `${WEATHER_API_BASE}/weather_points_forecast?laiks=${laiks}&punkti=${encodeURIComponent(punkti)}`;
+            const response = await fetch(url, {
+              next: { revalidate: REVALIDATE_SECONDS },
+            });
 
-    if (!response.ok) {
-      throw new Error(`Location points API returned ${response.status}`);
-    }
+            if (!response.ok) {
+              throw new Error(`Location points API returned ${response.status}`);
+            }
 
-    const raw = (await response.json()) as WeatherPointForecastRaw[];
+            return (await response.json()) as WeatherPointForecastRaw[];
+          },
+        ),
+      )
+    ).flat();
 
     if (!Array.isArray(raw) || raw.length === 0) {
       throw new Error("Location points API returned empty data");
