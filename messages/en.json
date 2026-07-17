@@ -265,6 +265,9 @@
     "source": "Source:",
     "regions": "{count, plural, one {# warning region} other {# warning regions}}",
     "stale": "cached",
+    "dismiss": "Dismiss warning",
+    "expand": "Show weather warning details",
+    "show": "Show",
     "levels": {
       "yellow": "Yellow",
       "orange": "Orange",
