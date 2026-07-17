@@ -67,7 +67,13 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
   ];
 
   return (
-    <section aria-label={t("warmest")}>
+    <section aria-labelledby="highlights-heading" className="space-y-3">
+      <h2
+        id="highlights-heading"
+        className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+      >
+        {t("title")}
+      </h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {items.map((item) => (
           <div

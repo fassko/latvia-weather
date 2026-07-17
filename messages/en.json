@@ -211,7 +211,7 @@
     }
   },
   "metrics": {
-    "sectionLabel": "Current conditions",
+    "title": "Current conditions",
     "feels": "Feels",
     "humidity": "Humidity",
     "wind": "Wind",
@@ -254,6 +254,7 @@
     }
   },
   "highlights": {
+    "title": "Today's peaks",
     "warmest": "Warmest",
     "peakRain": "Peak rain",
     "windGusts": "Wind gusts",
