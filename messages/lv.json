@@ -14,6 +14,26 @@
     "onX": "X",
     "onGitHub": "GitHub"
   },
+  "assistant": {
+    "title": "Laikapstākļu asistents",
+    "subtitle": "{location} · vienkāršas atbildes",
+    "placeholder": "Jautā par {location} laikapstākļiem — tendencēm, laiku vai dienas plāniem.",
+    "inputPlaceholder": "Jautā par laikapstākļiem...",
+    "send": "Jautāt",
+    "stop": "Apturēt",
+    "user": "Tu",
+    "assistant": "Asistents",
+    "thinking": "Pārbauda prognozes datus...",
+    "error": "Asistents nevarēja atbildēt. Pārbaudi AI Gateway konfigurāciju un mēģini vēlreiz.",
+    "open": "Atvērt laikapstākļu asistentu",
+    "close": "Aizvērt laikapstākļu asistentu",
+    "examples": {
+      "rain": "Vai šodien vietā {location} līs?",
+      "motorcycle": "Vai šodien ir labs laiks braukt ar motociklu?",
+      "clothes": "Ko šovakar vilkt mugurā vietā {location}?",
+      "weekend": "Kāda ir laikapstākļu tendence šonedēļ?"
+    }
+  },
   "header": {
     "humidity": "Mitrums",
     "wind": "Vējš",
