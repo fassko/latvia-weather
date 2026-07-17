@@ -9,7 +9,10 @@ const themeScript = `
     }
     var stored = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (stored === "dark" || (!stored && prefersDark)) {
+    var useDark =
+      stored === "dark" ||
+      ((stored === "system" || !stored) && prefersDark);
+    if (useDark) {
       document.documentElement.classList.add("dark");
     }
   } catch (_) {}

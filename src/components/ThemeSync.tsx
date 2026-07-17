@@ -2,15 +2,19 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { syncTheme } from "@/lib/theme";
+import { subscribeToSystemTheme, syncTheme } from "@/lib/theme";
 
-/** Keeps dark mode across client-side navigations (e.g. locale switch). */
+/** Keeps theme across navigations and follows OS light/dark changes. */
 export function ThemeSync() {
   const pathname = usePathname();
 
   useEffect(() => {
     syncTheme();
   }, [pathname]);
+
+  useEffect(() => {
+    return subscribeToSystemTheme();
+  }, []);
 
   return null;
 }

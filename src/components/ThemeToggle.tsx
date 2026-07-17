@@ -2,9 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
-import { applyTheme, getActiveTheme, type Theme } from "@/lib/theme";
-
-const THEME_CHANGE_EVENT = "latvia-theme-change";
+import {
+  THEME_CHANGE_EVENT,
+  getThemePreference,
+  setThemePreference,
+  type ThemePreference,
+} from "@/lib/theme";
 
 function subscribe(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
@@ -16,36 +19,52 @@ function subscribe(onStoreChange: () => void) {
   };
 }
 
-function getThemeSnapshot(): Theme {
-  return getActiveTheme();
+function getPreferenceSnapshot(): ThemePreference {
+  return getThemePreference();
 }
 
-function getServerThemeSnapshot(): Theme {
-  return "light";
+function getServerPreferenceSnapshot(): ThemePreference {
+  return "system";
 }
+
+const CYCLE: ThemePreference[] = ["system", "light", "dark"];
 
 export function ThemeToggle() {
   const t = useTranslations("theme");
-  const theme = useSyncExternalStore(
+  const preference = useSyncExternalStore(
     subscribe,
-    getThemeSnapshot,
-    getServerThemeSnapshot,
+    getPreferenceSnapshot,
+    getServerPreferenceSnapshot,
   );
 
-  function toggleTheme() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    applyTheme(next);
-    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+  function cycleTheme() {
+    const index = CYCLE.indexOf(preference);
+    const next = CYCLE[(index + 1) % CYCLE.length];
+    setThemePreference(next);
   }
+
+  const label =
+    preference === "system"
+      ? t("switchToLight")
+      : preference === "light"
+        ? t("switchToDark")
+        : t("switchToSystem");
 
   return (
     <button
       type="button"
-      onClick={toggleTheme}
-      aria-label={theme === "dark" ? t("switchToLight") : t("switchToDark")}
+      onClick={cycleTheme}
+      aria-label={label}
+      title={t(preference)}
       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
     >
-      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+      {preference === "system" ? (
+        <SystemIcon />
+      ) : preference === "dark" ? (
+        <MoonIcon />
+      ) : (
+        <SunIcon />
+      )}
     </button>
   );
 }
@@ -83,6 +102,25 @@ function MoonIcon() {
       aria-hidden="true"
     >
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  );
+}
+
+function SystemIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <rect x="5" y="2" width="14" height="20" rx="2" />
+      <path d="M12 18h.01" />
     </svg>
   );
 }
