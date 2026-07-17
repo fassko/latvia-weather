@@ -211,7 +211,7 @@
     }
   },
   "metrics": {
-    "sectionLabel": "Pašreizējie apstākļi",
+    "title": "Pašreizējie apstākļi",
     "feels": "Šķiet",
     "humidity": "Mitrums",
     "wind": "Vējš",
@@ -254,6 +254,7 @@
     }
   },
   "highlights": {
+    "title": "Šodienas maksimumi",
     "warmest": "Siltākais",
     "peakRain": "Lietus maksimums",
     "windGusts": "Vēja brāzmas",
