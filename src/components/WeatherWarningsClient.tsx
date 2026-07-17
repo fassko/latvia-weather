@@ -1,9 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import type { WeatherWarning, WeatherWarningLevel } from "@/lib/weather/types";
-import { setDismissedWarningIdsCookie } from "@/lib/weather/warning-dismiss-cookie";
+import { useDismissedWarningIds } from "@/lib/weather/use-dismissed-warning-ids";
+import {
+  getWarningDismissKey,
+  isWarningDismissed,
+  setDismissedWarningIdsCookie,
+  toRelevantDismissKeys,
+} from "@/lib/weather/warning-dismiss-cookie";
 
 interface WeatherWarningsClientProps {
   locale: string;
@@ -35,44 +40,38 @@ export function WeatherWarningsClient({
   initialDismissedIds,
 }: WeatherWarningsClientProps) {
   const t = useTranslations("warnings");
-  const [dismissedIds, setDismissedIds] = useState(() => new Set(initialDismissedIds));
+  const dismissedIds = useDismissedWarningIds(initialDismissedIds);
+  const dismissedSet = new Set(dismissedIds);
 
   if (warnings.length === 0) return null;
 
-  function persistDismissed(ids: Set<string>) {
-    const relevant = warnings.map((warning) => warning.id).filter((id) => ids.has(id));
-    setDismissedWarningIdsCookie(relevant);
-    return new Set(relevant);
+  function persistDismissed(ids: Iterable<string>) {
+    setDismissedWarningIdsCookie(toRelevantDismissKeys(warnings, ids));
   }
 
-  function dismissWarning(id: string) {
-    setDismissedIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return persistDismissed(next);
-    });
+  function dismissWarning(warning: WeatherWarning) {
+    persistDismissed([...dismissedIds, getWarningDismissKey(warning)]);
   }
 
-  function expandWarning(id: string) {
-    setDismissedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return persistDismissed(next);
-    });
+  function expandWarning(warning: WeatherWarning) {
+    const key = getWarningDismissKey(warning);
+    persistDismissed(
+      dismissedIds.filter((id) => id !== key && id !== warning.id),
+    );
   }
 
   return (
     <section aria-label={t("sectionLabel")} className="space-y-3">
       {warnings.map((warning) => {
         const text = locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
-        const isDismissed = dismissedIds.has(warning.id);
+        const dismissed = isWarningDismissed(warning, dismissedSet);
 
-        if (isDismissed) {
+        if (dismissed) {
           return (
             <button
               key={warning.id}
               type="button"
-              onClick={() => expandWarning(warning.id)}
+              onClick={() => expandWarning(warning)}
               className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left shadow-sm transition hover:brightness-[0.98] dark:hover:brightness-110 ${warningTone[warning.level]}`}
               aria-label={t("expand")}
             >
@@ -118,7 +117,7 @@ export function WeatherWarningsClient({
                   </div>
                   <button
                     type="button"
-                    onClick={() => dismissWarning(warning.id)}
+                    onClick={() => dismissWarning(warning)}
                     className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
                     aria-label={t("dismiss")}
                   >
