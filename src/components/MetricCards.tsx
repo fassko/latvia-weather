@@ -103,22 +103,22 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
       >
         {t("title")}
       </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-4 lg:grid-cols-6">
         {cards.map((card) => (
           <div
             key={card.key}
-            className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            className="rounded-2xl border border-slate-200/70 bg-white p-2.5 shadow-sm sm:p-4 dark:border-slate-800 dark:bg-slate-900"
           >
-            <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-              <span className="text-sky-500 dark:text-sky-400">{card.icon}</span>
-              <span className="text-[11px] font-semibold uppercase tracking-wider">
+            <div className="flex items-center gap-1 text-slate-400 sm:gap-1.5 dark:text-slate-500">
+              <span className="shrink-0 text-sky-500 dark:text-sky-400">{card.icon}</span>
+              <span className="truncate text-[9px] font-semibold uppercase tracking-wider sm:text-[11px]">
                 {card.label}
               </span>
             </div>
-            <p className="mt-2 text-2xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
+            <p className="mt-1.5 text-base font-bold tabular-nums text-slate-900 sm:mt-2 sm:text-2xl dark:text-slate-100">
               {card.value}
             </p>
-            <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 truncate text-[10px] text-slate-500 sm:text-xs dark:text-slate-400">
               {card.sub}
             </p>
           </div>
@@ -128,13 +128,13 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
   );
 }
 
-const iconClass = "h-4 w-4";
+const iconClass = "h-3 w-3 sm:h-4 sm:w-4";
 
 function WindArrow({ degrees }: { degrees: number }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-3 w-3 shrink-0 text-sky-500 dark:text-sky-400"
+      className="h-2.5 w-2.5 shrink-0 text-sky-500 sm:h-3 sm:w-3 dark:text-sky-400"
       style={{ transform: `rotate(${degrees + 180}deg)` }}
       viewBox="0 0 16 16"
       fill="none"
