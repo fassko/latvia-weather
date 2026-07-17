@@ -9,10 +9,12 @@ import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { TopNav } from "@/components/TopNav";
 import { WeatherHero } from "@/components/WeatherHero";
 import { WeatherHighlights } from "@/components/WeatherHighlights";
+import { WeatherWarnings } from "@/components/WeatherWarnings";
 import { routing, type Locale } from "@/i18n/routing";
 import {
   getHourlyForecast,
   getLocationPoints,
+  getWeatherWarnings,
   mergeForecastLocation,
 } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
@@ -138,11 +140,13 @@ export default async function Home({ params, searchParams }: HomeProps) {
 
   let data;
   let locations;
+  let warnings;
 
   try {
-    [data, locations] = await Promise.all([
+    [data, locations, warnings] = await Promise.all([
       getHourlyForecast(locationId),
       getLocationPoints(),
+      getWeatherWarnings(),
     ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : t("loadWeatherData");
@@ -195,6 +199,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
             {tFooter("staleData")}
           </p>
         ) : null}
+        <WeatherWarnings locale={locale} warnings={warnings} />
         <MetricCards forecasts={data.forecasts} />
         <WeatherHighlights forecasts={data.forecasts} />
         <HourlyStripCard forecasts={data.forecasts} />

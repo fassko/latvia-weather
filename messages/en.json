@@ -259,6 +259,19 @@
     "windGusts": "Wind gusts",
     "at": "at {time}"
   },
+  "warnings": {
+    "sectionLabel": "Weather warnings",
+    "title": "Weather warning",
+    "source": "Source:",
+    "regions": "{count, plural, one {# warning region} other {# warning regions}}",
+    "stale": "cached",
+    "levels": {
+      "yellow": "Yellow",
+      "orange": "Orange",
+      "red": "Red",
+      "unknown": "Warning"
+    }
+  },
   "hourlyCard": {
     "title": "Hourly · Temperature & rain",
     "now": "Now"

@@ -259,6 +259,19 @@
     "windGusts": "Vēja brāzmas",
     "at": "plkst. {time}"
   },
+  "warnings": {
+    "sectionLabel": "Laikapstākļu brīdinājumi",
+    "title": "Laikapstākļu brīdinājums",
+    "source": "Avots:",
+    "regions": "{count, plural, one {# brīdinājuma reģions} other {# brīdinājuma reģioni}}",
+    "stale": "kešots",
+    "levels": {
+      "yellow": "Dzeltenais",
+      "orange": "Oranžais",
+      "red": "Sarkanais",
+      "unknown": "Brīdinājums"
+    }
+  },
   "hourlyCard": {
     "title": "Pa stundām · Temperatūra un lietus",
     "now": "Tagad"

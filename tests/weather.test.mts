@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { distanceKm } from "../src/lib/weather/coordinates.ts";
 import { groupForecastsByDay } from "../src/lib/weather/daily.ts";
-import { formatLaiks, getHourlyForecast } from "../src/lib/weather/fetch.ts";
+import {
+  formatLaiks,
+  getHourlyForecast,
+  getWeatherWarnings,
+  parseWeatherWarning,
+} from "../src/lib/weather/fetch.ts";
 import { getUpcomingHourlyForecasts, getUpcomingTodayForecasts } from "../src/lib/weather/chart-data.ts";
 import {
   getConditionKey,
@@ -58,6 +63,23 @@ test("parseHourlyForecast maps raw LVGMC fields", () => {
   assert.equal(forecast.snow, 1.2);
   assert.equal(forecast.uvIndex, 5);
   assert.equal(forecast.thunderProbability, 7);
+});
+
+test("parseWeatherWarning maps LVGMC warning fields", () => {
+  const warning = parseWeatherWarning({
+    id: 414683703,
+    teksts: "Latvijā gaidāms stiprs karstums.",
+    teksts_en: "Intensive heat is expected in Latvia.",
+    veids: "weather",
+    krasa: "Dzeltenā",
+    ikona: "1806",
+    regions: "163,164",
+  });
+
+  assert.equal(warning.id, "414683703");
+  assert.equal(warning.level, "yellow");
+  assert.equal(warning.textLv, "Latvijā gaidāms stiprs karstums.");
+  assert.deepEqual(warning.regions, ["163", "164"]);
 });
 
 test("condition and wind helpers map display values", () => {
@@ -275,4 +297,34 @@ test("getHourlyForecast falls back to last successful data on transient API fail
 
   const stale = await getHourlyForecast("P269");
   assert.equal(stale.forecasts[0].temperature, 21);
+});
+
+test("getWeatherWarnings falls back to stale warning data on transient API failure", async () => {
+  const rawWarnings = [
+    {
+      id: 1,
+      teksts: "Brīdinājums",
+      teksts_en: "Warning",
+      veids: "weather",
+      krasa: "Oranžā",
+      ikona: "1806",
+      regions: "163",
+    },
+  ];
+
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify(rawWarnings), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+
+  const fresh = await getWeatherWarnings();
+  assert.equal(fresh[0].level, "orange");
+  assert.equal(fresh[0].isStale, undefined);
+
+  globalThis.fetch = async () => new Response("Service unavailable", { status: 503 });
+
+  const stale = await getWeatherWarnings();
+  assert.equal(stale[0].textEn, "Warning");
+  assert.equal(stale[0].isStale, true);
 });
