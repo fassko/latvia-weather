@@ -265,6 +265,9 @@
     "source": "Avots:",
     "regions": "{count, plural, one {# brīdinājuma reģions} other {# brīdinājuma reģioni}}",
     "stale": "kešots",
+    "dismiss": "Aizvērt brīdinājumu",
+    "expand": "Rādīt brīdinājuma detaļas",
+    "show": "Rādīt",
     "levels": {
       "yellow": "Dzeltenais",
       "orange": "Oranžais",
