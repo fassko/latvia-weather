@@ -103,22 +103,22 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
       >
         {t("title")}
       </h2>
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-4 lg:grid-cols-8">
         {cards.map((card) => (
           <div
             key={card.key}
-            className="rounded-2xl border border-slate-200/70 bg-white p-2.5 shadow-sm sm:p-4 dark:border-slate-800 dark:bg-slate-900"
+            className="min-w-0 rounded-2xl border border-slate-200/70 bg-white p-2.5 shadow-sm sm:p-3 lg:p-2.5 dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="flex items-center gap-1 text-slate-400 sm:gap-1.5 dark:text-slate-500">
               <span className="shrink-0 text-sky-500 dark:text-sky-400">{card.icon}</span>
-              <span className="truncate text-[9px] font-semibold uppercase tracking-wider sm:text-[11px]">
+              <span className="truncate text-[9px] font-semibold uppercase tracking-wider sm:text-[11px] lg:text-[10px]">
                 {card.label}
               </span>
             </div>
-            <p className="mt-1.5 text-base font-bold tabular-nums text-slate-900 sm:mt-2 sm:text-2xl dark:text-slate-100">
+            <p className="mt-1.5 text-base font-bold tabular-nums text-slate-900 sm:mt-2 sm:text-2xl lg:text-xl dark:text-slate-100">
               {card.value}
             </p>
-            <p className="mt-0.5 truncate text-[10px] text-slate-500 sm:text-xs dark:text-slate-400">
+            <p className="mt-0.5 truncate text-[10px] text-slate-500 sm:text-xs lg:text-[11px] dark:text-slate-400">
               {card.sub}
             </p>
           </div>
