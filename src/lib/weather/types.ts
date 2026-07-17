@@ -73,6 +73,30 @@ export interface WeatherLocationPoint extends WeatherLocation {
   iconCode: string;
 }
 
+export interface WeatherWarningRaw {
+  id: number | string;
+  teksts: string;
+  teksts_en: string;
+  veids: string;
+  krasa: string;
+  ikona: string;
+  regions: string;
+}
+
+export type WeatherWarningLevel = "yellow" | "orange" | "red" | "unknown";
+
+export interface WeatherWarning {
+  id: string;
+  textLv: string;
+  textEn: string;
+  type: string;
+  color: string;
+  level: WeatherWarningLevel;
+  iconCode: string;
+  regions: string[];
+  isStale?: boolean;
+}
+
 export interface WeatherData {
   location: WeatherLocation;
   forecasts: HourlyForecast[];

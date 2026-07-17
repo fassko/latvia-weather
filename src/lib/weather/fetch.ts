@@ -5,6 +5,9 @@ import type {
   WeatherData,
   WeatherLocationPoint,
   WeatherPointForecastRaw,
+  WeatherWarning,
+  WeatherWarningLevel,
+  WeatherWarningRaw,
 } from "./types";
 
 const WEATHER_API_BASE = "https://videscentrs.lvgmc.lv/data";
@@ -22,6 +25,10 @@ interface CachedValue<T> {
 }
 
 const locationPointsCache: CachedValue<WeatherLocationPoint[]> = {
+  value: [],
+  storedAt: 0,
+};
+const weatherWarningsCache: CachedValue<WeatherWarning[]> = {
   value: [],
   storedAt: 0,
 };
@@ -44,6 +51,11 @@ function rememberHourlyForecast(punkts: string, value: WeatherData) {
     value,
     storedAt: Date.now(),
   });
+}
+
+function rememberWeatherWarnings(value: WeatherWarning[]) {
+  weatherWarningsCache.value = value;
+  weatherWarningsCache.storedAt = Date.now();
 }
 
 function chunkArray<T>(items: readonly T[], size: number): T[][] {
@@ -74,6 +86,32 @@ export function formatLaiks(date: Date): string {
   );
   const hour = parts.hour === "24" ? "00" : parts.hour;
   return `${parts.year}${parts.month}${parts.day}${hour}00`;
+}
+
+function getWarningLevel(color: string): WeatherWarningLevel {
+  const normalized = color.toLocaleLowerCase("lv");
+
+  if (normalized.includes("dzelten")) return "yellow";
+  if (normalized.includes("oran")) return "orange";
+  if (normalized.includes("sarkan")) return "red";
+
+  return "unknown";
+}
+
+export function parseWeatherWarning(raw: WeatherWarningRaw): WeatherWarning {
+  return {
+    id: String(raw.id),
+    textLv: raw.teksts,
+    textEn: raw.teksts_en,
+    type: raw.veids,
+    color: raw.krasa,
+    level: getWarningLevel(raw.krasa),
+    iconCode: raw.ikona,
+    regions: raw.regions
+      .split(",")
+      .map((region) => region.trim())
+      .filter(Boolean),
+  };
 }
 
 export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoint[]> {
@@ -124,6 +162,39 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
     }
 
     throw error;
+  }
+}
+
+export async function getWeatherWarnings(): Promise<WeatherWarning[]> {
+  const url = `${WEATHER_API_BASE}/warnings`;
+
+  try {
+    const response = await fetch(url, {
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Warnings API returned ${response.status}`);
+    }
+
+    const raw = (await response.json()) as WeatherWarningRaw[];
+
+    if (!Array.isArray(raw)) {
+      throw new Error("Warnings API returned invalid data");
+    }
+
+    const warnings = raw.map(parseWeatherWarning);
+    rememberWeatherWarnings(warnings);
+    return warnings;
+  } catch {
+    if (isUsableStaleValue(weatherWarningsCache, (value) => value.length === 0)) {
+      return weatherWarningsCache.value.map((warning) => ({
+        ...warning,
+        isStale: true,
+      }));
+    }
+
+    return [];
   }
 }
 
