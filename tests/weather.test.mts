@@ -8,7 +8,11 @@ import {
   getWeatherWarnings,
   parseWeatherWarning,
 } from "../src/lib/weather/fetch.ts";
-import { getUpcomingHourlyForecasts, getUpcomingTodayForecasts } from "../src/lib/weather/chart-data.ts";
+import {
+  getRemainingTodayForecasts,
+  getUpcomingHourlyForecasts,
+  getUpcomingTodayForecasts,
+} from "../src/lib/weather/chart-data.ts";
 import {
   getConditionKey,
   getWindDirection,
@@ -248,6 +252,47 @@ test("24h chart forecasts cover the next 24 hours from the current hour", () => 
   assert.deepEqual(
     upcoming.map((forecast) => formatLaiks(forecast.time)),
     ["202607081000", "202607081200", "202607081400", "202607090000"],
+  );
+});
+
+test("remaining today forecasts stop at Latvia midnight", () => {
+  const forecasts = [
+    "202607082000",
+    "202607082200",
+    "202607082300",
+    "202607090000",
+    "202607090100",
+  ].map((laiks) =>
+    parseHourlyForecast({
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks,
+      temperatura: "21",
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: "21",
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    }),
+  );
+
+  const remainingToday = getRemainingTodayForecasts(
+    forecasts,
+    new Date("2026-07-08T18:30:00.000Z"),
+  );
+
+  assert.deepEqual(
+    remainingToday.map((forecast) => formatLaiks(forecast.time)),
+    ["202607082200", "202607082300"],
   );
 });
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
-import { getUpcomingTodayForecasts } from "@/lib/weather/chart-data";
+import { getRemainingTodayForecasts } from "@/lib/weather/chart-data";
 import { formatLatviaTime } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
@@ -22,7 +22,7 @@ interface WeatherHighlightsProps {
 export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
   const t = await getTranslations("highlights");
   const windUnit = await getWindUnitsCookie();
-  const period = getUpcomingTodayForecasts(forecasts);
+  const period = getRemainingTodayForecasts(forecasts);
 
   if (period.length === 0) return null;
 
