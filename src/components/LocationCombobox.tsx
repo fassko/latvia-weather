@@ -19,6 +19,13 @@ const FAVORITE_LOCATION_STORAGE_KEY = "latvia-weather-favorite-locations";
 const MAX_RECENT_LOCATIONS = 5;
 const MAX_FAVORITE_LOCATIONS = 5;
 
+function normalizeForLocationSearch(value: string): string {
+  return value
+    .toLocaleLowerCase("lv")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+}
+
 function getStoredLocationIds(key: string): string[] {
   if (typeof window === "undefined") return [];
 
@@ -67,7 +74,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     setError(false);
 
     try {
-      const response = await fetch("/api/locations");
+      const response = await fetch("/api/locations", { cache: "no-store" });
       if (!response.ok) throw new Error("Failed to load locations");
       const data = (await response.json()) as WeatherLocationPoint[];
       setLocations(data);
@@ -78,7 +85,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     }
   }, [locations, loading]);
 
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = normalizeForLocationSearch(query.trim());
   const allLocations = locations ?? [];
   const favoriteLocationIdSet = new Set(favoriteLocationIds);
   const favoriteLocations =
@@ -96,7 +103,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
       : [];
   const recentLocationIdSet = new Set(recentLocations.map((location) => location.id));
   const filtered = allLocations.filter((location) => {
-    const haystack = `${location.name} ${location.region}`.toLowerCase();
+    const haystack = normalizeForLocationSearch(`${location.name} ${location.region}`);
     if (!haystack.includes(normalizedQuery)) return false;
     if (normalizedQuery.length > 0) return true;
     return (
@@ -159,7 +166,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
       let availableLocations = locations;
 
       if (availableLocations === null) {
-        const response = await fetch("/api/locations");
+        const response = await fetch("/api/locations", { cache: "no-store" });
         if (!response.ok) throw new Error("Failed to load locations");
         availableLocations = (await response.json()) as WeatherLocationPoint[];
         setLocations(availableLocations);

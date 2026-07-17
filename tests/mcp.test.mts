@@ -62,6 +62,6 @@ test("searchLocations respects the result limit", () => {
 
 test("isValidLocationId accepts known location IDs and rejects unknown IDs", () => {
   assert.equal(isValidLocationId("P269"), true);
-  assert.equal(isValidLocationId("P999"), false);
+  assert.equal(isValidLocationId("P99999"), false);
   assert.equal(isValidLocationId(""), false);
 });
