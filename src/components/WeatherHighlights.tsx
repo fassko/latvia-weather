@@ -74,28 +74,28 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
       >
         {t("title")}
       </h2>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {items.map((item) => (
           <div
             key={item.key}
-            className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            className="flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200/70 bg-white p-2.5 text-center shadow-sm sm:flex-row sm:items-center sm:gap-4 sm:p-4 sm:text-left dark:border-slate-800 dark:bg-slate-900"
           >
             <span
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.tone}`}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${item.tone}`}
             >
               {item.icon}
             </span>
-            <div className="min-w-0 text-left">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="min-w-0">
+              <p className="truncate text-[9px] font-semibold uppercase tracking-wider text-slate-400 sm:text-[11px] dark:text-slate-500">
                 {item.label}
               </p>
-              <p className="flex items-center gap-1.5 text-2xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
+              <p className="flex items-center justify-center gap-1 text-base font-bold tabular-nums text-slate-900 sm:justify-start sm:gap-1.5 sm:text-2xl dark:text-slate-100">
                 {item.value}
                 {item.arrow !== undefined ? (
                   <WindArrow degrees={item.arrow} />
                 ) : null}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[10px] text-slate-500 sm:text-xs dark:text-slate-400">
                 {t("at", { time: formatLatviaTime(item.time, "HH:mm") })}
               </p>
             </div>
@@ -106,13 +106,13 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
   );
 }
 
-const iconClass = "h-5 w-5";
+const iconClass = "h-3.5 w-3.5 sm:h-5 sm:w-5";
 
 function WindArrow({ degrees }: { degrees: number }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500"
+      className="h-3 w-3 shrink-0 text-slate-400 sm:h-4 sm:w-4 dark:text-slate-500"
       style={{ transform: `rotate(${degrees + 180}deg)` }}
       viewBox="0 0 16 16"
       fill="none"
