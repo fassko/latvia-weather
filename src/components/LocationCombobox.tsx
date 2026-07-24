@@ -4,6 +4,10 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { distanceKm } from "@/lib/weather/coordinates";
+import {
+  compareLocationsBySearchRank,
+  normalizeForLocationSearch,
+} from "@/lib/weather/location-search";
 import { setLocationCookie } from "@/lib/weather/location-cookie";
 import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
 import { getConditionEmoji } from "@/lib/weather/parse";
@@ -18,13 +22,6 @@ const RECENT_LOCATION_STORAGE_KEY = "latvia-weather-recent-locations";
 const FAVORITE_LOCATION_STORAGE_KEY = "latvia-weather-favorite-locations";
 const MAX_RECENT_LOCATIONS = 5;
 const MAX_FAVORITE_LOCATIONS = 5;
-
-function normalizeForLocationSearch(value: string): string {
-  return value
-    .toLocaleLowerCase("lv")
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "");
-}
 
 function getStoredLocationIds(key: string): string[] {
   if (typeof window === "undefined") return [];
@@ -102,14 +99,20 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
           .filter((location): location is WeatherLocationPoint => Boolean(location))
       : [];
   const recentLocationIdSet = new Set(recentLocations.map((location) => location.id));
-  const filtered = allLocations.filter((location) => {
-    const haystack = normalizeForLocationSearch(`${location.name} ${location.region}`);
-    if (!haystack.includes(normalizedQuery)) return false;
-    if (normalizedQuery.length > 0) return true;
-    return (
-      !favoriteLocationIdSet.has(location.id) && !recentLocationIdSet.has(location.id)
+  const filtered = allLocations
+    .filter((location) => {
+      const haystack = normalizeForLocationSearch(`${location.name} ${location.region}`);
+      if (!haystack.includes(normalizedQuery)) return false;
+      if (normalizedQuery.length > 0) return true;
+      return (
+        !favoriteLocationIdSet.has(location.id) && !recentLocationIdSet.has(location.id)
+      );
+    })
+    .sort((a, b) =>
+      normalizedQuery.length > 0
+        ? compareLocationsBySearchRank(a, b, query)
+        : a.name.localeCompare(b.name, "lv"),
     );
-  });
   const optionLocations =
     normalizedQuery.length > 0
       ? filtered
