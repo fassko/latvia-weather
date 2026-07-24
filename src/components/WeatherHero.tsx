@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { getTodayForecasts } from "@/lib/weather/chart-data";
 import { summarizeDay } from "@/lib/weather/daily";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
-import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
+import { getConditionEmoji, getConditionKey, getWindDirection, isNightIcon } from "@/lib/weather/parse";
 import { getWeatherSummaryParts } from "@/lib/weather/summary";
 import { formatLatviaDateTime } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
@@ -13,10 +13,6 @@ function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
   const now = Date.now();
   const upcoming = forecasts.find((f) => f.time.getTime() >= now);
   return upcoming ?? forecasts[forecasts.length - 1];
-}
-
-function isNightIcon(iconCode: string): boolean {
-  return iconCode.startsWith("2");
 }
 
 function WindArrow({ degrees }: { degrees: number }) {

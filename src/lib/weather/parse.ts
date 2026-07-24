@@ -3,6 +3,22 @@ import { parseLaiks } from "./timezone";
 
 export { parseLaiks } from "./timezone";
 
+/**
+ * LVĢMC `laika_apstaklu_ikona` codes are 4 digits:
+ * - 1xxx = day, 2xxx = night
+ * - remaining 3 digits identify the condition (see data.gov.lv weather_codes.csv)
+ *
+ * Important: 14xx is mist/fog, 16xx is snow. Mapping 40x → snow is wrong and
+ * caused mist (e.g. 1403) to display as "heavy snow".
+ */
+export function getIconConditionId(iconCode: string): string {
+  return iconCode.length >= 4 ? iconCode.slice(1) : iconCode;
+}
+
+export function isNightIcon(iconCode: string): boolean {
+  return iconCode.startsWith("2");
+}
+
 export function parseNumber(value: string | null | undefined): number {
   if (value == null || value === "") return 0;
   const num = Number.parseFloat(value);
@@ -53,51 +69,121 @@ export function getWindDirection(degrees: number): string {
   return DIRECTIONS[index];
 }
 
+/** Translation key under `conditions.*` for an LVĢMC icon code. */
 export function getConditionKey(iconCode: string): string {
-  const code = iconCode.slice(1);
-  const isNight = iconCode.startsWith("2");
+  const id = getIconConditionId(iconCode);
+  const night = isNightIcon(iconCode);
 
-  const conditions: Record<string, string> = {
-    "101": isNight ? "101_night" : "101_day",
-    "102": "102",
-    "103": "103",
-    "104": "104",
-    "201": "201",
-    "202": "202",
-    "203": "203",
-    "204": "204",
-    "301": "301",
-    "302": "302",
-    "303": "303",
-    "304": "304",
-    "305": "305",
-    "306": "306",
-    "401": "401",
-    "402": "402",
-    "403": "403",
-    "404": "404",
-    "501": "501",
-    "502": "502",
-    "503": "503",
-    "504": "504",
-    "505": "505",
-    "506": "506",
-  };
+  switch (id) {
+    case "101":
+      return night ? "clear_night" : "clear_day";
+    case "102":
+      return "partlyCloudy";
+    case "103":
+      return "cloudyClearing";
+    case "104":
+      return "cloudy";
+    case "105":
+      return "overcast";
 
-  return conditions[code] ?? (isNight ? "fallback_night" : "fallback_day");
+    case "201":
+    case "203":
+      return "freezingDrizzle";
+    case "204":
+    case "206":
+      return "freezingRain";
+    case "207":
+    case "208":
+      return "freezingSleet";
+
+    case "301":
+    case "303":
+      return "thunderRain";
+    case "304":
+    case "306":
+      return "thunderHeavyRain";
+    case "307":
+    case "309":
+      return "thunderHail";
+    case "310":
+    case "312":
+      return "thunderHeavyHail";
+    case "313":
+    case "314":
+      return "thunderSleet";
+    case "315":
+    case "316":
+      return "thunderHeavySleet";
+    case "317":
+    case "319":
+      return "hail";
+    case "320":
+    case "322":
+      return "heavyHail";
+
+    case "401":
+    case "403":
+    case "404":
+      return "mist";
+    case "405":
+    case "406":
+      return "mistDrizzle";
+    case "407":
+    case "408":
+      return "mistRain";
+    case "409":
+    case "411":
+    case "412":
+      return "mistHoarfrost";
+    case "413":
+    case "414":
+      return "mistSnow";
+    case "415":
+    case "416":
+      return "mistSleet";
+
+    case "501":
+    case "503":
+      return "drizzle";
+    case "504":
+    case "506":
+      return "rain";
+    case "507":
+    case "509":
+      return "heavyRain";
+
+    case "601":
+    case "603":
+      return "snow";
+    case "604":
+    case "606":
+      return "heavySnow";
+    case "607":
+    case "608":
+      return "snowstorm";
+    case "609":
+    case "610":
+      return "heavySnowstorm";
+
+    default:
+      return night ? "fallback_night" : "fallback_day";
+  }
 }
 
 export function getConditionEmoji(iconCode: string): string {
-  const code = iconCode.slice(1);
-  const isNight = iconCode.startsWith("2");
+  const id = getIconConditionId(iconCode);
+  const night = isNightIcon(iconCode);
+  const family = id.slice(0, 1);
 
-  if (code.startsWith("50") || code.startsWith("30")) return "🌧️";
-  if (code.startsWith("40")) return "❄️";
-  if (code === "104" || code === "204") return "☁️";
-  if (code === "103" || code === "203") return "🌥️";
-  if (code === "102" || code === "202") return isNight ? "🌙" : "⛅";
-  if (code === "101" || code === "201") return isNight ? "🌙" : "☀️";
-  if (code.startsWith("30")) return "⛈️";
+  if (id === "413" || id === "414" || family === "6") return "❄️";
+  if (id === "415" || id === "416" || id === "207" || id === "208") return "🌨️";
+  if (family === "4") return "🌫️";
+  if (family === "3") return "⛈️";
+  if (family === "2" || family === "5") return "🌧️";
+  if (id === "104" || id === "105") return "☁️";
+  if (id === "103") return "🌥️";
+  if (id === "102") return night ? "☁️" : "⛅";
+  if (id === "101") return night ? "🌙" : "☀️";
 
-  return isNight ? "🌙" : "🌤️";
+  return night ? "🌙" : "🌤️";
 }

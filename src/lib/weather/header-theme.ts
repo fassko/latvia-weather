@@ -1,3 +1,6 @@
+import { getConditionGroup as getWeatherConditionGroup } from "./condition-group";
+import { isNightIcon } from "./parse";
+
 export interface WeatherHeaderTheme {
   card: string;
   shadow: string;
@@ -17,23 +20,26 @@ type ConditionGroup =
   | "drizzle";
 
 function getConditionGroup(iconCode: string): ConditionGroup {
-  const code = iconCode.slice(1);
-  const isNight = iconCode.startsWith("2");
-
-  if (code.startsWith("40")) return "snow";
-  if (code === "304" || code === "305" || code === "306") return "thunder";
-  if (code.startsWith("30")) return "rain";
-  if (code.startsWith("50")) return "drizzle";
-  if (code === "201" || code === "202" || code === "203" || code === "204") return "fog";
-  if (code === "103" || code === "104") return "cloudy";
-  if (code === "102") return "partly-cloudy";
-  if (code === "101") return "clear";
-
-  return isNight ? "cloudy" : "partly-cloudy";
-}
-
-function isNightIcon(iconCode: string): boolean {
-  return iconCode.startsWith("2");
+  switch (getWeatherConditionGroup(iconCode)) {
+    case "clearDay":
+    case "clearNight":
+      return "clear";
+    case "partlyCloudy":
+      return "partly-cloudy";
+    case "cloudy":
+    case "overcast":
+      return "cloudy";
+    case "fog":
+      return "fog";
+    case "rain":
+      return "rain";
+    case "drizzle":
+      return "drizzle";
+    case "snow":
+      return "snow";
+    case "thunder":
+      return "thunder";
+  }
 }
 
 const themes: Record<ConditionGroup, { day: WeatherHeaderTheme; night: WeatherHeaderTheme }> = {
