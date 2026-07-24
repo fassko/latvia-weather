@@ -14,6 +14,26 @@
     "onX": "X",
     "onGitHub": "GitHub"
   },
+  "assistant": {
+    "title": "Weather assistant",
+    "subtitle": "{location} · plain-language answers",
+    "placeholder": "Ask me anything about {location}'s weather — trends, timing, or what to plan around.",
+    "inputPlaceholder": "Ask about the weather...",
+    "send": "Ask",
+    "stop": "Stop",
+    "user": "You",
+    "assistant": "Assistant",
+    "thinking": "Checking forecast data...",
+    "error": "The assistant could not answer. Check the AI Gateway configuration and try again.",
+    "open": "Open weather assistant",
+    "close": "Close weather assistant",
+    "examples": {
+      "rain": "Will it rain in {location} today?",
+      "motorcycle": "Is it a good day to ride my motorcycle?",
+      "clothes": "What should I wear in {location} this evening?",
+      "weekend": "What’s the weather trend this week?"
+    }
+  },
   "header": {
     "humidity": "Humidity",
     "wind": "Wind",

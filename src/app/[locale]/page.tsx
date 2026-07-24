@@ -7,6 +7,7 @@ import { HourlyStripCard } from "@/components/HourlyStripCard";
 import { MetricCards } from "@/components/MetricCards";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { TopNav } from "@/components/TopNav";
+import { WeatherAssistant } from "@/components/WeatherAssistant";
 import { WeatherHero } from "@/components/WeatherHero";
 import { WeatherHighlights } from "@/components/WeatherHighlights";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
@@ -137,6 +138,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
   const locationId = resolveLocationId(punkts, savedPunkts);
   const t = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
+  const tAssistant = await getTranslations({ locale, namespace: "assistant" });
 
   let data;
   let locations;
@@ -202,6 +204,30 @@ export default async function Home({ params, searchParams }: HomeProps) {
         <WeatherWarnings locale={locale} warnings={warnings} />
         <MetricCards forecasts={data.forecasts} />
         <WeatherHighlights forecasts={data.forecasts} />
+        <WeatherAssistant
+          locale={locale}
+          locationId={data.location.id}
+          labels={{
+            title: tAssistant("title"),
+            subtitle: tAssistant("subtitle", { location: data.location.name }),
+            placeholder: tAssistant("placeholder", { location: data.location.name }),
+            inputPlaceholder: tAssistant("inputPlaceholder"),
+            send: tAssistant("send"),
+            stop: tAssistant("stop"),
+            user: tAssistant("user"),
+            assistant: tAssistant("assistant"),
+            thinking: tAssistant("thinking"),
+            error: tAssistant("error"),
+            close: tAssistant("close"),
+            open: tAssistant("open"),
+            examples: [
+              tAssistant("examples.weekend"),
+              tAssistant("examples.motorcycle"),
+              tAssistant("examples.clothes", { location: data.location.name }),
+              tAssistant("examples.rain", { location: data.location.name }),
+            ],
+          }}
+        />
         <HourlyStripCard forecasts={data.forecasts} />
         <ForecastChartsSection forecasts={data.forecasts} />
         <DailyForecastList forecasts={data.forecasts} />
