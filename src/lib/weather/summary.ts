@@ -1,32 +1,8 @@
+import { getConditionGroup, type WeatherConditionGroup } from "./condition-group";
 import type { HourlyForecast } from "./types";
 
-export type WeatherConditionGroup =
-  | "clearDay"
-  | "clearNight"
-  | "partlyCloudy"
-  | "cloudy"
-  | "overcast"
-  | "fog"
-  | "rain"
-  | "drizzle"
-  | "snow"
-  | "thunder";
-
-/** Group an LVĢMC icon code into a condition family used by the summary copy. */
-export function getConditionGroup(iconCode: string): WeatherConditionGroup {
-  const code = iconCode.slice(1);
-  const isNight = iconCode.startsWith("2");
-
-  if (code.startsWith("40")) return "snow";
-  if (code === "304" || code === "305" || code === "306") return "thunder";
-  if (code.startsWith("50")) return "drizzle";
-  if (code.startsWith("30")) return "rain";
-  if (code === "201" || code === "202" || code === "203") return "fog";
-  if (code === "104" || code === "204") return "overcast";
-  if (code === "103") return "cloudy";
-  if (code === "102") return "partlyCloudy";
-  return isNight ? "clearNight" : "clearDay";
-}
+export type { WeatherConditionGroup };
+export { getConditionGroup };
 
 export function getTempBandKey(temperature: number): string {
   if (temperature <= 0) return "freezing";

@@ -15,10 +15,12 @@ import {
 } from "../src/lib/weather/chart-data.ts";
 import {
   getConditionKey,
+  getConditionEmoji,
   getWindDirection,
   parseHourlyForecast,
   parseNumber,
 } from "../src/lib/weather/parse.ts";
+import { getConditionGroup } from "../src/lib/weather/condition-group.ts";
 
 const originalFetch = globalThis.fetch;
 
@@ -86,13 +88,43 @@ test("parseWeatherWarning maps LVGMC warning fields", () => {
   assert.deepEqual(warning.regions, ["163", "164"]);
 });
 
-test("condition and wind helpers map display values", () => {
-  assert.equal(getConditionKey("1101"), "101_day");
-  assert.equal(getConditionKey("2101"), "101_night");
-  assert.equal(getConditionKey("1402"), "402");
+test("condition helpers map LVGMC pictogram codes correctly", () => {
+  // Day/night clear
+  assert.equal(getConditionKey("1101"), "clear_day");
+  assert.equal(getConditionKey("2101"), "clear_night");
+  assert.equal(getConditionEmoji("1101"), "☀️");
+  assert.equal(getConditionEmoji("2101"), "🌙");
+
+  // 14xx is mist/fog — must NOT be shown as snow (regression for summer "heavy snow")
+  assert.equal(getConditionKey("1403"), "mist");
+  assert.equal(getConditionKey("2403"), "mist");
+  assert.equal(getConditionEmoji("1403"), "☁️");
+  assert.equal(getConditionEmoji("2403"), "☁️");
+
+  // Real snow is 16xx
+  assert.equal(getConditionKey("1604"), "heavySnow");
+  assert.equal(getConditionKey("2604"), "heavySnow");
+  assert.equal(getConditionEmoji("1604"), "❄️");
+
+  // Rain / thunder families
+  assert.equal(getConditionKey("1506"), "rain");
+  assert.equal(getConditionKey("1303"), "thunderRain");
+  assert.equal(getConditionEmoji("1303"), "⛈️");
+
   assert.equal(getWindDirection(0), "N");
   assert.equal(getWindDirection(225), "SW");
   assert.equal(getWindDirection(359), "N");
+});
+
+test("condition groups follow official LVGMC pictogram families", () => {
+  assert.equal(getConditionGroup("1403"), "fog");
+  assert.equal(getConditionGroup("2403"), "fog");
+  assert.equal(getConditionGroup("1604"), "snow");
+  assert.equal(getConditionGroup("1506"), "rain");
+  assert.equal(getConditionGroup("1501"), "drizzle");
+  assert.equal(getConditionGroup("1303"), "thunder");
+  assert.equal(getConditionGroup("1101"), "clearDay");
+  assert.equal(getConditionGroup("2101"), "clearNight");
 });
 
 test("groupForecastsByDay uses Latvia day keys and wall-clock dates", () => {
