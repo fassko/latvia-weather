@@ -32,6 +32,24 @@ const sampleLocations: WeatherLocationPoint[] = [
     temperature: 17,
     iconCode: "1101",
   },
+  {
+    id: "P1",
+    name: "Bērzaine",
+    region: "Bērzaines pag., Valmieras nov.",
+    lat: 57.5,
+    lon: 25.4,
+    temperature: 20,
+    iconCode: "1101",
+  },
+  {
+    id: "P4",
+    name: "Valmiera",
+    region: "Valmiera",
+    lat: 57.54,
+    lon: 25.42,
+    temperature: 20,
+    iconCode: "1101",
+  },
 ];
 
 test("searchLocations returns matches for Latvian and accent-stripped queries", () => {
@@ -51,8 +69,14 @@ test("searchLocations matches region names", () => {
 });
 
 test("searchLocations returns empty array for no match", () => {
-  assert.deepEqual(searchLocations(sampleLocations, "Valmiera"), []);
+  assert.deepEqual(searchLocations(sampleLocations, "Cēsis"), []);
   assert.deepEqual(searchLocations(sampleLocations, "   "), []);
+});
+
+test("searchLocations ranks exact city match before region matches", () => {
+  const matches = searchLocations(sampleLocations, "Valmiera");
+  assert.equal(matches[0]?.name, "Valmiera");
+  assert.equal(matches[1]?.name, "Bērzaine");
 });
 
 test("searchLocations respects the result limit", () => {
