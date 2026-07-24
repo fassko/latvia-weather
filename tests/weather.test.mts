@@ -16,6 +16,7 @@ import {
 import {
   getConditionKey,
   getConditionEmoji,
+  getLvgmcWeatherIconUrl,
   getWindDirection,
   parseHourlyForecast,
   parseNumber,
@@ -98,8 +99,12 @@ test("condition helpers map LVGMC pictogram codes correctly", () => {
   // 14xx is mist/fog — must NOT be shown as snow (regression for summer "heavy snow")
   assert.equal(getConditionKey("1403"), "mist");
   assert.equal(getConditionKey("2403"), "mist");
-  assert.equal(getConditionEmoji("1403"), "🌫️");
-  assert.equal(getConditionEmoji("2403"), "🌫️");
+  assert.equal(getConditionEmoji("1403"), "🌁");
+  assert.equal(getConditionEmoji("2403"), "🌁");
+  assert.equal(
+    getLvgmcWeatherIconUrl("2403"),
+    "https://videscentrs.lvgmc.lv/images/weather/2403.png",
+  );
 
   // Real snow is 16xx
   assert.equal(getConditionKey("1604"), "heavySnow");

@@ -170,20 +170,30 @@ export function getConditionKey(iconCode: string): string {
   }
 }
 
+/**
+ * Prefer widely supported emoji (Unicode 6.0 era). Newer weather glyphs like
+ * 🌫️ often render as empty "tofu" squares in mobile SVG text.
+ */
 export function getConditionEmoji(iconCode: string): string {
   const id = getIconConditionId(iconCode);
   const night = isNightIcon(iconCode);
   const family = id.slice(0, 1);
 
   if (id === "413" || id === "414" || family === "6") return "❄️";
-  if (id === "415" || id === "416" || id === "207" || id === "208") return "🌨️";
-  if (family === "4") return "🌫️";
+  if (id === "415" || id === "416" || id === "207" || id === "208") return "❄️";
+  // 🌁 (foggy) is far more reliable than 🌫️ in chart SVG / Android WebViews
+  if (family === "4") return "🌁";
   if (family === "3") return "⛈️";
   if (family === "2" || family === "5") return "🌧️";
   if (id === "104" || id === "105") return "☁️";
-  if (id === "103") return "🌥️";
+  if (id === "103") return "☁️";
   if (id === "102") return night ? "☁️" : "⛅";
   if (id === "101") return night ? "🌙" : "☀️";
 
-  return night ? "🌙" : "🌤️";
+  return night ? "🌙" : "⛅";
+}
+
+/** Official LVĢMC pictogram image for an icon code (day or night). */
+export function getLvgmcWeatherIconUrl(iconCode: string): string {
+  return `https://videscentrs.lvgmc.lv/images/weather/${encodeURIComponent(iconCode)}.png`;
 }
