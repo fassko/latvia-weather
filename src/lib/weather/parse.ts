@@ -181,8 +181,8 @@ export function getConditionEmoji(iconCode: string): string {
 
   if (id === "413" || id === "414" || family === "6") return "❄️";
   if (id === "415" || id === "416" || id === "207" || id === "208") return "❄️";
-  // 🌁 (foggy) is far more reliable than 🌫️ in chart SVG / Android WebViews
-  if (family === "4") return "🌁";
+  // Mist/fog: avoid 🌫️ (tofu on many mobiles). ☁️ stays readable in dark mode.
+  if (family === "4") return "☁️";
   if (family === "3") return "⛈️";
   if (family === "2" || family === "5") return "🌧️";
   if (id === "104" || id === "105") return "☁️";
@@ -191,9 +191,4 @@ export function getConditionEmoji(iconCode: string): string {
   if (id === "101") return night ? "🌙" : "☀️";
 
   return night ? "🌙" : "⛅";
-}
-
-/** Official LVĢMC pictogram image for an icon code (day or night). */
-export function getLvgmcWeatherIconUrl(iconCode: string): string {
-  return `https://videscentrs.lvgmc.lv/images/weather/${encodeURIComponent(iconCode)}.png`;
 }

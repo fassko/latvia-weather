@@ -27,12 +27,7 @@ import {
   getUpcomingTodayForecasts,
   toChartPoints,
 } from "@/lib/weather/chart-data";
-import {
-  getConditionEmoji,
-  getConditionKey,
-  getLvgmcWeatherIconUrl,
-  getWindDirection,
-} from "@/lib/weather/parse";
+import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import { formatLatviaTime } from "@/lib/weather/timezone";
 import {
   convertWindSpeed,
@@ -283,17 +278,14 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     return (
       <g transform={`translate(${cx}, ${cy - iconSize - 2})`} pointerEvents="none">
         <title>{condition}</title>
-        {/* Official LVĢMC PNGs avoid emoji tofu squares (e.g. mist 🌫️) in SVG. */}
-        <image
-          href={getLvgmcWeatherIconUrl(payload.iconCode)}
-          x={-iconSize / 2}
-          y={0}
-          width={iconSize}
-          height={iconSize}
-          opacity={0.95}
+        <text
+          y={iconSize / 4}
+          textAnchor="middle"
+          fontSize={iconSize}
+          fontFamily="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif"
         >
-          <title>{condition}</title>
-        </image>
+          {getConditionEmoji(payload.iconCode)}
+        </text>
       </g>
     );
   };
