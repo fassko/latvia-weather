@@ -100,7 +100,25 @@
     "colder": "aukstāk"
   },
   "wind": {
-    "from": "Vējš no {direction}"
+    "from": "Vējš no {direction}",
+    "directions": {
+      "N": "Z",
+      "NNE": "ZZA",
+      "NE": "ZA",
+      "ENE": "AZA",
+      "E": "A",
+      "ESE": "ADA",
+      "SE": "DA",
+      "SSE": "DDA",
+      "S": "D",
+      "SSW": "DDR",
+      "SW": "DR",
+      "WSW": "RDR",
+      "W": "R",
+      "WNW": "RZR",
+      "NW": "ZR",
+      "NNW": "ZZR"
+    }
   },
   "conditions": {
     "clear_day": "Saulains",

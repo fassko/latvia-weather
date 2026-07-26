@@ -44,6 +44,7 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
   const t = await getTranslations("hero");
   const tConditions = await getTranslations("conditions");
   const tSummary = await getTranslations("summary");
+  const tWind = await getTranslations("wind");
   const windUnit = await getWindUnitsCookie();
 
   const current = findCurrentForecast(data.forecasts);
@@ -114,7 +115,9 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
           >
             <WindArrow degrees={current.windDirection} />
             {formatWindSpeed(current.windSpeed, windUnit)}
-            <span className="opacity-80">{getWindDirection(current.windDirection)}</span>
+            <span className="opacity-80">
+              {tWind(`directions.${getWindDirection(current.windDirection)}`)}
+            </span>
           </span>
         </div>
 

@@ -24,6 +24,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
   const locale = await getLocale();
   const t = await getTranslations("dailyList");
   const tTable = await getTranslations("table");
+  const tWind = await getTranslations("wind");
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = await getWindUnitsCookie();
   const todayKey = getLatviaDayKey(new Date());
@@ -131,6 +132,9 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                 <DayBreakdown
                   forecasts={row.forecasts}
                   windUnit={windUnit}
+                  formatWindDirection={(degrees) =>
+                    tWind(`directions.${getWindDirection(degrees)}`)
+                  }
                   labels={{
                     time: tTable("time"),
                     temp: tTable("temp"),
@@ -155,6 +159,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
 interface DayBreakdownProps {
   forecasts: HourlyForecast[];
   windUnit: WindUnit;
+  formatWindDirection: (degrees: number) => string;
   labels: {
     time: string;
     temp: string;
@@ -168,7 +173,7 @@ interface DayBreakdownProps {
   };
 }
 
-function DayBreakdown({ forecasts, windUnit, labels }: DayBreakdownProps) {
+function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayBreakdownProps) {
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
       <table className="min-w-full text-left text-sm">
@@ -214,7 +219,7 @@ function DayBreakdown({ forecasts, windUnit, labels }: DayBreakdownProps) {
               >
                 {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
                 <WindArrow degrees={forecast.windDirection} />{" "}
-                {getWindDirection(forecast.windDirection)}
+                {formatWindDirection(forecast.windDirection)}
               </td>
               <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.humidity)}%</td>
               <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.cloudCover)}%</td>

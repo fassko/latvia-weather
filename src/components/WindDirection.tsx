@@ -22,7 +22,7 @@ export function WindDirection({
   className,
 }: WindDirectionProps) {
   const t = useTranslations("wind");
-  const label = getWindDirection(degrees);
+  const label = t(`directions.${getWindDirection(degrees)}`);
 
   return (
     <span
