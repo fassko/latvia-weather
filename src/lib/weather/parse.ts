@@ -64,7 +64,10 @@ const DIRECTIONS = [
   "NNW",
 ] as const;
 
-export function getWindDirection(degrees: number): string {
+/** Compass-point key for `wind.directions.*` message lookups. */
+export type WindDirectionCode = (typeof DIRECTIONS)[number];
+
+export function getWindDirection(degrees: number): WindDirectionCode {
   const index = Math.round(degrees / 22.5) % 16;
   return DIRECTIONS[index];
 }

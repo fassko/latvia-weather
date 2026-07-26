@@ -24,6 +24,7 @@ interface MetricCardsProps {
 
 export async function MetricCards({ forecasts }: MetricCardsProps) {
   const t = await getTranslations("metrics");
+  const tWind = await getTranslations("wind");
   const windUnit = await getWindUnitsCookie();
   const current = findCurrentForecast(forecasts);
 
@@ -50,7 +51,9 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
       sub: (
         <span className="inline-flex items-center gap-1">
           <WindArrow degrees={current.windDirection} />
-          {t("direction", { direction: getWindDirection(current.windDirection) })}
+          {t("direction", {
+            direction: tWind(`directions.${getWindDirection(current.windDirection)}`),
+          })}
         </span>
       ),
     },

@@ -113,7 +113,19 @@ test("condition helpers map LVGMC pictogram codes correctly", () => {
 
   assert.equal(getWindDirection(0), "N");
   assert.equal(getWindDirection(225), "SW");
+  assert.equal(getWindDirection(247.5), "WSW");
   assert.equal(getWindDirection(359), "N");
+});
+
+test("Latvian wind direction abbreviations use local compass letters", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const lv = JSON.parse(await readFile(new URL("../messages/lv.json", import.meta.url), "utf8"));
+  assert.equal(lv.wind.directions.N, "Z");
+  assert.equal(lv.wind.directions.E, "A");
+  assert.equal(lv.wind.directions.S, "D");
+  assert.equal(lv.wind.directions.W, "R");
+  assert.equal(lv.wind.directions.SW, "DR");
+  assert.equal(lv.wind.directions.WSW, "RDR");
 });
 
 test("condition groups follow official LVGMC pictogram families", () => {

@@ -300,7 +300,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
       return null;
     }
 
-    const direction = getWindDirection(payload.windDirection);
+    const direction = tWind(`directions.${getWindDirection(payload.windDirection)}`);
     const iconSize = getWindDirectionIconSize(period);
     return (
       <g
@@ -508,7 +508,9 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                       return [formatWindSpeed(num, windUnit), windLabel];
                     }
 
-                    const direction = getWindDirection(point.windDirection);
+                    const direction = tWind(
+                      `directions.${getWindDirection(point.windDirection)}`,
+                    );
 
                     return [
                       <span
