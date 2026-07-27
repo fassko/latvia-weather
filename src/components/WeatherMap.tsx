@@ -202,6 +202,41 @@ async function fillTodayBrief(
   }
 }
 
+function createClusterIcon(
+  cluster: L.MarkerCluster,
+  temperatureByMarker: WeakMap<L.Marker, number>,
+): L.DivIcon {
+  const childCount = cluster.getChildCount();
+  const childMarkers = cluster.getAllChildMarkers();
+  let temperatureSum = 0;
+  let temperatureCount = 0;
+
+  for (const marker of childMarkers) {
+    const temperature = temperatureByMarker.get(marker);
+    if (temperature == null || !Number.isFinite(temperature)) continue;
+    temperatureSum += temperature;
+    temperatureCount += 1;
+  }
+
+  const averageTemperature =
+    temperatureCount > 0 ? temperatureSum / temperatureCount : 15;
+  const fill = temperatureMarkerColor(averageTemperature);
+  const text = temperatureTextColor(averageTemperature);
+  const sizeClass =
+    childCount < 10
+      ? "weather-map-cluster--small"
+      : childCount < 25
+        ? "weather-map-cluster--medium"
+        : "weather-map-cluster--large";
+  const dimension = childCount < 10 ? 40 : childCount < 25 ? 48 : 56;
+
+  return L.divIcon({
+    html: `<div class="weather-map-cluster__core" style="background:${fill};color:${text};box-shadow:0 0 0 6px ${fill}33">${childCount}</div>`,
+    className: `weather-map-cluster ${sizeClass}`,
+    iconSize: L.point(dimension, dimension),
+  });
+}
+
 function LocationMarkers({
   locations,
   locale,
@@ -220,11 +255,14 @@ function LocationMarkers({
   const windUnit = useWindUnit();
 
   useEffect(() => {
+    const temperatureByMarker = new WeakMap<L.Marker, number>();
     const cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
       maxClusterRadius: 50,
       spiderfyOnMaxZoom: true,
       disableClusteringAtZoom: 11,
+      iconCreateFunction: (markerCluster) =>
+        createClusterIcon(markerCluster, temperatureByMarker),
     });
     const markersById: MarkersById = new Map();
 
@@ -239,6 +277,7 @@ function LocationMarkers({
         riseOnHover: true,
         zIndexOffset: location.id === selectedId ? 1000 : 0,
       });
+      temperatureByMarker.set(marker, location.temperature);
 
       marker.bindPopup(
         () =>
