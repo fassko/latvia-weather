@@ -37,3 +37,121 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Leaflet weather map markers */
+.weather-map {
+  z-index: 0;
+  background: #e2e8f0;
+}
+
+.dark .weather-map {
+  background: #0f172a;
+}
+
+.weather-map-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.weather-map-marker__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.18),
+    0 0 0 1px rgb(15 23 42 / 0.08);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.weather-map-marker__emoji {
+  font-size: 0.8rem;
+}
+
+.weather-map-popup {
+  min-width: 10rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.weather-map-popup__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: #0f172a;
+}
+
+.weather-map-popup__region {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.weather-map-popup__stats {
+  margin: 0.45rem 0 0;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.weather-map-popup__link {
+  display: inline-block;
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0284c7;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.weather-map-popup__link:hover {
+  color: #0369a1;
+}
+
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background-color: rgb(14 165 233 / 0.25) !important;
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgb(2 132 199 / 0.9) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.dark .leaflet-container {
+  background: #0f172a;
+}
+
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: #0f172a;
+  color: #e2e8f0;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+.dark .weather-map-popup__title {
+  color: #f8fafc;
+}
+
+.dark .weather-map-popup__region {
+  color: #94a3b8;
+}
+
+.dark .weather-map-popup__stats {
+  color: #cbd5e1;
+}
+
+.dark .weather-map-popup__link {
+  color: #38bdf8;
+}
+
+.dark .weather-map-popup__link:hover {
+  color: #7dd3fc;
+}

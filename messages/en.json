@@ -203,7 +203,23 @@
   },
   "nav": {
     "brand": "Latvia Weather",
-    "home": "Home"
+    "home": "Home",
+    "map": "Map"
+  },
+  "map": {
+    "title": "Weather map",
+    "description": "Map of current weather across all forecast locations in Latvia",
+    "subtitle": "Current conditions at {count, plural, one {# location} other {# locations}} across Latvia. Tap a marker for details.",
+    "range": "Now: {min}° to {max}°",
+    "loading": "Loading map…",
+    "openForecast": "Open forecast",
+    "markerCount": "{count, plural, one {# weather location} other {# weather locations}} on the map",
+    "legend": "Temperature",
+    "legendCold": "Cold",
+    "legendCool": "Cool",
+    "legendMild": "Mild",
+    "legendWarm": "Warm",
+    "legendHot": "Hot"
   },
   "hero": {
     "feelsLike": "Feels like {temp}°",
