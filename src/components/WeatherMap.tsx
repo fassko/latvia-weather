@@ -5,7 +5,7 @@ import "leaflet.markercluster";
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useTranslations } from "next-intl";
-import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
+import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import {
   formatMapTemperature,
   temperatureMarkerColor,
@@ -17,6 +17,8 @@ import {
   THEME_CHANGE_EVENT,
   type Theme,
 } from "@/lib/theme";
+import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
+import { useWindUnit } from "@/lib/weather/use-wind-unit";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -66,7 +68,10 @@ function createPopupContent(
   labels: {
     openForecast: string;
     condition: string;
+    wind: string;
+    windDirection: string;
   },
+  windUnit: WindUnit,
 ): HTMLElement {
   const root = document.createElement("div");
   root.className = "weather-map-popup";
@@ -89,6 +94,11 @@ function createPopupContent(
   stats.textContent = `${formatMapTemperature(location.temperature)} · ${emoji} ${labels.condition}`;
   root.appendChild(stats);
 
+  const wind = document.createElement("p");
+  wind.className = "weather-map-popup__wind";
+  wind.textContent = `${labels.wind} ${formatWindSpeed(location.windSpeed, windUnit)} · ${labels.windDirection}`;
+  root.appendChild(wind);
+
   const link = document.createElement("a");
   link.className = "weather-map-popup__link";
   link.href = forecastHref(locale, location.id);
@@ -106,6 +116,8 @@ function LocationMarkers({
   const map = useMap();
   const tConditions = useTranslations("conditions");
   const tMap = useTranslations("map");
+  const tWind = useTranslations("wind");
+  const windUnit = useWindUnit();
 
   useEffect(() => {
     const cluster = L.markerClusterGroup({
@@ -129,10 +141,19 @@ function LocationMarkers({
 
       marker.bindPopup(
         () =>
-          createPopupContent(location, locale, {
-            openForecast: tMap("openForecast"),
-            condition: tConditions(getConditionKey(location.iconCode)),
-          }),
+          createPopupContent(
+            location,
+            locale,
+            {
+              openForecast: tMap("openForecast"),
+              condition: tConditions(getConditionKey(location.iconCode)),
+              wind: tMap("wind"),
+              windDirection: tWind(
+                `directions.${getWindDirection(location.windDirection)}`,
+              ),
+            },
+            windUnit,
+          ),
         { maxWidth: 260 },
       );
 
@@ -144,7 +165,7 @@ function LocationMarkers({
     return () => {
       map.removeLayer(cluster);
     };
-  }, [locations, locale, map, selectedId, tConditions, tMap]);
+  }, [locations, locale, map, selectedId, tConditions, tMap, tWind, windUnit]);
 
   return null;
 }

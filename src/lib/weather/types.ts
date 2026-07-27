@@ -70,6 +70,8 @@ export interface WeatherPointForecastRaw {
 
 export interface WeatherLocationPoint extends WeatherLocation {
   temperature: number;
+  windSpeed: number;
+  windDirection: number;
   iconCode: string;
 }
 

@@ -213,6 +213,7 @@
     "range": "Now: {min}° to {max}°",
     "loading": "Loading map…",
     "openForecast": "Open forecast",
+    "wind": "Wind",
     "markerCount": "{count, plural, one {# weather location} other {# weather locations}} on the map",
     "legend": "Temperature",
     "legendCold": "Cold",

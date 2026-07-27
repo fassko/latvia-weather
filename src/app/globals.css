@@ -49,6 +49,10 @@ body {
   filter: contrast(1.06) saturate(1.05);
 }
 
+.dark .weather-map .leaflet-tile-pane {
+  filter: none;
+}
+
 .dark .weather-map {
   background: #0f172a;
 }
@@ -102,6 +106,12 @@ body {
   color: #334155;
 }
 
+.weather-map-popup__wind {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
 .weather-map-popup__link {
   display: inline-block;
   margin-top: 0.55rem;
@@ -151,6 +161,10 @@ body {
 
 .dark .weather-map-popup__stats {
   color: #cbd5e1;
+}
+
+.dark .weather-map-popup__wind {
+  color: #94a3b8;
 }
 
 .dark .weather-map-popup__link {

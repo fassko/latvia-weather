@@ -15,6 +15,8 @@ const valmieraAreaLocations: WeatherLocationPoint[] = [
     lat: 57.5,
     lon: 25.4,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -24,6 +26,8 @@ const valmieraAreaLocations: WeatherLocationPoint[] = [
     lat: 57.51,
     lon: 25.41,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -33,6 +37,8 @@ const valmieraAreaLocations: WeatherLocationPoint[] = [
     lat: 57.7,
     lon: 25.2,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -42,6 +48,8 @@ const valmieraAreaLocations: WeatherLocationPoint[] = [
     lat: 57.54,
     lon: 25.42,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -51,6 +59,8 @@ const valmieraAreaLocations: WeatherLocationPoint[] = [
     lat: 57.6,
     lon: 25.1,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -60,6 +70,8 @@ const valmieraAreaLocations: WeatherLocationPoint[] = [
     lat: 56.95,
     lon: 24.1,
     temperature: 18,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
 ];
@@ -101,7 +113,9 @@ test("name prefix matches rank above region-only matches", () => {
       lat: 1,
       lon: 1,
       temperature: 1,
-      iconCode: "1101",
+      windSpeed: 3,
+    windDirection: 180,
+    iconCode: "1101",
     },
     {
       id: "P11",
@@ -110,7 +124,9 @@ test("name prefix matches rank above region-only matches", () => {
       lat: 1,
       lon: 1,
       temperature: 1,
-      iconCode: "1101",
+      windSpeed: 3,
+    windDirection: 180,
+    iconCode: "1101",
     },
   ] satisfies WeatherLocationPoint[];
 

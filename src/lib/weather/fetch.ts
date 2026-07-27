@@ -150,6 +150,8 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
         lat: parseNumber(point.lat),
         lon: parseNumber(point.lon),
         temperature: parseNumber(point.temperatura),
+        windSpeed: parseNumber(point.veja_atrums),
+        windDirection: parseNumber(point.veja_virziens),
         iconCode: point.laika_apstaklu_ikona,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "lv"));
