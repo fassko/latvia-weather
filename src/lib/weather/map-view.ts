@@ -1,0 +1,53 @@
+/** Geographic center used for the default Latvia overview. */
+export const LATVIA_CENTER: [number, number] = [56.88, 24.6];
+
+/** Bounding box that covers Latvia with a small margin. */
+export const LATVIA_BOUNDS: [[number, number], [number, number]] = [
+  [55.6, 20.7],
+  [58.15, 28.4],
+];
+
+/** Match Tailwind `sm` — phones stay in the mobile overview. */
+export const MOBILE_MAP_MAX_WIDTH = 640;
+
+/**
+ * Narrow map panes under-zoom when fitting Latvia’s wide bounds (portrait
+ * phones especially). Prefer this fixed overview instead of fitBounds.
+ */
+export const MOBILE_DEFAULT_ZOOM = 7;
+
+export const DESKTOP_FIT_MAX_ZOOM = 8;
+export const DESKTOP_FIT_PADDING: [number, number] = [24, 24];
+
+export type LatviaOverview =
+  | {
+      mode: "setView";
+      center: [number, number];
+      zoom: number;
+    }
+  | {
+      mode: "fitBounds";
+      padding: [number, number];
+      maxZoom: number;
+    };
+
+export function isMobileMapWidth(width: number): boolean {
+  return width > 0 && width < MOBILE_MAP_MAX_WIDTH;
+}
+
+/** Pick the default Latvia camera for the current map pane width. */
+export function latviaOverviewForWidth(mapWidth: number): LatviaOverview {
+  if (isMobileMapWidth(mapWidth)) {
+    return {
+      mode: "setView",
+      center: LATVIA_CENTER,
+      zoom: MOBILE_DEFAULT_ZOOM,
+    };
+  }
+
+  return {
+    mode: "fitBounds",
+    padding: DESKTOP_FIT_PADDING,
+    maxZoom: DESKTOP_FIT_MAX_ZOOM,
+  };
+}

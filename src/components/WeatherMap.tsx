@@ -33,15 +33,16 @@ import {
   type TodayBrief,
 } from "@/lib/weather/today-brief";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
+import {
+  LATVIA_BOUNDS,
+  LATVIA_CENTER,
+  MOBILE_DEFAULT_ZOOM,
+  latviaOverviewForWidth,
+} from "@/lib/weather/map-view";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-const LATVIA_CENTER: L.LatLngExpression = [56.88, 24.6];
-const LATVIA_BOUNDS: L.LatLngBoundsExpression = [
-  [55.6, 20.7],
-  [58.15, 28.4],
-];
 const LOCATE_ZOOM = 11;
 
 const TILE_URLS: Record<Theme, string> = {
@@ -386,7 +387,30 @@ function FitLatvia({ enabled }: { enabled: boolean }) {
 
   useEffect(() => {
     if (!enabled) return;
-    map.fitBounds(LATVIA_BOUNDS, { padding: [24, 24], maxZoom: 8 });
+
+    function applyOverview() {
+      map.invalidateSize();
+      const width = map.getSize().x;
+      if (width <= 0) return;
+
+      const overview = latviaOverviewForWidth(width);
+
+      if (overview.mode === "setView") {
+        map.setView(overview.center, overview.zoom, {
+          animate: false,
+        });
+        return;
+      }
+
+      map.fitBounds(LATVIA_BOUNDS, {
+        padding: overview.padding,
+        maxZoom: overview.maxZoom,
+      });
+    }
+
+    applyOverview();
+    const frame = requestAnimationFrame(applyOverview);
+    return () => cancelAnimationFrame(frame);
   }, [enabled, map]);
 
   return null;
@@ -584,7 +608,7 @@ export function WeatherMap({
   return (
     <MapContainer
       center={LATVIA_CENTER}
-      zoom={7}
+      zoom={MOBILE_DEFAULT_ZOOM}
       className="weather-map h-full w-full rounded-xl"
       scrollWheelZoom
       worldCopyJump={false}
