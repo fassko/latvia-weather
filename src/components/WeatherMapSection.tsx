@@ -16,6 +16,7 @@ interface WeatherMapSectionProps {
   locations: WeatherLocationPoint[];
   locale: string;
   selectedId?: string;
+  focusLocationId?: string;
 }
 
 function WeatherMapSkeleton() {
@@ -35,6 +36,7 @@ export function WeatherMapSection({
   locations,
   locale,
   selectedId,
+  focusLocationId,
 }: WeatherMapSectionProps) {
   return (
     <div className="h-[min(70vh,44rem)] min-h-[28rem] w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800">
@@ -42,6 +44,7 @@ export function WeatherMapSection({
         locations={locations}
         locale={locale}
         selectedId={selectedId}
+        focusLocationId={focusLocationId}
       />
     </div>
   );

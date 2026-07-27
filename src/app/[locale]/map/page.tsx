@@ -6,7 +6,7 @@ import { WeatherMapSection } from "@/components/WeatherMapSection";
 import { routing, type Locale } from "@/i18n/routing";
 import { getLocationPoints } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
-import { DEFAULT_LOCATION_ID, resolveLocationId } from "@/lib/weather/locations";
+import { DEFAULT_LOCATION_ID, isValidLocationId, resolveLocationId } from "@/lib/weather/locations";
 import {
   TEMPERATURE_LEGEND_BANDS,
   type TemperatureLegendBandId,
@@ -60,6 +60,8 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
 
   const savedPunkts = await getLocationCookie();
   const locationId = resolveLocationId(punkts, savedPunkts);
+  const focusLocationId =
+    punkts && isValidLocationId(punkts) ? punkts : undefined;
   const t = await getTranslations({ locale, namespace: "map" });
   const tErrors = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
@@ -107,6 +109,7 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
           locations={locations}
           locale={locale}
           selectedId={selected?.id}
+          focusLocationId={focusLocationId}
         />
 
         <div

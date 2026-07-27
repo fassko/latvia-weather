@@ -1,4 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { getTodayForecasts } from "@/lib/weather/chart-data";
 import { summarizeDay } from "@/lib/weather/daily";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
@@ -31,6 +32,24 @@ function WindArrow({ degrees }: { degrees: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function MapPinIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-3.5 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
+      <circle cx="12" cy="10" r="2.5" />
     </svg>
   );
 }
@@ -119,6 +138,13 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
               {tWind(`directions.${getWindDirection(current.windDirection)}`)}
             </span>
           </span>
+          <Link
+            href={`/map?punkts=${encodeURIComponent(data.location.id)}`}
+            className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/25 ${theme.text}`}
+          >
+            <MapPinIcon />
+            {t("showOnMap")}
+          </Link>
         </div>
 
         <p className={`mt-3 max-w-xl text-sm sm:text-base ${theme.muted}`}>
