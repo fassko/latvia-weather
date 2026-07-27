@@ -1,11 +1,11 @@
 /** Geographic center used for the default Latvia overview. */
-export const LATVIA_CENTER = [56.88, 24.6] as const;
+export const LATVIA_CENTER: [number, number] = [56.88, 24.6];
 
 /** Bounding box that covers Latvia with a small margin. */
-export const LATVIA_BOUNDS = [
+export const LATVIA_BOUNDS: [[number, number], [number, number]] = [
   [55.6, 20.7],
   [58.15, 28.4],
-] as const;
+];
 
 /** Match Tailwind `sm` — phones stay in the mobile overview. */
 export const MOBILE_MAP_MAX_WIDTH = 640;
@@ -17,17 +17,17 @@ export const MOBILE_MAP_MAX_WIDTH = 640;
 export const MOBILE_DEFAULT_ZOOM = 7;
 
 export const DESKTOP_FIT_MAX_ZOOM = 8;
-export const DESKTOP_FIT_PADDING = [24, 24] as const;
+export const DESKTOP_FIT_PADDING: [number, number] = [24, 24];
 
 export type LatviaOverview =
   | {
       mode: "setView";
-      center: readonly [number, number];
+      center: [number, number];
       zoom: number;
     }
   | {
       mode: "fitBounds";
-      padding: readonly [number, number];
+      padding: [number, number];
       maxZoom: number;
     };
 

@@ -396,14 +396,14 @@ function FitLatvia({ enabled }: { enabled: boolean }) {
       const overview = latviaOverviewForWidth(width);
 
       if (overview.mode === "setView") {
-        map.setView(overview.center as L.LatLngExpression, overview.zoom, {
+        map.setView(overview.center, overview.zoom, {
           animate: false,
         });
         return;
       }
 
-      map.fitBounds(LATVIA_BOUNDS as L.LatLngBoundsExpression, {
-        padding: [...overview.padding],
+      map.fitBounds(LATVIA_BOUNDS, {
+        padding: overview.padding,
         maxZoom: overview.maxZoom,
       });
     }
@@ -607,7 +607,7 @@ export function WeatherMap({
 
   return (
     <MapContainer
-      center={LATVIA_CENTER as L.LatLngExpression}
+      center={LATVIA_CENTER}
       zoom={MOBILE_DEFAULT_ZOOM}
       className="weather-map h-full w-full rounded-xl"
       scrollWheelZoom
