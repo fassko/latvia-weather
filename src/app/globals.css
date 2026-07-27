@@ -196,18 +196,20 @@ body {
   color: #7dd3fc;
 }
 
-/* Locate control sits under Leaflet zoom (+/-) */
-.weather-map .weather-map-locate-wrap.leaflet-top {
-  top: 76px;
-  z-index: 1000;
+/* Locate control is portaled into Leaflet's top-left corner under zoom */
+.weather-map-locate-wrap {
+  clear: both;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
+  pointer-events: auto;
 }
 
 .weather-map-locate {
-  margin: 0 0 0 10px !important;
+  float: left;
+  clear: both;
+  margin: 0 0 10px 10px !important;
   border: none !important;
   box-shadow: none !important;
 }
@@ -216,20 +218,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   margin: 0;
   padding: 0;
-  border: 2px solid rgba(0, 0, 0, 0.2);
+  border: none;
   border-radius: 4px;
   background: #fff;
   color: #0f172a;
   cursor: pointer;
   line-height: 1;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 0.4);
 }
 
 .weather-map-locate__button:hover {
-  background: #f8fafc;
+  background: #f4f4f4;
 }
 
 .weather-map-locate__button:disabled {
@@ -239,7 +242,7 @@ body {
 
 .weather-map-locate__error {
   max-width: 11rem;
-  margin: 0 0 0 10px;
+  margin: 0 0 10px 10px;
   padding: 0.35rem 0.5rem;
   border-radius: 0.4rem;
   background: rgb(255 255 255 / 0.95);
@@ -250,9 +253,9 @@ body {
 }
 
 .dark .weather-map-locate__button {
-  border-color: rgba(255, 255, 255, 0.25);
   background: #0f172a;
   color: #e2e8f0;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 0.55);
 }
 
 .dark .weather-map-locate__button:hover {

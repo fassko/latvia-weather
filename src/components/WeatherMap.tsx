@@ -9,6 +9,7 @@ import {
   type MutableRefObject,
   type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useTranslations } from "next-intl";
 import { findNearestLocation } from "@/lib/weather/coordinates";
@@ -344,15 +345,23 @@ function LocateMeControl({
   const map = useMap();
   const tMap = useTranslations("map");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [corner, setCorner] = useState<HTMLElement | null>(null);
   const userLayerRef = useRef<L.LayerGroup | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const controlCorner = map
+      .getContainer()
+      .querySelector<HTMLElement>(".leaflet-top.leaflet-left");
+    setCorner(controlCorner);
+  }, [map]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
     L.DomEvent.disableClickPropagation(wrap);
     L.DomEvent.disableScrollPropagation(wrap);
-  }, []);
+  }, [corner]);
 
   useEffect(() => {
     return () => {
@@ -445,8 +454,10 @@ function LocateMeControl({
         ? tMap("locateError")
         : tMap("locateMe");
 
-  return (
-    <div ref={wrapRef} className="leaflet-top leaflet-left weather-map-locate-wrap">
+  if (!corner) return null;
+
+  return createPortal(
+    <div ref={wrapRef} className="weather-map-locate-wrap">
       <div className="leaflet-bar leaflet-control weather-map-locate">
         <button
           type="button"
@@ -465,7 +476,8 @@ function LocateMeControl({
           {tMap("locateError")}
         </p>
       ) : null}
-    </div>
+    </div>,
+    corner,
   );
 }
 
