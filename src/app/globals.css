@@ -113,6 +113,13 @@ body {
   color: #475569;
 }
 
+.weather-map-popup__today {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 550;
+  color: #0f172a;
+}
+
 .weather-map-popup__link {
   display: inline-block;
   margin-top: 0.55rem;
@@ -166,6 +173,10 @@ body {
 
 .dark .weather-map-popup__wind {
   color: #94a3b8;
+}
+
+.dark .weather-map-popup__today {
+  color: #e2e8f0;
 }
 
 .dark .weather-map-popup__link {

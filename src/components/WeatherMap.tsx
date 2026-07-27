@@ -26,6 +26,10 @@ import {
 } from "@/lib/theme";
 import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
+import {
+  fetchTodayBrief,
+  type TodayBrief,
+} from "@/lib/weather/today-brief";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -81,6 +85,12 @@ function createPopupContent(
     condition: string;
     wind: string;
     windDirection: string;
+    today: string;
+    todayLoading: string;
+    todayError: string;
+    formatHighLow: (high: number, low: number) => string;
+    formatRainChance: (chance: number) => string;
+    formatRainAmount: (amount: number) => string;
   },
   windUnit: WindUnit,
 ): HTMLElement {
@@ -110,13 +120,65 @@ function createPopupContent(
   wind.textContent = `${labels.wind} ${formatWindSpeed(location.windSpeed, windUnit)} · ${labels.windDirection}`;
   root.appendChild(wind);
 
+  const today = document.createElement("p");
+  today.className = "weather-map-popup__today";
+  today.setAttribute("aria-live", "polite");
+  today.textContent = `${labels.today} · ${labels.todayLoading}`;
+  root.appendChild(today);
+
   const link = document.createElement("a");
   link.className = "weather-map-popup__link";
   link.href = forecastHref(locale, location.id);
   link.textContent = labels.openForecast;
   root.appendChild(link);
 
+  void fillTodayBrief(location.id, today, labels);
+
   return root;
+}
+
+function formatTodayBriefLine(
+  brief: TodayBrief,
+  labels: {
+    today: string;
+    formatHighLow: (high: number, low: number) => string;
+    formatRainChance: (chance: number) => string;
+    formatRainAmount: (amount: number) => string;
+  },
+): string {
+  const parts = [labels.today, labels.formatHighLow(brief.high, brief.low)];
+
+  if (brief.rainChance > 0) {
+    parts.push(labels.formatRainChance(brief.rainChance));
+  }
+
+  if (brief.precipMm >= 0.1) {
+    parts.push(labels.formatRainAmount(brief.precipMm));
+  }
+
+  return parts.join(" · ");
+}
+
+async function fillTodayBrief(
+  locationId: string,
+  target: HTMLElement,
+  labels: {
+    today: string;
+    todayLoading: string;
+    todayError: string;
+    formatHighLow: (high: number, low: number) => string;
+    formatRainChance: (chance: number) => string;
+    formatRainAmount: (amount: number) => string;
+  },
+) {
+  try {
+    const brief = await fetchTodayBrief(locationId);
+    if (!target.isConnected) return;
+    target.textContent = formatTodayBriefLine(brief, labels);
+  } catch {
+    if (!target.isConnected) return;
+    target.textContent = `${labels.today} · ${labels.todayError}`;
+  }
 }
 
 function LocationMarkers({
@@ -132,6 +194,7 @@ function LocationMarkers({
   const map = useMap();
   const tConditions = useTranslations("conditions");
   const tMap = useTranslations("map");
+  const tHero = useTranslations("hero");
   const tWind = useTranslations("wind");
   const windUnit = useWindUnit();
 
@@ -168,10 +231,18 @@ function LocationMarkers({
               windDirection: tWind(
                 `directions.${getWindDirection(location.windDirection)}`,
               ),
+              today: tMap("today"),
+              todayLoading: tMap("todayLoading"),
+              todayError: tMap("todayError"),
+              formatHighLow: (high, low) => tHero("highLow", { high, low }),
+              formatRainChance: (chance) =>
+                tMap("todayRainChance", { chance }),
+              formatRainAmount: (amount) =>
+                tMap("todayRainAmount", { amount: amount.toFixed(1) }),
             },
             windUnit,
           ),
-        { maxWidth: 260 },
+        { maxWidth: 280 },
       );
 
       cluster.addLayer(marker);
@@ -197,6 +268,7 @@ function LocationMarkers({
     markersByIdRef,
     selectedId,
     tConditions,
+    tHero,
     tMap,
     tWind,
     windUnit,
