@@ -25,3 +25,25 @@ export function distanceKm(
 
   return earthRadiusKm * c;
 }
+
+/** Nearest point by great-circle distance, or null when the list is empty. */
+export function findNearestLocation<T extends { lat: number; lon: number }>(
+  origin: { lat: number; lon: number },
+  locations: readonly T[],
+): T | null {
+  if (locations.length === 0) return null;
+
+  let nearest = locations[0];
+  let nearestDistance = distanceKm(origin, nearest);
+
+  for (let index = 1; index < locations.length; index += 1) {
+    const candidate = locations[index];
+    const distance = distanceKm(origin, candidate);
+    if (distance < nearestDistance) {
+      nearest = candidate;
+      nearestDistance = distance;
+    }
+  }
+
+  return nearest;
+}
