@@ -44,18 +44,12 @@ function subscribeToWarningDismiss(callback: () => void) {
 }
 
 export function useDismissedWarningIds(serverIds: string[]): string[] {
-  const clientIds = useSyncExternalStore(
+  // Trust document.cookie on the client. Merging with serverIds broke "Show":
+  // expand clears the cookie, but serverIds from the initial render still
+  // contained the dismissed key and kept the compact banner stuck closed.
+  return useSyncExternalStore(
     subscribeToWarningDismiss,
     readDismissedWarningIds,
     () => serverIds,
   );
-
-  if (clientIds.length === 0) return serverIds;
-  if (serverIds.length === 0) return clientIds;
-
-  const merged = [...serverIds];
-  for (const id of clientIds) {
-    if (!merged.includes(id)) merged.push(id);
-  }
-  return merged;
 }

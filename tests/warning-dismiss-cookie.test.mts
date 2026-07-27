@@ -83,4 +83,21 @@ describe("warning dismiss cookie helpers", () => {
       [key],
     );
   });
+
+  it("clears dismissal when Show removes the key (expand)", () => {
+    const key = getWarningDismissKey(sampleWarning);
+    const dismissed = [key, "other-warning-key"];
+    const afterShow = dismissed.filter(
+      (id) => id !== key && id !== sampleWarning.id,
+    );
+
+    assert.deepEqual(
+      toRelevantDismissKeys([sampleWarning], afterShow),
+      [],
+    );
+    assert.equal(
+      isWarningDismissed(sampleWarning, new Set(afterShow)),
+      false,
+    );
+  });
 });
