@@ -213,6 +213,7 @@
     "range": "Tagad: no {min}° līdz {max}°",
     "loading": "Ielādē karti…",
     "openForecast": "Atvērt prognozi",
+    "wind": "Vējš",
     "markerCount": "{count, plural, one {# laika prognozes vieta} other {# laika prognozes vietas}} kartē",
     "legend": "Temperatūra",
     "legendCold": "Auksts",

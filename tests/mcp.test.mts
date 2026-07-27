@@ -12,6 +12,8 @@ const sampleLocations: WeatherLocationPoint[] = [
     lat: 56.95,
     lon: 24.1,
     temperature: 18,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -21,6 +23,8 @@ const sampleLocations: WeatherLocationPoint[] = [
     lat: 56.51,
     lon: 21.01,
     temperature: 16,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1102",
   },
   {
@@ -30,6 +34,8 @@ const sampleLocations: WeatherLocationPoint[] = [
     lat: 55.87,
     lon: 26.53,
     temperature: 17,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -39,6 +45,8 @@ const sampleLocations: WeatherLocationPoint[] = [
     lat: 57.5,
     lon: 25.4,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
   {
@@ -48,6 +56,8 @@ const sampleLocations: WeatherLocationPoint[] = [
     lat: 57.54,
     lon: 25.42,
     temperature: 20,
+    windSpeed: 3,
+    windDirection: 180,
     iconCode: "1101",
   },
 ];
