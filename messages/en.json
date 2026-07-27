@@ -237,7 +237,8 @@
   },
   "hero": {
     "feelsLike": "Feels like {temp}°",
-    "highLow": "H {high}° · L {low}°"
+    "highLow": "H {high}° · L {low}°",
+    "showOnMap": "Show on map"
   },
   "summary": {
     "cond": {

@@ -237,7 +237,8 @@
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°",
-    "highLow": "Augst. {high}° · Zem. {low}°"
+    "highLow": "Augst. {high}° · Zem. {low}°",
+    "showOnMap": "Rādīt kartē"
   },
   "summary": {
     "cond": {

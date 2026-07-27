@@ -54,6 +54,7 @@ interface WeatherMapProps {
   locations: WeatherLocationPoint[];
   locale: string;
   selectedId?: string;
+  focusLocationId?: string;
 }
 
 type MarkersById = Map<string, L.Marker>;
@@ -241,6 +242,7 @@ function LocationMarkers({
   locations,
   locale,
   selectedId,
+  focusLocationId,
   markersByIdRef,
   clusterRef,
 }: WeatherMapProps & {
@@ -313,6 +315,29 @@ function LocationMarkers({
     clusterRef.current = cluster;
     map.addLayer(cluster);
 
+    if (focusLocationId) {
+      const focusLocation = locations.find(
+        (location) => location.id === focusLocationId,
+      );
+      const focusMarker = markersById.get(focusLocationId);
+
+      if (
+        focusLocation &&
+        focusMarker &&
+        Number.isFinite(focusLocation.lat) &&
+        Number.isFinite(focusLocation.lon)
+      ) {
+        map.flyTo([focusLocation.lat, focusLocation.lon], LOCATE_ZOOM, {
+          duration: 0.75,
+        });
+        map.once("moveend", () => {
+          cluster.zoomToShowLayer(focusMarker, () => {
+            focusMarker.openPopup();
+          });
+        });
+      }
+    }
+
     return () => {
       map.removeLayer(cluster);
       if (clusterRef.current === cluster) {
@@ -322,6 +347,7 @@ function LocationMarkers({
     };
   }, [
     clusterRef,
+    focusLocationId,
     locations,
     locale,
     map,
@@ -337,12 +363,13 @@ function LocationMarkers({
   return null;
 }
 
-function FitLatvia() {
+function FitLatvia({ enabled }: { enabled: boolean }) {
   const map = useMap();
 
   useEffect(() => {
+    if (!enabled) return;
     map.fitBounds(LATVIA_BOUNDS, { padding: [24, 24], maxZoom: 8 });
-  }, [map]);
+  }, [enabled, map]);
 
   return null;
 }
@@ -515,7 +542,12 @@ function LocateMeControl({
   );
 }
 
-export function WeatherMap({ locations, locale, selectedId }: WeatherMapProps) {
+export function WeatherMap({
+  locations,
+  locale,
+  selectedId,
+  focusLocationId,
+}: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
   const markersByIdRef = useRef<MarkersById>(new Map());
@@ -557,11 +589,12 @@ export function WeatherMap({ locations, locale, selectedId }: WeatherMapProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         url={TILE_URLS[theme]}
       />
-      <FitLatvia />
+      <FitLatvia enabled={!focusLocationId} />
       <LocationMarkers
         locations={locations}
         locale={locale}
         selectedId={selectedId}
+        focusLocationId={focusLocationId}
         markersByIdRef={markersByIdRef}
         clusterRef={clusterRef}
       />
