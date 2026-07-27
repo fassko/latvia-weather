@@ -2,9 +2,16 @@
 
 import L from "leaflet";
 import "leaflet.markercluster";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useTranslations } from "next-intl";
+import { findNearestLocation } from "@/lib/weather/coordinates";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import {
   formatMapTemperature,
@@ -29,6 +36,7 @@ const LATVIA_BOUNDS: L.LatLngBoundsExpression = [
   [55.6, 20.7],
   [58.15, 28.4],
 ];
+const LOCATE_ZOOM = 11;
 
 const TILE_URLS: Record<Theme, string> = {
   // Voyager keeps labels/roads readable in light mode (Positron is too washed out).
@@ -41,6 +49,8 @@ interface WeatherMapProps {
   locale: string;
   selectedId?: string;
 }
+
+type MarkersById = Map<string, L.Marker>;
 
 function forecastHref(locale: string, locationId: string): string {
   if (locationId === DEFAULT_LOCATION_ID) return `/${locale}`;
@@ -112,7 +122,12 @@ function LocationMarkers({
   locations,
   locale,
   selectedId,
-}: WeatherMapProps) {
+  markersByIdRef,
+  clusterRef,
+}: WeatherMapProps & {
+  markersByIdRef: MutableRefObject<MarkersById>;
+  clusterRef: MutableRefObject<L.MarkerClusterGroup | null>;
+}) {
   const map = useMap();
   const tConditions = useTranslations("conditions");
   const tMap = useTranslations("map");
@@ -126,6 +141,7 @@ function LocationMarkers({
       spiderfyOnMaxZoom: true,
       disableClusteringAtZoom: 11,
     });
+    const markersById: MarkersById = new Map();
 
     for (const location of locations) {
       if (!Number.isFinite(location.lat) || !Number.isFinite(location.lon)) {
@@ -158,14 +174,32 @@ function LocationMarkers({
       );
 
       cluster.addLayer(marker);
+      markersById.set(location.id, marker);
     }
 
+    markersByIdRef.current = markersById;
+    clusterRef.current = cluster;
     map.addLayer(cluster);
 
     return () => {
       map.removeLayer(cluster);
+      if (clusterRef.current === cluster) {
+        clusterRef.current = null;
+      }
+      markersByIdRef.current = new Map();
     };
-  }, [locations, locale, map, selectedId, tConditions, tMap, tWind, windUnit]);
+  }, [
+    clusterRef,
+    locations,
+    locale,
+    map,
+    markersByIdRef,
+    selectedId,
+    tConditions,
+    tMap,
+    tWind,
+    windUnit,
+  ]);
 
   return null;
 }
@@ -180,9 +214,173 @@ function FitLatvia() {
   return null;
 }
 
+function LocateIcon({ spinning }: { spinning?: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {spinning ? (
+        <path d="M12 3a9 9 0 1 1-9 9" />
+      ) : (
+        <>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          <circle cx="12" cy="12" r="8" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function LocateMeControl({
+  locations,
+  markersByIdRef,
+  clusterRef,
+}: {
+  locations: WeatherLocationPoint[];
+  markersByIdRef: RefObject<MarkersById>;
+  clusterRef: RefObject<L.MarkerClusterGroup | null>;
+}) {
+  const map = useMap();
+  const tMap = useTranslations("map");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const userLayerRef = useRef<L.LayerGroup | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    L.DomEvent.disableClickPropagation(wrap);
+    L.DomEvent.disableScrollPropagation(wrap);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (userLayerRef.current) {
+        map.removeLayer(userLayerRef.current);
+        userLayerRef.current = null;
+      }
+    };
+  }, [map]);
+
+  function showUserPosition(lat: number, lon: number, accuracyMeters: number) {
+    if (userLayerRef.current) {
+      map.removeLayer(userLayerRef.current);
+    }
+
+    const layer = L.layerGroup();
+    const accuracyRadius = Math.min(Math.max(accuracyMeters, 40), 2500);
+
+    L.circle([lat, lon], {
+      radius: accuracyRadius,
+      color: "#0284c7",
+      weight: 1,
+      opacity: 0.45,
+      fillColor: "#38bdf8",
+      fillOpacity: 0.15,
+      interactive: false,
+    }).addTo(layer);
+
+    L.circleMarker([lat, lon], {
+      radius: 7,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: "#0284c7",
+      fillOpacity: 1,
+      interactive: false,
+    }).addTo(layer);
+
+    layer.addTo(map);
+    userLayerRef.current = layer;
+  }
+
+  function openNearestPopup(locationId: string) {
+    const marker = markersByIdRef.current?.get(locationId);
+    const cluster = clusterRef.current;
+    if (!marker || !cluster) return;
+
+    cluster.zoomToShowLayer(marker, () => {
+      marker.openPopup();
+    });
+  }
+
+  function handleLocate() {
+    if (!navigator.geolocation) {
+      setStatus("error");
+      return;
+    }
+
+    setStatus("loading");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const origin = { lat: latitude, lon: longitude };
+        const nearest = findNearestLocation(origin, locations);
+
+        showUserPosition(latitude, longitude, accuracy);
+        map.flyTo([latitude, longitude], LOCATE_ZOOM, { duration: 0.85 });
+
+        if (nearest) {
+          map.once("moveend", () => {
+            openNearestPopup(nearest.id);
+          });
+        }
+
+        setStatus("idle");
+      },
+      () => setStatus("error"),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 15 * 60 * 1000,
+        timeout: 10_000,
+      },
+    );
+  }
+
+  const label =
+    status === "loading"
+      ? tMap("locating")
+      : status === "error"
+        ? tMap("locateError")
+        : tMap("locateMe");
+
+  return (
+    <div ref={wrapRef} className="leaflet-top leaflet-left weather-map-locate-wrap">
+      <div className="leaflet-bar leaflet-control weather-map-locate">
+        <button
+          type="button"
+          className="weather-map-locate__button"
+          onClick={handleLocate}
+          disabled={status === "loading"}
+          title={label}
+          aria-label={label}
+          aria-busy={status === "loading"}
+        >
+          <LocateIcon spinning={status === "loading"} />
+        </button>
+      </div>
+      {status === "error" ? (
+        <p className="weather-map-locate__error" role="status">
+          {tMap("locateError")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function WeatherMap({ locations, locale, selectedId }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
+  const markersByIdRef = useRef<MarkersById>(new Map());
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
 
   useEffect(() => {
     const sync = () => setTheme(getActiveTheme());
@@ -225,6 +423,13 @@ export function WeatherMap({ locations, locale, selectedId }: WeatherMapProps) {
         locations={locations}
         locale={locale}
         selectedId={selectedId}
+        markersByIdRef={markersByIdRef}
+        clusterRef={clusterRef}
+      />
+      <LocateMeControl
+        locations={locations}
+        markersByIdRef={markersByIdRef}
+        clusterRef={clusterRef}
       />
       <span className="sr-only">
         {tMap("markerCount", { count: locations.length })}

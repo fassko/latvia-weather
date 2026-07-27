@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
-import { distanceKm } from "../src/lib/weather/coordinates.ts";
+import { distanceKm, findNearestLocation } from "../src/lib/weather/coordinates.ts";
 import { groupForecastsByDay } from "../src/lib/weather/daily.ts";
 import {
   formatLaiks,
@@ -347,6 +347,21 @@ test("distanceKm returns near-zero for identical coordinates and realistic Riga 
     { lat: 55.8714, lon: 26.5161 },
   );
   assert.ok(rigaToDaugavpils > 185 && rigaToDaugavpils < 200);
+});
+
+test("findNearestLocation returns the closest point and null for empty lists", () => {
+  assert.equal(findNearestLocation({ lat: 56.95, lon: 24.1 }, []), null);
+
+  const nearest = findNearestLocation(
+    { lat: 56.95, lon: 24.1 },
+    [
+      { id: "liepaja", lat: 56.51, lon: 21.01 },
+      { id: "riga", lat: 56.9496, lon: 24.1052 },
+      { id: "daugavpils", lat: 55.87, lon: 26.53 },
+    ],
+  );
+
+  assert.equal(nearest?.id, "riga");
 });
 
 test("getHourlyForecast falls back to last successful data on transient API failure", async () => {

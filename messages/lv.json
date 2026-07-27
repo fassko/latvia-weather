@@ -220,7 +220,10 @@
     "legendCool": "Vēsns",
     "legendMild": "Mērens",
     "legendWarm": "Silts",
-    "legendHot": "Karsts"
+    "legendHot": "Karsts",
+    "locateMe": "Mana atrašanās vieta",
+    "locating": "Meklē atrašanās vietu…",
+    "locateError": "Neizdevās noteikt atrašanās vietu."
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°",

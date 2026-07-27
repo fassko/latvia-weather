@@ -220,7 +220,10 @@
     "legendCool": "Cool",
     "legendMild": "Mild",
     "legendWarm": "Warm",
-    "legendHot": "Hot"
+    "legendHot": "Hot",
+    "locateMe": "My location",
+    "locating": "Finding your location…",
+    "locateError": "Could not find your location."
   },
   "hero": {
     "feelsLike": "Feels like {temp}°",
