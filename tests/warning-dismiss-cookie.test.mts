@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { createDismissedWarningIdsCache } from "../src/lib/weather/dismissed-warning-ids-cache.ts";
 import {
   getWarningDismissKey,
   isWarningDismissed,
@@ -91,13 +92,32 @@ describe("warning dismiss cookie helpers", () => {
       (id) => id !== key && id !== sampleWarning.id,
     );
 
-    assert.deepEqual(
-      toRelevantDismissKeys([sampleWarning], afterShow),
-      [],
-    );
-    assert.equal(
-      isWarningDismissed(sampleWarning, new Set(afterShow)),
-      false,
-    );
+    assert.deepEqual(toRelevantDismissKeys([sampleWarning], afterShow), []);
+    assert.equal(isWarningDismissed(sampleWarning, new Set(afterShow)), false);
+  });
+});
+
+describe("dismissed warning ids cache", () => {
+  it("re-reads after invalidate when the cookie is cleared to empty", () => {
+    const cache = createDismissedWarningIdsCache();
+    const key = getWarningDismissKey(sampleWarning);
+    const encoded = encodeURIComponent(key);
+
+    assert.deepEqual(cache.read(encoded), [key]);
+
+    // Bug: invalidating with "" made the next empty-cookie read look unchanged
+    // and return the stale dismissed key, so Show appeared to do nothing.
+    cache.invalidate();
+    assert.deepEqual(cache.read(""), []);
+  });
+
+  it("returns cached ids when the raw cookie value is unchanged", () => {
+    const cache = createDismissedWarningIdsCache();
+    const encoded = encodeURIComponent("a,b");
+    const first = cache.read(encoded);
+    const second = cache.read(encoded);
+
+    assert.equal(first, second);
+    assert.deepEqual(second, ["a", "b"]);
   });
 });
