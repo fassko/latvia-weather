@@ -31,13 +31,15 @@ export function findNearestLocation<T extends { lat: number; lon: number }>(
   origin: { lat: number; lon: number },
   locations: readonly T[],
 ): T | null {
-  if (locations.length === 0) return null;
+  let nearest: T | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
 
-  let nearest = locations[0];
-  let nearestDistance = distanceKm(origin, nearest);
-
-  for (let index = 1; index < locations.length; index += 1) {
+  for (let index = 0; index < locations.length; index += 1) {
     const candidate = locations[index];
+    if (!Number.isFinite(candidate.lat) || !Number.isFinite(candidate.lon)) {
+      continue;
+    }
+
     const distance = distanceKm(origin, candidate);
     if (distance < nearestDistance) {
       nearest = candidate;
