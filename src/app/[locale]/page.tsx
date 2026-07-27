@@ -220,9 +220,12 @@ export default async function Home({ params, searchParams }: HomeProps) {
             error: tAssistant("error"),
             close: tAssistant("close"),
             open: tAssistant("open"),
+            sourceCaption:
+              locale === "lv"
+                ? `Balstīts uz šīs lietotnes LVĢMC prognozi — ${data.location.name}.`
+                : `Based on this app’s LVGMC forecast — ${data.location.name}.`,
             examples: [
               tAssistant("examples.weekend"),
-              tAssistant("examples.motorcycle"),
               tAssistant("examples.clothes", { location: data.location.name }),
               tAssistant("examples.rain", { location: data.location.name }),
             ],

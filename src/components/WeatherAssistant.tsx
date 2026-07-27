@@ -1,6 +1,12 @@
 "use client";
 
-import { DefaultChatTransport, isTextUIPart, type UIMessage } from "ai";
+import {
+  DefaultChatTransport,
+  getToolName,
+  isTextUIPart,
+  isToolUIPart,
+  type UIMessage,
+} from "ai";
 import { useChat } from "@ai-sdk/react";
 import {
   useEffect,
@@ -28,6 +34,7 @@ interface WeatherAssistantProps {
     examples: string[];
     close: string;
     open: string;
+    sourceCaption: string;
   };
 }
 
@@ -79,6 +86,38 @@ function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
     });
 }
 
+function isSourceCaption(text: string): boolean {
+  return /^(source|avots):\s+/i.test(text);
+}
+
+function isForecastToolOutput(output: unknown): output is {
+  sourceCaption?: string;
+  location?: { name?: string };
+} {
+  return typeof output === "object" && output !== null;
+}
+
+function getForecastSourceCaption(message: UIMessage): string | null {
+  for (const part of message.parts) {
+    if (!isToolUIPart(part)) continue;
+
+    const toolName = getToolName(part);
+    if (
+      toolName !== "get_current_page_forecast" &&
+      toolName !== "get_weather_forecast"
+    ) {
+      continue;
+    }
+
+    if (!("output" in part) || !isForecastToolOutput(part.output)) continue;
+    if (typeof part.output.sourceCaption === "string") {
+      return part.output.sourceCaption;
+    }
+  }
+
+  return null;
+}
+
 function RichWeatherText({ text }: { text: string }) {
   const lines = text.trim().split("\n");
   const blocks: ReactNode[] = [];
@@ -111,16 +150,25 @@ function RichWeatherText({ text }: { text: string }) {
       }
 
       index -= 1;
+      const weatherItems = items.filter((item) => !isSourceCaption(item));
+
       blocks.push(
-        <ul key={`list-${index}`} className="space-y-1.5">
-          {items.map((item, itemIndex) => (
-            <li key={`${item}-${itemIndex}`} className="flex gap-2">
-              <span className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[#477dd8]" />
-              <span>{renderInlineMarkdown(item, `list-${index}-${itemIndex}`)}</span>
-            </li>
-          ))}
-        </ul>,
+        <div key={`list-${index}`} className="space-y-2">
+          {weatherItems.length > 0 ? (
+            <div className="space-y-2">
+              {weatherItems.map((item, itemIndex) => (
+                <p key={`${item}-${itemIndex}`}>
+                  {renderInlineMarkdown(item, `list-${index}-${itemIndex}`)}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>,
       );
+      continue;
+    }
+
+    if (isSourceCaption(trimmed)) {
       continue;
     }
 
@@ -154,6 +202,24 @@ function getMessageText(message: UIMessage) {
   );
 }
 
+function getAssistantErrorMessage(
+  error: Error | undefined,
+  fallback: string,
+): string {
+  if (!error?.message) return fallback;
+
+  try {
+    const parsed = JSON.parse(error.message) as { error?: unknown };
+    if (typeof parsed.error === "string" && parsed.error.trim()) {
+      return parsed.error;
+    }
+  } catch {
+    // The AI SDK also uses plain text error messages for stream errors.
+  }
+
+  return error.message;
+}
+
 function AppWeatherIcon({ className = "" }: { className?: string }) {
   return (
     <span
@@ -183,6 +249,7 @@ export function WeatherAssistant({
   );
   const { messages, sendMessage, status, stop, error } = useChat({ transport });
   const isStreaming = status === "submitted" || status === "streaming";
+  const errorMessage = getAssistantErrorMessage(error, labels.error);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -320,6 +387,10 @@ export function WeatherAssistant({
           {messages.map((message) => {
             const text = getMessageText(message);
             if (!text) return null;
+            const sourceCaption =
+              message.role === "assistant"
+                ? (getForecastSourceCaption(message) ?? labels.sourceCaption)
+                : null;
 
             return (
               <div
@@ -334,7 +405,12 @@ export function WeatherAssistant({
                   {message.role === "user" ? labels.user : labels.assistant}
                 </p>
                 {message.role === "assistant" ? (
-                  <RichWeatherText text={text} />
+                  <>
+                    <RichWeatherText text={text} />
+                    <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                      {sourceCaption}
+                    </p>
+                  </>
                 ) : (
                   <p className="whitespace-pre-wrap">{text}</p>
                 )}
@@ -349,7 +425,7 @@ export function WeatherAssistant({
           ) : null}
           {error ? (
             <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
-              {labels.error}
+              {errorMessage}
             </p>
           ) : null}
         </div>
