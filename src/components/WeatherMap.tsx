@@ -29,7 +29,8 @@ const LATVIA_BOUNDS: L.LatLngBoundsExpression = [
 ];
 
 const TILE_URLS: Record<Theme, string> = {
-  light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+  // Voyager keeps labels/roads readable in light mode (Positron is too washed out).
+  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
   dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
 };
 
