@@ -117,7 +117,27 @@ function createPopupContent(
 
   const wind = document.createElement("p");
   wind.className = "weather-map-popup__wind";
-  wind.textContent = `${labels.wind} ${formatWindSpeed(location.windSpeed, windUnit)} · ${labels.windDirection}`;
+
+  const windArrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  windArrow.setAttribute("aria-hidden", "true");
+  windArrow.setAttribute("viewBox", "0 0 16 16");
+  windArrow.setAttribute("fill", "none");
+  windArrow.setAttribute("class", "weather-map-popup__wind-arrow");
+  windArrow.style.transform = `rotate(${location.windDirection + 180}deg)`;
+
+  const windArrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  windArrowPath.setAttribute("d", "M8 2v10M8 2L5 7M8 2l3 5");
+  windArrowPath.setAttribute("stroke", "currentColor");
+  windArrowPath.setAttribute("stroke-width", "1.75");
+  windArrowPath.setAttribute("stroke-linecap", "round");
+  windArrowPath.setAttribute("stroke-linejoin", "round");
+  windArrow.appendChild(windArrowPath);
+
+  const windText = document.createElement("span");
+  windText.textContent = `${labels.wind} ${formatWindSpeed(location.windSpeed, windUnit)} · ${labels.windDirection}`;
+
+  wind.appendChild(windArrow);
+  wind.appendChild(windText);
   root.appendChild(wind);
 
   const today = document.createElement("p");
