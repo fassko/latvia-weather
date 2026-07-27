@@ -302,7 +302,7 @@ function LocationMarkers({
             },
             windUnit,
           ),
-        { maxWidth: 280 },
+        { maxWidth: 260, className: "weather-map-popup-pane" },
       );
 
       cluster.addLayer(marker);
