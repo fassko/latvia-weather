@@ -223,16 +223,17 @@ function createClusterIcon(
     temperatureCount > 0 ? temperatureSum / temperatureCount : 15;
   const fill = temperatureMarkerColor(averageTemperature);
   const text = temperatureTextColor(averageTemperature);
+  const tempLabel = formatMapTemperature(averageTemperature);
   const sizeClass =
     childCount < 10
       ? "weather-map-cluster--small"
       : childCount < 25
         ? "weather-map-cluster--medium"
         : "weather-map-cluster--large";
-  const dimension = childCount < 10 ? 40 : childCount < 25 ? 48 : 56;
+  const dimension = childCount < 10 ? 48 : childCount < 25 ? 54 : 60;
 
   return L.divIcon({
-    html: `<div class="weather-map-cluster__core" style="background:${fill};color:${text};box-shadow:0 0 0 6px ${fill}33">${childCount}</div>`,
+    html: `<div class="weather-map-cluster__core" style="background:${fill};color:${text};box-shadow:0 0 0 6px ${fill}33"><span class="weather-map-cluster__temp">${tempLabel}</span><span class="weather-map-cluster__count">${childCount}</span></div>`,
     className: `weather-map-cluster ${sizeClass}`,
     iconSize: L.point(dimension, dimension),
   });
