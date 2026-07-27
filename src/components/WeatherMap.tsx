@@ -39,9 +39,10 @@ const LATVIA_BOUNDS: L.LatLngBoundsExpression = [
 const LOCATE_ZOOM = 11;
 
 const TILE_URLS: Record<Theme, string> = {
-  // Voyager keeps labels/roads readable in light mode (Positron is too washed out).
+  // Voyager stays readable; dark mode reuses it with an invert filter in CSS
+  // because CARTO Dark Matter is too low-contrast for roads/labels.
   light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  dark: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
 };
 
 interface WeatherMapProps {
