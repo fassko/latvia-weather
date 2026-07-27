@@ -68,13 +68,51 @@ function NavLink({
       href={href}
       className={
         isActive
-          ? "rounded-md bg-sky-100 px-2.5 py-1.5 font-medium text-sky-800 dark:bg-sky-950/80 dark:text-sky-200"
-          : "rounded-md px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100"
+          ? "inline-flex items-center gap-1.5 rounded-md bg-sky-100 px-2.5 py-1.5 font-medium text-sky-800 dark:bg-sky-950/80 dark:text-sky-200"
+          : "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100"
       }
       aria-current={isActive ? "page" : undefined}
     >
-      {label}
+      {href === "/" ? <HomeIcon /> : <MapIcon />}
+      <span>{label}</span>
     </Link>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 10.5 12 4l8 6.5" />
+      <path d="M6.5 9.75V20h11V9.75" />
+      <path d="M10 20v-6h4v6" />
+    </svg>
+  );
+}
+
+function MapIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 4.5 3.75 6.5v13l5.25-2 6 2 5.25-2v-13L15 6.5l-6-2Z" />
+      <path d="M9 4.5v13M15 6.5v13" />
+    </svg>
   );
 }
 
