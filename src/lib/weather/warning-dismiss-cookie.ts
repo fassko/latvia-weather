@@ -46,7 +46,13 @@ export function getDismissedWarningIdsFromDocument(): string[] {
 
 export function setDismissedWarningIdsCookie(ids: string[]): void {
   const value = serializeDismissedWarningIds(ids);
-  document.cookie = `${WARNING_DISMISS_COOKIE_NAME}=${encodeURIComponent(value)};path=/;max-age=${WARNING_DISMISS_COOKIE_MAX_AGE};SameSite=Lax`;
+  if (value) {
+    document.cookie = `${WARNING_DISMISS_COOKIE_NAME}=${encodeURIComponent(value)};path=/;max-age=${WARNING_DISMISS_COOKIE_MAX_AGE};SameSite=Lax`;
+  } else {
+    // Delete instead of writing an empty value — an empty cookie string
+    // collides with cache invalidation sentinels that also use "".
+    document.cookie = `${WARNING_DISMISS_COOKIE_NAME}=;path=/;max-age=0;SameSite=Lax`;
+  }
   window.dispatchEvent(new Event(WARNING_DISMISS_CHANGE_EVENT));
 }
 
