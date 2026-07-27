@@ -108,9 +108,18 @@ body {
 }
 
 .weather-map-popup__wind {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   margin: 0.25rem 0 0;
   font-size: 0.8rem;
   color: #475569;
+}
+
+.weather-map-popup__wind-arrow {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
 }
 
 .weather-map-popup__today {
