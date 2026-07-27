@@ -41,7 +41,12 @@ body {
 /* Leaflet weather map markers */
 .weather-map {
   z-index: 0;
-  background: #e2e8f0;
+  background: #dbe4ee;
+}
+
+.weather-map .leaflet-tile-pane {
+  /* Slight bump so pale basemap labels stay legible under markers */
+  filter: contrast(1.06) saturate(1.05);
 }
 
 .dark .weather-map {
