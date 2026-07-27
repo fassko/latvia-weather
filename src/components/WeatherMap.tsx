@@ -239,6 +239,19 @@ function createClusterIcon(
   });
 }
 
+function openClusteredMarkerPopup(
+  map: L.Map,
+  cluster: L.MarkerClusterGroup,
+  marker: L.Marker,
+) {
+  if (!map.hasLayer(cluster)) return;
+
+  cluster.zoomToShowLayer(marker, () => {
+    if (!map.hasLayer(cluster)) return;
+    marker.openPopup();
+  });
+}
+
 function LocationMarkers({
   locations,
   locale,
@@ -315,6 +328,7 @@ function LocationMarkers({
     markersByIdRef.current = markersById;
     clusterRef.current = cluster;
     map.addLayer(cluster);
+    let handleFocusMoveEnd: (() => void) | null = null;
 
     if (focusLocationId) {
       const focusLocation = locations.find(
@@ -331,15 +345,17 @@ function LocationMarkers({
         map.flyTo([focusLocation.lat, focusLocation.lon], LOCATE_ZOOM, {
           duration: 0.75,
         });
-        map.once("moveend", () => {
-          cluster.zoomToShowLayer(focusMarker, () => {
-            focusMarker.openPopup();
-          });
-        });
+        handleFocusMoveEnd = () => {
+          openClusteredMarkerPopup(map, cluster, focusMarker);
+        };
+        map.once("moveend", handleFocusMoveEnd);
       }
     }
 
     return () => {
+      if (handleFocusMoveEnd) {
+        map.off("moveend", handleFocusMoveEnd);
+      }
       map.removeLayer(cluster);
       if (clusterRef.current === cluster) {
         clusterRef.current = null;
@@ -470,9 +486,7 @@ function LocateMeControl({
     const cluster = clusterRef.current;
     if (!marker || !cluster) return;
 
-    cluster.zoomToShowLayer(marker, () => {
-      marker.openPopup();
-    });
+    openClusteredMarkerPopup(map, cluster, marker);
   }
 
   function handleLocate() {
