@@ -171,22 +171,42 @@ body {
 
 .weather-map-cluster__core {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.05rem;
   width: 100%;
   height: 100%;
   border-radius: 999px;
-  font-size: 0.8rem;
   font-weight: 700;
   line-height: 1;
 }
 
-.weather-map-cluster--small .weather-map-cluster__core {
-  font-size: 0.75rem;
+.weather-map-cluster__temp {
+  font-size: 0.72rem;
+  letter-spacing: -0.02em;
 }
 
-.weather-map-cluster--large .weather-map-cluster__core {
-  font-size: 0.9rem;
+.weather-map-cluster__count {
+  font-size: 0.62rem;
+  font-weight: 650;
+  opacity: 0.9;
+}
+
+.weather-map-cluster--medium .weather-map-cluster__temp {
+  font-size: 0.78rem;
+}
+
+.weather-map-cluster--medium .weather-map-cluster__count {
+  font-size: 0.66rem;
+}
+
+.weather-map-cluster--large .weather-map-cluster__temp {
+  font-size: 0.84rem;
+}
+
+.weather-map-cluster--large .weather-map-cluster__count {
+  font-size: 0.7rem;
 }
 
 .dark .leaflet-container {
