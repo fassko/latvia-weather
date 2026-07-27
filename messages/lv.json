@@ -221,6 +221,11 @@
     "legendMild": "Mērens",
     "legendWarm": "Silts",
     "legendHot": "Karsts",
+    "legendColdRange": "≤ 0°C",
+    "legendCoolRange": "no 1° līdz 10°C",
+    "legendMildRange": "no 11° līdz 20°C",
+    "legendWarmRange": "no 21° līdz 25°C",
+    "legendHotRange": "≥ 26°C",
     "locateMe": "Mana atrašanās vieta",
     "locating": "Meklē atrašanās vietu…",
     "locateError": "Neizdevās noteikt atrašanās vietu."

@@ -7,6 +7,10 @@ import { routing, type Locale } from "@/i18n/routing";
 import { getLocationPoints } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { DEFAULT_LOCATION_ID, resolveLocationId } from "@/lib/weather/locations";
+import {
+  TEMPERATURE_LEGEND_BANDS,
+  type TemperatureLegendBandId,
+} from "@/lib/weather/map-temp";
 import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
@@ -107,16 +111,20 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
 
         <div
           className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
-          aria-hidden="true"
+          role="list"
+          aria-label={t("legend")}
         >
           <span className="font-medium text-slate-600 dark:text-slate-300">
             {t("legend")}
           </span>
-          <LegendSwatch color="#2563eb" label={t("legendCold")} />
-          <LegendSwatch color="#0ea5e9" label={t("legendCool")} />
-          <LegendSwatch color="#22c55e" label={t("legendMild")} />
-          <LegendSwatch color="#eab308" label={t("legendWarm")} />
-          <LegendSwatch color="#ef4444" label={t("legendHot")} />
+          {TEMPERATURE_LEGEND_BANDS.map((band) => (
+            <LegendSwatch
+              key={band.id}
+              color={band.color}
+              label={t(legendLabelKey(band.id))}
+              range={t(legendRangeKey(band.id))}
+            />
+          ))}
         </div>
 
         <footer className="pt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -138,14 +146,79 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   );
 }
 
-function LegendSwatch({ color, label }: { color: string; label: string }) {
+function legendLabelKey(
+  id: TemperatureLegendBandId,
+):
+  | "legendCold"
+  | "legendCool"
+  | "legendMild"
+  | "legendWarm"
+  | "legendHot" {
+  switch (id) {
+    case "cold":
+      return "legendCold";
+    case "cool":
+      return "legendCool";
+    case "mild":
+      return "legendMild";
+    case "warm":
+      return "legendWarm";
+    case "hot":
+      return "legendHot";
+  }
+}
+
+function legendRangeKey(
+  id: TemperatureLegendBandId,
+):
+  | "legendColdRange"
+  | "legendCoolRange"
+  | "legendMildRange"
+  | "legendWarmRange"
+  | "legendHotRange" {
+  switch (id) {
+    case "cold":
+      return "legendColdRange";
+    case "cool":
+      return "legendCoolRange";
+    case "mild":
+      return "legendMildRange";
+    case "warm":
+      return "legendWarmRange";
+    case "hot":
+      return "legendHotRange";
+  }
+}
+
+function LegendSwatch({
+  color,
+  label,
+  range,
+}: {
+  color: string;
+  label: string;
+  range: string;
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <span
+      role="listitem"
+      tabIndex={0}
+      title={`${label}: ${range}`}
+      aria-label={`${label}: ${range}`}
+      className="group relative inline-flex cursor-help items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
+    >
       <span
         className="inline-block h-2.5 w-2.5 rounded-full"
         style={{ backgroundColor: color }}
+        aria-hidden="true"
       />
       {label}
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
+      >
+        {range}
+      </span>
     </span>
   );
 }

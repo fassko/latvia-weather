@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   formatMapTemperature,
+  TEMPERATURE_LEGEND_BANDS,
   temperatureMarkerColor,
   temperatureTextColor,
 } from "../src/lib/weather/map-temp.ts";
@@ -23,5 +24,11 @@ describe("map temperature helpers", () => {
     assert.equal(temperatureTextColor(-2), "#ffffff");
     assert.equal(temperatureTextColor(12), "#0f172a");
     assert.equal(temperatureTextColor(31), "#ffffff");
+  });
+
+  it("defines five contiguous legend bands", () => {
+    assert.equal(TEMPERATURE_LEGEND_BANDS.length, 5);
+    assert.equal(TEMPERATURE_LEGEND_BANDS[0]?.maxC, 0);
+    assert.equal(TEMPERATURE_LEGEND_BANDS.at(-1)?.minC, 26);
   });
 });
