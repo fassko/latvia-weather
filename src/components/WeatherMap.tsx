@@ -345,16 +345,11 @@ function LocateMeControl({
   const map = useMap();
   const tMap = useTranslations("map");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
-  const [corner, setCorner] = useState<HTMLElement | null>(null);
   const userLayerRef = useRef<L.LayerGroup | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const controlCorner = map
-      .getContainer()
-      .querySelector<HTMLElement>(".leaflet-top.leaflet-left");
-    setCorner(controlCorner);
-  }, [map]);
+  const corner = map
+    .getContainer()
+    .querySelector<HTMLElement>(".leaflet-top.leaflet-left");
 
   useEffect(() => {
     const wrap = wrapRef.current;
