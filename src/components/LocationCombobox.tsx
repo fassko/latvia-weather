@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { findNearestLocation } from "@/lib/weather/coordinates";
+import { getBrowserPosition } from "@/lib/weather/geolocation";
 import {
   compareLocationsBySearchRank,
   normalizeForLocationSearch,
@@ -176,16 +177,9 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     setError(false);
 
     try {
-      const positionPromise = new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: false,
-          maximumAge: 15 * 60 * 1000,
-          timeout: 10_000,
-        });
-      });
       const [availableLocations, position] = await Promise.all([
         getLocations(),
-        positionPromise,
+        getBrowserPosition(),
       ]);
       const nearest = findNearestLocation(
         { lat: position.coords.latitude, lon: position.coords.longitude },

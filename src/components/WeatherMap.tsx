@@ -13,6 +13,7 @@ import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import { useTranslations } from "next-intl";
 import { findNearestLocation } from "@/lib/weather/coordinates";
+import { getBrowserPosition } from "@/lib/weather/geolocation";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import {
   formatMapTemperature,
@@ -489,7 +490,7 @@ function LocateMeControl({
     openClusteredMarkerPopup(map, cluster, marker);
   }
 
-  function handleLocate() {
+  async function handleLocate() {
     if (!navigator.geolocation) {
       setStatus("error");
       return;
@@ -497,30 +498,25 @@ function LocateMeControl({
 
     setStatus("loading");
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        const origin = { lat: latitude, lon: longitude };
-        const nearest = findNearestLocation(origin, locations);
+    try {
+      const position = await getBrowserPosition();
+      const { latitude, longitude, accuracy } = position.coords;
+      const origin = { lat: latitude, lon: longitude };
+      const nearest = findNearestLocation(origin, locations);
 
-        showUserPosition(latitude, longitude, accuracy);
-        map.flyTo([latitude, longitude], LOCATE_ZOOM, { duration: 0.85 });
+      showUserPosition(latitude, longitude, accuracy);
+      map.flyTo([latitude, longitude], LOCATE_ZOOM, { duration: 0.85 });
 
-        if (nearest) {
-          map.once("moveend", () => {
-            openNearestPopup(nearest.id);
-          });
-        }
+      if (nearest) {
+        map.once("moveend", () => {
+          openNearestPopup(nearest.id);
+        });
+      }
 
-        setStatus("idle");
-      },
-      () => setStatus("error"),
-      {
-        enableHighAccuracy: false,
-        maximumAge: 15 * 60 * 1000,
-        timeout: 10_000,
-      },
-    );
+      setStatus("idle");
+    } catch {
+      setStatus("error");
+    }
   }
 
   const label =
