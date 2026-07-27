@@ -7,7 +7,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteUrl();
   const lastModified = new Date();
 
-  return routing.locales.flatMap((locale) =>
+  const mapEntries = routing.locales.map((locale) => ({
+    url: `${baseUrl}/${locale}/map`,
+    lastModified,
+    changeFrequency: "hourly" as const,
+    alternates: {
+      languages: Object.fromEntries(
+        routing.locales.map((altLocale) => [
+          altLocale,
+          `${baseUrl}/${altLocale}/map`,
+        ]),
+      ),
+    },
+  }));
+
+  const locationEntries = routing.locales.flatMap((locale) =>
     LOCATION_POINT_IDS.map((locationId) => {
       const query =
         locationId === DEFAULT_LOCATION_ID
@@ -20,10 +34,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "hourly" as const,
         alternates: {
           languages: Object.fromEntries(
-            routing.locales.map((altLocale) => [altLocale, `${baseUrl}/${altLocale}${query}`]),
+            routing.locales.map((altLocale) => [
+              altLocale,
+              `${baseUrl}/${altLocale}${query}`,
+            ]),
           ),
         },
       };
     }),
   );
+
+  return [...mapEntries, ...locationEntries];
 }

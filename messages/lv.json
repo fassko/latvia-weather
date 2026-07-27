@@ -203,7 +203,23 @@
   },
   "nav": {
     "brand": "Laika prognoze",
-    "home": "Sākums"
+    "home": "Sākums",
+    "map": "Karte"
+  },
+  "map": {
+    "title": "Laika karte",
+    "description": "Pašreizējais laiks visās Latvijas prognožu vietās kartē",
+    "subtitle": "Pašreizējie apstākļi {count, plural, one {# vietā} other {# vietās}} Latvijā. Pieskaries punktam, lai uzzinātu vairāk.",
+    "range": "Tagad: no {min}° līdz {max}°",
+    "loading": "Ielādē karti…",
+    "openForecast": "Atvērt prognozi",
+    "markerCount": "{count, plural, one {# laika prognozes vieta} other {# laika prognozes vietas}} kartē",
+    "legend": "Temperatūra",
+    "legendCold": "Auksts",
+    "legendCool": "Vēsns",
+    "legendMild": "Mērens",
+    "legendWarm": "Silts",
+    "legendHot": "Karsts"
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°",
