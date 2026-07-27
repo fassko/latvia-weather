@@ -85,7 +85,7 @@ function getLocaleInstructions(locale: string): string {
       "Answer only in Latvian.",
       "Do not use English labels, recommendation words, or mixed-language phrases.",
       'Translate recommendation labels: use "Labi", "Izvairies", "Labākais laiks", "Paņem lietussargu", and "Nav nepieciešams lietussargs" instead of English.',
-      'Use "Laiks: Eiropa/Rīga" instead of "Time (Europe/Riga)".',
+      'Use "pēc Latvijas laika" for time context. Do not write "Eiropa/Rīga" in user-facing answers.',
     ].join(" ");
   }
 
@@ -240,7 +240,7 @@ export async function POST(request: Request) {
         "If forecast tool data is unavailable, say that the app forecast could not be loaded instead of guessing.",
         "The app UI renders the forecast source caption from tool output. Do not write a source line yourself.",
         getLocaleInstructions(locale),
-        "Keep answers practical and cite forecast times using Europe/Riga local context.",
+        "Keep answers practical and cite forecast times as Latvia local time. Treat Europe/Riga as an internal timezone identifier only; do not write it in user-facing answers.",
         "Format answers as compact Markdown: start with one relevant weather emoji and a bold one-line summary, then use two or three short paragraphs for timing, risk, and advice.",
         "Use **bold** for important temperatures, rain chances, wind, and recommendation words.",
         "When discussing a week or multi-day forecast, mention Saturday/Sunday or sestdiena/svētdiena by name so the UI can highlight weekend days.",
