@@ -221,6 +221,11 @@
     "legendMild": "Mild",
     "legendWarm": "Warm",
     "legendHot": "Hot",
+    "legendColdRange": "≤ 0°C",
+    "legendCoolRange": "1° to 10°C",
+    "legendMildRange": "11° to 20°C",
+    "legendWarmRange": "21° to 25°C",
+    "legendHotRange": "≥ 26°C",
     "locateMe": "My location",
     "locating": "Finding your location…",
     "locateError": "Could not find your location."

@@ -176,7 +176,7 @@ body {
 }
 
 /* Locate control sits under Leaflet zoom (+/-) */
-.weather-map-locate-wrap {
+.weather-map .weather-map-locate-wrap.leaflet-top {
   top: 76px;
   z-index: 1000;
   display: flex;
