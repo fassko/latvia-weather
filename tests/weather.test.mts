@@ -364,6 +364,18 @@ test("findNearestLocation returns the closest point and null for empty lists", (
   assert.equal(nearest?.id, "riga");
 });
 
+test("findNearestLocation ignores locations without usable coordinates", () => {
+  const nearest = findNearestLocation(
+    { lat: 56.95, lon: 24.1 },
+    [
+      { id: "missing", lat: Number.NaN, lon: Number.NaN },
+      { id: "riga", lat: 56.9496, lon: 24.1052 },
+    ],
+  );
+
+  assert.equal(nearest?.id, "riga");
+});
+
 test("getHourlyForecast falls back to last successful data on transient API failure", async () => {
   const rawForecast = [
     {

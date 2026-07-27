@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { distanceKm } from "@/lib/weather/coordinates";
+import { findNearestLocation } from "@/lib/weather/coordinates";
 import {
   compareLocationsBySearchRank,
   normalizeForLocationSearch,
@@ -81,6 +81,16 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
       setLoading(false);
     }
   }, [locations, loading]);
+
+  const getLocations = useCallback(async () => {
+    if (locations !== null) return locations;
+
+    const response = await fetch("/api/locations", { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to load locations");
+    const data = (await response.json()) as WeatherLocationPoint[];
+    setLocations(data);
+    return data;
+  }, [locations]);
 
   const normalizedQuery = normalizeForLocationSearch(query.trim());
   const allLocations = locations ?? [];
@@ -166,38 +176,26 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     setError(false);
 
     try {
-      let availableLocations = locations;
-
-      if (availableLocations === null) {
-        const response = await fetch("/api/locations", { cache: "no-store" });
-        if (!response.ok) throw new Error("Failed to load locations");
-        availableLocations = (await response.json()) as WeatherLocationPoint[];
-        setLocations(availableLocations);
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!availableLocations || availableLocations.length === 0) {
-            setGeoStatus("error");
-            return;
-          }
-
-          const currentPosition = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          };
-          const nearest = availableLocations.reduce((best, location) => {
-            const bestDistance = distanceKm(currentPosition, best);
-            const locationDistance = distanceKm(currentPosition, location);
-            return locationDistance < bestDistance ? location : best;
-          }, availableLocations[0]);
-
-          setGeoStatus("idle");
-          selectLocation(nearest.id);
-        },
-        () => setGeoStatus("error"),
-        { enableHighAccuracy: false, maximumAge: 15 * 60 * 1000, timeout: 10_000 },
+      const positionPromise = new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          maximumAge: 15 * 60 * 1000,
+          timeout: 10_000,
+        });
+      });
+      const [availableLocations, position] = await Promise.all([
+        getLocations(),
+        positionPromise,
+      ]);
+      const nearest = findNearestLocation(
+        { lat: position.coords.latitude, lon: position.coords.longitude },
+        availableLocations,
       );
+
+      if (!nearest) throw new Error("No locations available");
+
+      setGeoStatus("idle");
+      selectLocation(nearest.id);
     } catch {
       setGeoStatus("error");
     }
