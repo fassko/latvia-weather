@@ -57,11 +57,10 @@ function formatForecastDay(locale: string, offsetHours: number): string {
   const time = getInitialForecastTime();
   time.setHours(time.getHours() + offsetHours);
 
+  // Weekday-only keeps day chips readable on narrow phone timelines.
   return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
     timeZone: "Europe/Riga",
     weekday: "short",
-    day: "numeric",
-    month: "short",
   }).format(time);
 }
 
@@ -176,7 +175,7 @@ function ForecastTimeControl({
         </button>
         <button
           type="button"
-          className="weather-map-time-control__stepper"
+          className="weather-map-time-control__stepper weather-map-time-control__stepper--back"
           onClick={() => onChange(offsetHours - 1)}
           disabled={!canStepBack}
           aria-label={tMap("forecastPreviousHour")}
@@ -226,6 +225,7 @@ function ForecastTimeControl({
                 key={hourOffset}
                 className="weather-map-time-control__hour"
                 style={getTimelineTickStyle(hourOffset)}
+                data-dense={hourOffset % 12 === 0 ? undefined : "true"}
                 data-edge={
                   hourOffset === 0
                     ? "start"
@@ -242,7 +242,7 @@ function ForecastTimeControl({
         </div>
         <button
           type="button"
-          className="weather-map-time-control__stepper"
+          className="weather-map-time-control__stepper weather-map-time-control__stepper--forward"
           onClick={() => onChange(offsetHours + 1)}
           disabled={!canStepForward}
           aria-label={tMap("forecastNextHour")}
@@ -355,7 +355,7 @@ export function WeatherMapSection({
 
   return (
     <section className="flex w-full flex-col gap-2">
-      <div className="h-[min(58vh,calc(100vh-20rem),42rem)] min-h-[20rem] w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm sm:min-h-[24rem] dark:border-slate-800">
+      <div className="h-[min(52vh,calc(100dvh-22rem),42rem)] min-h-[16rem] w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm sm:h-[min(58vh,calc(100vh-20rem),42rem)] sm:min-h-[24rem] dark:border-slate-800">
         <WeatherMap
           locations={displayLocations}
           locale={locale}

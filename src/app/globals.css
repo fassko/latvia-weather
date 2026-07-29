@@ -455,7 +455,7 @@ body {
 }
 
 .weather-map-time-control__value {
-  min-width: 9rem;
+  min-width: 0;
   text-align: right;
   color: #0f172a;
   font-size: 0.78rem;
@@ -627,6 +627,75 @@ body {
   height: 0.24rem;
   background: currentColor;
   opacity: 0.42;
+}
+
+@media (max-width: 639px) {
+  .weather-map-time-control {
+    padding: 0.65rem 0.7rem 0.55rem;
+  }
+
+  .weather-map-time-control__controls {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "timeline timeline timeline"
+      "back play forward";
+    gap: 0.55rem 0.4rem;
+  }
+
+  .weather-map-time-control__play {
+    grid-area: play;
+    width: 100%;
+    min-width: 0;
+    height: 2.5rem;
+    font-size: 0.82rem;
+  }
+
+  .weather-map-time-control__stepper--back {
+    grid-area: back;
+  }
+
+  .weather-map-time-control__stepper--forward {
+    grid-area: forward;
+  }
+
+  .weather-map-time-control__stepper {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.25rem;
+  }
+
+  .weather-map-time-control__timeline {
+    grid-area: timeline;
+    padding: 1.7rem 0 1.15rem;
+  }
+
+  .weather-map-time-control__day {
+    padding: 0.28rem 0.42rem;
+    font-size: 0.68rem;
+  }
+
+  .weather-map-time-control__hours {
+    height: 1.05rem;
+    font-size: 0.58rem;
+  }
+
+  .weather-map-time-control__hour[data-dense="true"] {
+    font-size: 0;
+  }
+
+  .weather-map-time-control__hour[data-dense="true"] .weather-map-time-control__tick {
+    height: 0.18rem;
+    opacity: 0.28;
+  }
+
+  .weather-map-time-control__status {
+    min-height: 1.1rem;
+    margin-top: 0.2rem;
+  }
+
+  .weather-map-time-control__slider {
+    height: 1.4rem;
+  }
 }
 
 .dark .weather-map-time-control {

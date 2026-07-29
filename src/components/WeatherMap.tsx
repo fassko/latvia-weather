@@ -347,7 +347,7 @@ function LocationMarkers({
     const windDirectionByMarker = new WeakMap<L.Marker, number>();
     const cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
-      maxClusterRadius: 50,
+      maxClusterRadius: (zoom) => (zoom <= 8 ? 72 : zoom <= 10 ? 56 : 44),
       spiderfyOnMaxZoom: true,
       disableClusteringAtZoom: 11,
       iconCreateFunction: (markerCluster) =>

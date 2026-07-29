@@ -92,9 +92,9 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         locationName={selected?.name ?? t("title")}
         active="map"
       />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-5 pb-8 sm:px-6">
-        <header className="flex flex-col gap-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 pt-4 pb-[max(1.5rem,calc(0.75rem+env(safe-area-inset-bottom)))] sm:gap-4 sm:px-6 sm:pt-5 sm:pb-[max(2rem,calc(1rem+env(safe-area-inset-bottom)))]">
+        <header className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-100">
             {t("title")}
           </h1>
           <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
