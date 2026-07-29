@@ -18,7 +18,7 @@ import type { HourlyForecast } from "@/lib/weather/types";
 
 export const maxDuration = 30;
 
-const model = process.env.AI_MODEL ?? "openai/gpt-5-mini";
+const model = process.env.AI_MODEL ?? "deepseek/deepseek-v4-flash";
 
 function getMaxAssistantSteps(): number {
   const value = Number(process.env.AI_MAX_STEPS ?? 2);
