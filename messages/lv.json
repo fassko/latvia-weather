@@ -252,7 +252,16 @@
     "legendHotRange": "≥ 26°C",
     "locateMe": "Mana atrašanās vieta",
     "locating": "Meklē atrašanās vietu…",
-    "locateError": "Neizdevās noteikt atrašanās vietu."
+    "locateError": "Neizdevās noteikt atrašanās vietu.",
+    "forecastTime": "Prognozes laiks",
+    "forecastNow": "Tagad",
+    "forecastMax": "+72 h",
+    "forecastLoading": "Ielādē prognozi…",
+    "forecastError": "Neizdevās ielādēt šo prognozes stundu.",
+    "forecastPreviousHour": "Iepriekšējā stunda",
+    "forecastNextHour": "Nākamā stunda",
+    "forecastPlay": "Atskaņot",
+    "forecastPause": "Pauzēt"
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°",
