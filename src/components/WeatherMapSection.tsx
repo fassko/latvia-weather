@@ -1,13 +1,24 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { type CSSProperties, useEffect, useState } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useTranslations } from "next-intl";
+import { MOBILE_MAP_MAX_WIDTH } from "@/lib/weather/map-view";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
 
 const MAX_FORECAST_OFFSET_HOURS = 72;
 const HOUR_TICKS = Array.from({ length: 13 }, (_, index) => index * 6);
 const DAY_TICKS = [0, 24, 48, 72];
+const MAP_HEIGHT_STORAGE_KEY = "latvia-weather-map-height-px";
+const MOBILE_MAP_MIN_HEIGHT_PX = 160;
+const MOBILE_MAP_CHROME_PX = 360;
 type TimelineTickStyle = CSSProperties & { "--tick-position": string };
 
 const WeatherMap = dynamic(
@@ -79,6 +90,52 @@ function getTimelineTickStyle(offsetHours: number): TimelineTickStyle {
   return {
     "--tick-position": `${(offsetHours / MAX_FORECAST_OFFSET_HOURS) * 100}%`,
   };
+}
+
+function getViewportHeight(): number {
+  return window.visualViewport?.height ?? window.innerHeight;
+}
+
+function clampMobileMapHeight(heightPx: number, viewportHeight = getViewportHeight()): number {
+  const maxHeight = Math.max(
+    MOBILE_MAP_MIN_HEIGHT_PX,
+    Math.min(
+      Math.round(viewportHeight * 0.72),
+      Math.round(viewportHeight - MOBILE_MAP_CHROME_PX + 80),
+    ),
+  );
+  return Math.min(maxHeight, Math.max(MOBILE_MAP_MIN_HEIGHT_PX, Math.round(heightPx)));
+}
+
+function defaultMobileMapHeight(viewportHeight = getViewportHeight()): number {
+  return clampMobileMapHeight(
+    Math.min(viewportHeight * 0.52, viewportHeight - MOBILE_MAP_CHROME_PX),
+    viewportHeight,
+  );
+}
+
+function readStoredMobileMapHeight(viewportHeight = getViewportHeight()): number | null {
+  try {
+    const raw = window.localStorage.getItem(MAP_HEIGHT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return null;
+    return clampMobileMapHeight(parsed, viewportHeight);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredMobileMapHeight(heightPx: number) {
+  try {
+    window.localStorage.setItem(MAP_HEIGHT_STORAGE_KEY, String(Math.round(heightPx)));
+  } catch {
+    // Ignore quota / private-mode failures.
+  }
+}
+
+function isMobileMapViewport(width = window.innerWidth): boolean {
+  return width > 0 && width < MOBILE_MAP_MAX_WIDTH;
 }
 
 async function fetchMapWeather(offsetHours: number): Promise<MapWeatherResponse> {
@@ -267,6 +324,7 @@ export function WeatherMapSection({
   selectedId,
   focusLocationId,
 }: WeatherMapSectionProps) {
+  const tMap = useTranslations("map");
   const [offsetHours, setOffsetHours] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
@@ -274,11 +332,53 @@ export function WeatherMapSection({
   const [mapWeatherCache, setMapWeatherCache] = useState(
     () => new Map<number, WeatherLocationPoint[]>([[0, locations]]),
   );
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [mobileMapHeightPx, setMobileMapHeightPx] = useState<number | null>(null);
+  const [isResizingMap, setIsResizingMap] = useState(false);
+  const resizeStartRef = useRef<{ pointerY: number; heightPx: number } | null>(
+    null,
+  );
+  const mobileMapHeightRef = useRef<number | null>(null);
   const hasCachedForecast = offsetHours === 0 || mapWeatherCache.has(offsetHours);
   const displayLocations =
     offsetHours === 0
       ? locations
       : (mapWeatherCache.get(offsetHours) ?? locations);
+
+  useEffect(() => {
+    mobileMapHeightRef.current = mobileMapHeightPx;
+  }, [mobileMapHeightPx]);
+
+  useEffect(() => {
+    function syncViewport() {
+      const mobile = isMobileMapViewport();
+      setIsMobileViewport(mobile);
+      if (!mobile) {
+        setMobileMapHeightPx(null);
+        return;
+      }
+
+      const viewportHeight = getViewportHeight();
+      setMobileMapHeightPx((current) => {
+        const next =
+          current == null
+            ? (readStoredMobileMapHeight(viewportHeight) ??
+              defaultMobileMapHeight(viewportHeight))
+            : clampMobileMapHeight(current, viewportHeight);
+        mobileMapHeightRef.current = next;
+        return next;
+      });
+    }
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("resize", syncViewport);
+
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      window.visualViewport?.removeEventListener("resize", syncViewport);
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -353,9 +453,88 @@ export function WeatherMapSection({
     });
   }
 
+  function handleResizePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (mobileMapHeightPx == null) return;
+    event.preventDefault();
+    resizeStartRef.current = {
+      pointerY: event.clientY,
+      heightPx: mobileMapHeightPx,
+    };
+    setIsResizingMap(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleResizePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = resizeStartRef.current;
+    if (!start) return;
+    const nextHeight = clampMobileMapHeight(
+      start.heightPx + (event.clientY - start.pointerY),
+    );
+    mobileMapHeightRef.current = nextHeight;
+    setMobileMapHeightPx(nextHeight);
+  }
+
+  function handleResizePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!resizeStartRef.current) return;
+    resizeStartRef.current = null;
+    setIsResizingMap(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (mobileMapHeightRef.current != null) {
+      writeStoredMobileMapHeight(mobileMapHeightRef.current);
+    }
+  }
+
+  function handleResizeKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (mobileMapHeightPx == null) return;
+
+    const step = event.shiftKey ? 32 : 16;
+    let nextHeight = mobileMapHeightPx;
+
+    switch (event.key) {
+      case "ArrowUp":
+      case "ArrowRight":
+        nextHeight = mobileMapHeightPx + step;
+        break;
+      case "ArrowDown":
+      case "ArrowLeft":
+        nextHeight = mobileMapHeightPx - step;
+        break;
+      case "Home":
+        nextHeight = MOBILE_MAP_MIN_HEIGHT_PX;
+        break;
+      case "End":
+        nextHeight = getViewportHeight() * 0.72;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const clamped = clampMobileMapHeight(nextHeight);
+    mobileMapHeightRef.current = clamped;
+    setMobileMapHeightPx(clamped);
+    writeStoredMobileMapHeight(clamped);
+  }
+
+  const mapFrameStyle =
+    isMobileViewport && mobileMapHeightPx != null
+      ? ({ height: `${mobileMapHeightPx}px` } satisfies CSSProperties)
+      : undefined;
+  const mobileMaxHeightPx =
+    isMobileViewport && typeof window !== "undefined"
+      ? Math.round(getViewportHeight() * 0.72)
+      : undefined;
+
   return (
     <section className="flex w-full flex-col gap-2">
-      <div className="h-[min(52vh,calc(100dvh-22rem),42rem)] min-h-[16rem] w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm sm:h-[min(58vh,calc(100vh-20rem),42rem)] sm:min-h-[24rem] dark:border-slate-800">
+      <div
+        className={`weather-map-frame w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800 ${
+          isResizingMap ? "select-none" : ""
+        }`}
+        style={mapFrameStyle}
+      >
         <WeatherMap
           locations={displayLocations}
           locale={locale}
@@ -363,6 +542,25 @@ export function WeatherMapSection({
           focusLocationId={focusLocationId}
         />
       </div>
+      {isMobileViewport ? (
+        <div
+          className={`weather-map-resize-handle${isResizingMap ? " weather-map-resize-handle--active" : ""}`}
+          aria-label={tMap("resizeMap")}
+          aria-valuemin={MOBILE_MAP_MIN_HEIGHT_PX}
+          aria-valuemax={mobileMaxHeightPx}
+          aria-valuenow={mobileMapHeightPx ?? undefined}
+          aria-orientation="horizontal"
+          role="slider"
+          tabIndex={0}
+          onPointerDown={handleResizePointerDown}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={handleResizePointerUp}
+          onPointerCancel={handleResizePointerUp}
+          onKeyDown={handleResizeKeyDown}
+        >
+          <span className="weather-map-resize-handle__grip" aria-hidden="true" />
+        </div>
+      ) : null}
       <ForecastTimeControl
         offsetHours={offsetHours}
         isPlaying={isPlaying}

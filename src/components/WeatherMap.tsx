@@ -488,6 +488,24 @@ function MapZoomDetailClass() {
   return null;
 }
 
+function InvalidateSizeOnContainerResize() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    const parent = container.parentElement;
+    if (!parent) return;
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+    });
+    observer.observe(parent);
+    return () => observer.disconnect();
+  }, [map]);
+
+  return null;
+}
+
 function FitLatvia({ enabled }: { enabled: boolean }) {
   const map = useMap();
 
@@ -722,6 +740,7 @@ export function WeatherMap({
         url={TILE_URLS[theme]}
       />
       <FitLatvia enabled={!focusLocationId} />
+      <InvalidateSizeOnContainerResize />
       <MapZoomDetailClass />
       <LocationMarkers
         locations={locations}
