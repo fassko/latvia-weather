@@ -38,7 +38,7 @@ export async function TopNav({
         <div className="min-w-0 flex-1 basis-[min(100%,12rem)] sm:basis-auto sm:flex-none">
           <LocationCombobox selectedId={locationId} selectedName={locationName} />
         </div>
-        <div className="flex w-full shrink-0 items-center justify-between gap-1.5 sm:ml-auto sm:w-auto sm:justify-end sm:gap-2">
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-1.5 sm:ml-auto sm:w-auto sm:justify-end sm:gap-2">
           <RefreshButton />
           <WindUnitsToggle />
           <Suspense fallback={null}>
