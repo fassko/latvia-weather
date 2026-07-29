@@ -179,7 +179,7 @@ function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayB
       <table className="min-w-full text-left text-sm">
         <thead>
           <tr className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <th className="py-2 pr-3 font-medium">{labels.time}</th>
+            <th className="py-2 pr-3 pl-3 font-medium">{labels.time}</th>
             <th className="py-2 pr-3 font-medium" />
             <th className="py-2 pr-3 font-medium">{labels.temp}</th>
             <th className="py-2 pr-3 font-medium">{labels.feels}</th>
@@ -192,9 +192,16 @@ function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayB
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {forecasts.map((forecast) => (
-            <tr key={forecast.time.toISOString()} className="text-slate-600 dark:text-slate-300">
-              <td className="py-1.5 pr-3 tabular-nums">
+          {forecasts.map((forecast, index) => (
+            <tr
+              key={forecast.time.toISOString()}
+              className={`transition-colors duration-150 motion-reduce:transition-none hover:bg-sky-200 dark:hover:bg-slate-700 ${
+                index % 2 === 0
+                  ? "bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                  : "bg-sky-50 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300"
+              }`}
+            >
+              <td className="py-1.5 pr-3 pl-3 tabular-nums">
                 <time dateTime={forecast.time.toISOString()}>
                   {formatLatviaTime(forecast.time, "HH:mm")}
                 </time>
