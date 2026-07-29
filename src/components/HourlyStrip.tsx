@@ -21,6 +21,10 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = useWindUnit();
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
+  const activeTileClass =
+    "bg-sky-50 ring-1 ring-inset ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30";
+  const hoverTileClass =
+    "hover:bg-sky-100/80 hover:ring-1 hover:ring-inset hover:ring-sky-300 dark:hover:bg-sky-500/15 dark:hover:ring-sky-500/50";
 
   if (upcoming.length === 0) return null;
 
@@ -45,10 +49,8 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
               </div>
             ) : null}
             <div
-              className={`flex min-w-[4.25rem] flex-col items-center gap-1 rounded-xl px-2 py-2.5 ${
-                isNow
-                  ? "bg-sky-50 ring-1 ring-inset ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30"
-                  : ""
+              className={`flex min-w-[4.25rem] flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
+                isNow ? activeTileClass : ""
               }`}
             >
               <span
