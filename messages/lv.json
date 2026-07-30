@@ -261,7 +261,8 @@
     "forecastPreviousHour": "Iepriekšējā stunda",
     "forecastNextHour": "Nākamā stunda",
     "forecastPlay": "Atskaņot",
-    "forecastPause": "Pauzēt"
+    "forecastPause": "Pauzēt",
+    "resizeMap": "Velc, lai mainītu kartes augstumu"
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°",

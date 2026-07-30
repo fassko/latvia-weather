@@ -347,7 +347,7 @@ function LocationMarkers({
     const windDirectionByMarker = new WeakMap<L.Marker, number>();
     const cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
-      maxClusterRadius: 50,
+      maxClusterRadius: (zoom) => (zoom <= 8 ? 72 : zoom <= 10 ? 56 : 44),
       spiderfyOnMaxZoom: true,
       disableClusteringAtZoom: 11,
       iconCreateFunction: (markerCluster) =>
@@ -483,6 +483,24 @@ function MapZoomDetailClass() {
       map.off("zoomend", syncDetailClass);
       container.classList.remove("weather-map--detail");
     };
+  }, [map]);
+
+  return null;
+}
+
+function InvalidateSizeOnContainerResize() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+    const parent = container.parentElement;
+    if (!parent) return;
+
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+    });
+    observer.observe(parent);
+    return () => observer.disconnect();
   }, [map]);
 
   return null;
@@ -722,6 +740,7 @@ export function WeatherMap({
         url={TILE_URLS[theme]}
       />
       <FitLatvia enabled={!focusLocationId} />
+      <InvalidateSizeOnContainerResize />
       <MapZoomDetailClass />
       <LocationMarkers
         locations={locations}

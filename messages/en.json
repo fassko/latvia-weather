@@ -261,7 +261,8 @@
     "forecastPreviousHour": "Previous hour",
     "forecastNextHour": "Next hour",
     "forecastPlay": "Play",
-    "forecastPause": "Pause"
+    "forecastPause": "Pause",
+    "resizeMap": "Drag to resize map height"
   },
   "hero": {
     "feelsLike": "Feels like {temp}°",

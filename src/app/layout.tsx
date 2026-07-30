@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { ThemeScript } from "@/components/ThemeScript";
@@ -29,6 +29,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

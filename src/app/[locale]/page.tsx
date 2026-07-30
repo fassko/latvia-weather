@@ -195,7 +195,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
       <StalePageRefresh />
       <TopNav locationId={data.location.id} locationName={data.location.name} />
       <WeatherHero data={data} />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-6 pb-10 sm:px-6">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-6 pb-[max(2.5rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6">
         {data.isStale ? (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
             {tFooter("staleData")}

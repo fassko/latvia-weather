@@ -430,6 +430,72 @@ body {
   color: #fca5a5;
 }
 
+.weather-map-resize-handle {
+  display: flex;
+  width: 100%;
+  height: 1.35rem;
+  align-items: center;
+  justify-content: center;
+  margin: -0.35rem 0 0;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.weather-map-resize-handle__grip {
+  width: 2.75rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgb(148 163 184 / 0.95);
+  box-shadow: 0 0 0 1px rgb(15 23 42 / 0.06);
+}
+
+.weather-map-resize-handle:hover .weather-map-resize-handle__grip,
+.weather-map-resize-handle--active .weather-map-resize-handle__grip,
+.weather-map-resize-handle:focus-visible .weather-map-resize-handle__grip {
+  background: #0284c7;
+}
+
+.weather-map-resize-handle:focus-visible {
+  outline: none;
+}
+
+.dark .weather-map-resize-handle__grip {
+  background: rgb(100 116 139 / 0.95);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+.dark .weather-map-resize-handle:hover .weather-map-resize-handle__grip,
+.dark .weather-map-resize-handle--active .weather-map-resize-handle__grip,
+.dark .weather-map-resize-handle:focus-visible .weather-map-resize-handle__grip {
+  background: #38bdf8;
+}
+
+.weather-map-frame {
+  height: min(58vh, calc(100vh - 20rem), 42rem);
+  min-height: 20rem;
+}
+
+@media (max-width: 639px) {
+  .weather-map-frame {
+    height: min(52dvh, calc(100dvh - 22rem));
+    min-height: 10rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .weather-map-frame {
+    min-height: 24rem;
+  }
+
+  .weather-map-resize-handle {
+    display: none;
+  }
+}
+
 .weather-map-time-control {
   flex: none;
   padding: 0.55rem 0.75rem 0.35rem;
@@ -455,7 +521,7 @@ body {
 }
 
 .weather-map-time-control__value {
-  min-width: 9rem;
+  min-width: 0;
   text-align: right;
   color: #0f172a;
   font-size: 0.78rem;
@@ -627,6 +693,75 @@ body {
   height: 0.24rem;
   background: currentColor;
   opacity: 0.42;
+}
+
+@media (max-width: 639px) {
+  .weather-map-time-control {
+    padding: 0.65rem 0.7rem 0.55rem;
+  }
+
+  .weather-map-time-control__controls {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "timeline timeline timeline"
+      "back play forward";
+    gap: 0.55rem 0.4rem;
+  }
+
+  .weather-map-time-control__play {
+    grid-area: play;
+    width: 100%;
+    min-width: 0;
+    height: 2.5rem;
+    font-size: 0.82rem;
+  }
+
+  .weather-map-time-control__stepper--back {
+    grid-area: back;
+  }
+
+  .weather-map-time-control__stepper--forward {
+    grid-area: forward;
+  }
+
+  .weather-map-time-control__stepper {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.25rem;
+  }
+
+  .weather-map-time-control__timeline {
+    grid-area: timeline;
+    padding: 1.7rem 0 1.15rem;
+  }
+
+  .weather-map-time-control__day {
+    padding: 0.28rem 0.42rem;
+    font-size: 0.68rem;
+  }
+
+  .weather-map-time-control__hours {
+    height: 1.05rem;
+    font-size: 0.58rem;
+  }
+
+  .weather-map-time-control__hour[data-dense="true"] {
+    font-size: 0;
+  }
+
+  .weather-map-time-control__hour[data-dense="true"] .weather-map-time-control__tick {
+    height: 0.18rem;
+    opacity: 0.28;
+  }
+
+  .weather-map-time-control__status {
+    min-height: 1.1rem;
+    margin-top: 0.2rem;
+  }
+
+  .weather-map-time-control__slider {
+    height: 1.4rem;
+  }
 }
 
 .dark .weather-map-time-control {
