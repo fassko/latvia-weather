@@ -352,8 +352,11 @@
     "regions": "{count, plural, one {# warning region} other {# warning regions}}",
     "stale": "cached",
     "dismiss": "Dismiss warning",
+    "dismissAll": "Dismiss all warnings",
     "expand": "Show weather warning details",
+    "expandAll": "Show all weather warning details",
     "show": "Show",
+    "count": "{count, plural, one {# warning} other {# warnings}}",
     "levels": {
       "yellow": "Yellow",
       "orange": "Orange",

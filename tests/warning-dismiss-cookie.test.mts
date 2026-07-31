@@ -95,6 +95,50 @@ describe("warning dismiss cookie helpers", () => {
     assert.deepEqual(toRelevantDismissKeys([sampleWarning], afterShow), []);
     assert.equal(isWarningDismissed(sampleWarning, new Set(afterShow)), false);
   });
+
+  it("dismisses every current warning in one update", () => {
+    const second = {
+      ...sampleWarning,
+      id: "414734428",
+      textLv: sampleWarning.textLv.replace("dienvidu", "rietumu"),
+    };
+    const keys = [
+      getWarningDismissKey(sampleWarning),
+      getWarningDismissKey(second),
+    ];
+
+    assert.deepEqual(toRelevantDismissKeys([sampleWarning, second], keys), keys);
+    assert.equal(
+      isWarningDismissed(sampleWarning, new Set(keys)),
+      true,
+    );
+    assert.equal(isWarningDismissed(second, new Set(keys)), true);
+  });
+
+  it("expands every current warning by clearing all of their keys", () => {
+    const second = {
+      ...sampleWarning,
+      id: "414734428",
+      textLv: sampleWarning.textLv.replace("dienvidu", "rietumu"),
+    };
+    const keys = [
+      getWarningDismissKey(sampleWarning),
+      getWarningDismissKey(second),
+      "unrelated",
+    ];
+    const keysToClear = new Set([
+      getWarningDismissKey(sampleWarning),
+      sampleWarning.id,
+      getWarningDismissKey(second),
+      second.id,
+    ]);
+    const afterExpand = keys.filter((id) => !keysToClear.has(id));
+
+    assert.deepEqual(
+      toRelevantDismissKeys([sampleWarning, second], afterExpand),
+      [],
+    );
+  });
 });
 
 describe("dismissed warning ids cache", () => {
