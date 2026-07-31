@@ -352,8 +352,11 @@
     "regions": "{count, plural, one {# brīdinājuma reģions} other {# brīdinājuma reģioni}}",
     "stale": "kešots",
     "dismiss": "Aizvērt brīdinājumu",
+    "dismissAll": "Aizvērt visus brīdinājumus",
     "expand": "Rādīt brīdinājuma detaļas",
+    "expandAll": "Rādīt visu brīdinājumu detaļas",
     "show": "Rādīt",
+    "count": "{count, plural, one {# brīdinājums} other {# brīdinājumi}}",
     "levels": {
       "yellow": "Dzeltenais",
       "orange": "Oranžais",

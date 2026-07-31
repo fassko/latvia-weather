@@ -34,6 +34,21 @@ const badgeTone: Record<WeatherWarningLevel, string> = {
   unknown: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
 };
 
+const levelPriority: Record<WeatherWarningLevel, number> = {
+  red: 3,
+  orange: 2,
+  yellow: 1,
+  unknown: 0,
+};
+
+function highestLevel(warnings: WeatherWarning[]): WeatherWarningLevel {
+  return warnings.reduce<WeatherWarningLevel>((highest, warning) => {
+    return levelPriority[warning.level] > levelPriority[highest]
+      ? warning.level
+      : highest;
+  }, "unknown");
+}
+
 export function WeatherWarningsClient({
   locale,
   warnings,
@@ -45,97 +60,123 @@ export function WeatherWarningsClient({
 
   if (warnings.length === 0) return null;
 
+  const visibleWarnings = warnings.filter(
+    (warning) => !isWarningDismissed(warning, dismissedSet),
+  );
+  const allDismissed = visibleWarnings.length === 0;
+
   function persistDismissed(ids: Iterable<string>) {
     setDismissedWarningIdsCookie(toRelevantDismissKeys(warnings, ids));
   }
 
-  function dismissWarning(warning: WeatherWarning) {
-    persistDismissed([...dismissedIds, getWarningDismissKey(warning)]);
+  function dismissAll() {
+    persistDismissed([
+      ...dismissedIds,
+      ...warnings.map((warning) => getWarningDismissKey(warning)),
+    ]);
   }
 
-  function expandWarning(warning: WeatherWarning) {
-    const key = getWarningDismissKey(warning);
-    persistDismissed(
-      dismissedIds.filter((id) => id !== key && id !== warning.id),
+  function expandAll() {
+    const keysToClear = new Set(
+      warnings.flatMap((warning) => [getWarningDismissKey(warning), warning.id]),
+    );
+    persistDismissed(dismissedIds.filter((id) => !keysToClear.has(id)));
+  }
+
+  if (allDismissed) {
+    const level = highestLevel(warnings);
+
+    return (
+      <section aria-label={t("sectionLabel")}>
+        <button
+          type="button"
+          onClick={expandAll}
+          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left shadow-sm transition hover:brightness-[0.98] dark:hover:brightness-110 ${warningTone[level]}`}
+          aria-label={t("expandAll")}
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70 text-current dark:bg-white/10">
+            <WarningIcon className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-bold">{t("title")}</span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${badgeTone[level]}`}
+              >
+                {t(`levels.${level}`)}
+              </span>
+              {warnings.length > 1 ? (
+                <span className="text-xs font-medium opacity-70">
+                  {t("count", { count: warnings.length })}
+                </span>
+              ) : null}
+            </span>
+          </span>
+          <span className="shrink-0 text-xs font-medium opacity-70">{t("show")}</span>
+        </button>
+      </section>
     );
   }
 
+  const level = highestLevel(visibleWarnings);
+  const uniqueLevels = [...new Set(visibleWarnings.map((warning) => warning.level))];
+
   return (
-    <section aria-label={t("sectionLabel")} className="space-y-3">
-      {warnings.map((warning) => {
-        const text = locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
-        const dismissed = isWarningDismissed(warning, dismissedSet);
-
-        if (dismissed) {
-          return (
-            <button
-              key={warning.id}
-              type="button"
-              onClick={() => expandWarning(warning)}
-              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left shadow-sm transition hover:brightness-[0.98] dark:hover:brightness-110 ${warningTone[warning.level]}`}
-              aria-label={t("expand")}
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70 text-current dark:bg-white/10">
-                <WarningIcon className="h-4 w-4" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold">{t("title")}</span>
+    <section aria-label={t("sectionLabel")}>
+      <article
+        className={`rounded-2xl border p-4 shadow-sm ${warningTone[level]}`}
+      >
+        <div className="flex gap-3">
+          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-current dark:bg-white/10">
+            <WarningIcon />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <h2 className="text-sm font-bold">{t("title")}</h2>
+                {uniqueLevels.map((warningLevel) => (
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${badgeTone[warning.level]}`}
+                    key={warningLevel}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${badgeTone[warningLevel]}`}
                   >
-                    {t(`levels.${warning.level}`)}
+                    {t(`levels.${warningLevel}`)}
                   </span>
-                </span>
-              </span>
-              <span className="shrink-0 text-xs font-medium opacity-70">{t("show")}</span>
-            </button>
-          );
-        }
-
-        return (
-          <article
-            key={warning.id}
-            className={`rounded-2xl border p-4 shadow-sm ${warningTone[warning.level]}`}
-          >
-            <div className="flex gap-3">
-              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-current dark:bg-white/10">
-                <WarningIcon />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start gap-2">
-                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                    <h2 className="text-sm font-bold">{t("title")}</h2>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${badgeTone[warning.level]}`}
-                    >
-                      {t(`levels.${warning.level}`)}
-                    </span>
-                    {warning.isStale ? (
-                      <span className="text-xs font-medium opacity-75">{t("stale")}</span>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => dismissWarning(warning)}
-                    className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
-                    aria-label={t("dismiss")}
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
-                <p className="mt-1 text-sm leading-6">{text}</p>
-                <p className="mt-2 text-xs opacity-75">
-                  {t("source")} LVĢMC
-                  {warning.regions.length > 0
-                    ? ` · ${t("regions", { count: warning.regions.length })}`
-                    : ""}
-                </p>
+                ))}
+                {visibleWarnings.some((warning) => warning.isStale) ? (
+                  <span className="text-xs font-medium opacity-75">{t("stale")}</span>
+                ) : null}
               </div>
+              <button
+                type="button"
+                onClick={dismissAll}
+                className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full opacity-70 transition hover:bg-black/5 hover:opacity-100 dark:hover:bg-white/10"
+                aria-label={t("dismissAll")}
+              >
+                <CloseIcon />
+              </button>
             </div>
-          </article>
-        );
-      })}
+
+            <ul className="mt-1 space-y-3">
+              {visibleWarnings.map((warning) => {
+                const text =
+                  locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
+
+                return (
+                  <li key={warning.id}>
+                    <p className="text-sm leading-6">{text}</p>
+                    <p className="mt-2 text-xs opacity-75">
+                      {t("source")} LVĢMC
+                      {warning.regions.length > 0
+                        ? ` · ${t("regions", { count: warning.regions.length })}`
+                        : ""}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      </article>
     </section>
   );
 }
