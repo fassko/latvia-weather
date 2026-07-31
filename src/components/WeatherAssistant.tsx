@@ -16,6 +16,10 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import {
+  isWeekendDayToken,
+  splitWeekendDayParts,
+} from "@/lib/weather/weekend-highlight";
 
 interface WeatherAssistantProps {
   locale: string;
@@ -45,25 +49,19 @@ const exampleIcons = [
   "M4 13a8 8 0 0116 0H4zm8 0v5m-1 2h2",
 ];
 
-const weekendDayPattern =
-  /^(sat\.?|sun\.?|saturday|sunday|sestdien[aāu]?|svētdien[aāu]?)$/i;
-
 function renderHighlightedText(text: string, keyPrefix: string): ReactNode[] {
-  return text
-    .split(/(sat\.?|sun\.?|saturday|sunday|sestdien[aāu]?|svētdien[aāu]?)/gi)
-    .filter(Boolean)
-    .map((part, index) =>
-      weekendDayPattern.test(part) ? (
-        <span
-          key={`${keyPrefix}-weekend-${index}`}
-          className="font-bold text-red-600 dark:text-red-400"
-        >
-          {part}
-        </span>
-      ) : (
-        part
-      ),
-    );
+  return splitWeekendDayParts(text).map((part, index) =>
+    isWeekendDayToken(part) ? (
+      <span
+        key={`${keyPrefix}-weekend-${index}`}
+        className="font-bold text-red-600 dark:text-red-400"
+      >
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
 }
 
 function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
