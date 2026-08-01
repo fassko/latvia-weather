@@ -244,6 +244,8 @@ export function WeatherAssistant({
   const [isOpen, setIsOpen] = useState(false);
   const [initialMessages] = useState<UIMessage[]>(() => loadAssistantHistory());
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -288,6 +290,22 @@ export function WeatherAssistant({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
+  // Move focus into the panel on open and hand it back to the launcher on
+  // close, so keyboard users are never left on a hidden element.
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+      return;
+    }
+
+    if (document.activeElement instanceof HTMLElement) {
+      const panelHasFocus = document.activeElement.closest(
+        "[data-assistant-panel]",
+      );
+      if (panelHasFocus) openButtonRef.current?.focus();
+    }
+  }, [isOpen]);
+
   function submitMessage(text: string) {
     const trimmed = text.trim();
     if (!trimmed || isStreaming) return;
@@ -305,28 +323,38 @@ export function WeatherAssistant({
   return (
     <>
       {isOpen ? (
-        <button
-          type="button"
-          aria-label={labels.close}
+        // The dialog already exposes a labelled close button, so the backdrop
+        // is a pointer-only convenience.
+        <div
+          aria-hidden="true"
           onClick={() => setIsOpen(false)}
           className="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-[2px] dark:bg-slate-950/60"
         />
       ) : null}
 
       <button
+        ref={openButtonRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        aria-label={labels.open}
-        className="fixed right-4 bottom-5 z-30 flex h-14 items-center gap-2 rounded-full bg-[#477dd8] px-5 text-base font-semibold text-white shadow-[0_18px_40px_rgba(71,125,216,0.35)] transition hover:bg-[#3d72cb] focus:ring-4 focus:ring-[#477dd8]/25 focus:outline-none sm:right-8 sm:bottom-7 sm:h-16 sm:px-7 sm:text-lg dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
+        // Keeps the visible text at the start of the accessible name so voice
+        // control users can say what they see.
+        aria-label={`${labels.send} · ${labels.title}`}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        className="fixed right-4 bottom-5 z-30 flex h-14 items-center gap-2 rounded-full bg-[#477dd8] px-5 text-base font-semibold text-white shadow-[0_18px_40px_rgba(71,125,216,0.35)] transition hover:bg-[#3d72cb] focus-visible:ring-4 focus-visible:ring-[#477dd8]/25 focus-visible:outline-none sm:right-8 sm:bottom-7 sm:h-16 sm:px-7 sm:text-lg dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
       >
         <AppWeatherIcon className="h-7 w-7 bg-none shadow-none" />
         {labels.send}
       </button>
 
       <aside
+        data-assistant-panel=""
         role="dialog"
         aria-modal="true"
         aria-label={labels.title}
+        // A closed panel is still in the layout for the slide animation, so it
+        // must be removed from the tab order and the accessibility tree.
+        inert={!isOpen}
         className={`fixed top-0 right-0 z-50 flex h-dvh w-full transform flex-col border-l border-slate-200 bg-slate-50 shadow-2xl transition-transform duration-300 ease-out sm:max-w-md dark:border-slate-800 dark:bg-slate-950 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -363,6 +391,8 @@ export function WeatherAssistant({
 
         <div
           ref={scrollAreaRef}
+          aria-live="polite"
+          aria-atomic="false"
           className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-6"
         >
           {messages.length === 0 ? (
@@ -433,12 +463,15 @@ export function WeatherAssistant({
           })}
 
           {isStreaming ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p role="status" className="text-sm text-slate-500 dark:text-slate-400">
               {labels.thinking}
             </p>
           ) : null}
           {error ? (
-            <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
+            <p
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200"
+            >
               {errorMessage}
             </p>
           ) : null}
@@ -449,6 +482,7 @@ export function WeatherAssistant({
           className="flex gap-3 border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950"
         >
           <input
+            ref={inputRef}
             value={input}
             onChange={(event) => setInput(event.currentTarget.value)}
             placeholder={labels.inputPlaceholder}

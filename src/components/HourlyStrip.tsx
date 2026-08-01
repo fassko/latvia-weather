@@ -4,7 +4,11 @@ import { Fragment } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
-import { getConditionEmoji } from "@/lib/weather/parse";
+import {
+  getConditionEmoji,
+  getConditionKey,
+  getWindDirection,
+} from "@/lib/weather/parse";
 import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
@@ -17,6 +21,9 @@ interface HourlyStripProps {
 
 export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
   const t = useTranslations("hourlyCard");
+  const tConditions = useTranslations("conditions");
+  const tDaily = useTranslations("dailyList");
+  const tWind = useTranslations("wind");
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = useWindUnit();
@@ -29,7 +36,14 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
   if (upcoming.length === 0) return null;
 
   return (
-    <div className="mt-4 flex gap-1.5 overflow-x-auto pb-2">
+    // A scrollable region needs to be focusable so it can also be scrolled with
+    // the keyboard.
+    <div
+      className="mt-4 flex gap-1.5 overflow-x-auto pb-2 focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:outline-none"
+      role="group"
+      aria-label={t("title")}
+      tabIndex={0}
+    >
       {upcoming.map((forecast, index) => {
         const isNow = index === 0;
         const isNewDay =
@@ -65,15 +79,32 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
               <span className="text-xl" aria-hidden="true">
                 {getConditionEmoji(forecast.iconCode)}
               </span>
+              <span className="sr-only">
+                {tConditions(getConditionKey(forecast.iconCode))}
+              </span>
               <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                 {Math.round(forecast.temperature)}°
               </span>
               <span className="text-xs tabular-nums text-sky-600 dark:text-sky-400">
-                {Math.round(forecast.precipitationProbability)}%
+                <span aria-hidden="true">
+                  {Math.round(forecast.precipitationProbability)}%
+                </span>
+                <span className="sr-only">
+                  {tDaily("rainChance", {
+                    value: Math.round(forecast.precipitationProbability),
+                  })}
+                </span>
               </span>
               <span className="flex items-center gap-0.5 text-[11px] tabular-nums text-slate-500 dark:text-slate-400">
                 <WindArrow degrees={forecast.windDirection} />
                 {formatWindSpeed(forecast.windSpeed, windUnit)}
+                <span className="sr-only">
+                  {tWind("from", {
+                    direction: tWind(
+                      `directions.${getWindDirection(forecast.windDirection)}`,
+                    ),
+                  })}
+                </span>
               </span>
             </div>
           </Fragment>

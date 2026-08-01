@@ -196,11 +196,13 @@
   },
   "share": {
     "label": "Share forecast",
-    "copied": "Link copied"
+    "copied": "Link copied",
+    "copyError": "Could not copy the link"
   },
   "refresh": {
     "label": "Refresh data",
-    "refreshing": "Refreshing…"
+    "refreshing": "Refreshing…",
+    "loadingForecast": "Loading forecast…"
   },
   "theme": {
     "switchToLight": "Switch to light mode",
@@ -218,12 +220,14 @@
   "language": {
     "switchTo": "Switch to {locale}",
     "en": "EN",
-    "lv": "LV"
+    "lv": "LV",
+    "groupLabel": "Language"
   },
   "nav": {
     "brand": "Latvia Weather",
     "home": "Home",
-    "map": "Map"
+    "map": "Map",
+    "skipToContent": "Skip to content"
   },
   "map": {
     "title": "Weather map",

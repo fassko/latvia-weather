@@ -25,6 +25,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
   const locale = await getLocale();
   const t = await getTranslations("dailyList");
   const tTable = await getTranslations("table");
+  const tHourly = await getTranslations("hourly");
   const tWind = await getTranslations("wind");
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = await getWindUnitsCookie();
@@ -149,6 +150,8 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                     tWind(`directions.${getWindDirection(degrees)}`)
                   }
                   labels={{
+                    caption: `${weekday} ${dateLabel} — ${tTable("title")}`,
+                    condition: tHourly("condition"),
                     time: tTable("time"),
                     temp: tTable("temp"),
                     feels: tTable("feels"),
@@ -174,6 +177,8 @@ interface DayBreakdownProps {
   windUnit: WindUnit;
   formatWindDirection: (degrees: number) => string;
   labels: {
+    caption: string;
+    condition: string;
     time: string;
     temp: string;
     feels: string;
@@ -190,18 +195,29 @@ function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayB
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
       <table className="min-w-full text-left text-sm">
+        <caption className="sr-only">{labels.caption}</caption>
         <thead>
           <tr className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <th className="py-2 pr-3 pl-3 font-medium">{labels.time}</th>
-            <th className="py-2 pr-3 font-medium" />
-            <th className="py-2 pr-3 font-medium">{labels.temp}</th>
-            <th className="py-2 pr-3 font-medium">{labels.feels}</th>
-            <th className="py-2 pr-3 font-medium">{labels.precip}</th>
-            <th className="py-2 pr-3 font-medium">{labels.rainPercent}</th>
-            <th className="py-2 pr-3 font-medium">{labels.wind}</th>
-            <th className="py-2 pr-3 font-medium">{labels.humidity}</th>
-            <th className="py-2 pr-3 font-medium">{labels.cloudCover}</th>
-            <th className="py-2 font-medium">{labels.pressure}</th>
+            <th scope="col" className="py-2 pr-3 pl-3 font-medium">
+              {labels.time}
+            </th>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              <span className="sr-only">{labels.condition}</span>
+            </th>
+            <th scope="col" className="py-2 pr-3 font-medium">{labels.temp}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">{labels.feels}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">{labels.precip}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              {labels.rainPercent}
+            </th>
+            <th scope="col" className="py-2 pr-3 font-medium">{labels.wind}</th>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              {labels.humidity}
+            </th>
+            <th scope="col" className="py-2 pr-3 font-medium">
+              {labels.cloudCover}
+            </th>
+            <th scope="col" className="py-2 font-medium">{labels.pressure}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
+import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { TopNav } from "@/components/TopNav";
 import { WeatherMapSection } from "@/components/WeatherMapSection";
 import { routing, type Locale } from "@/i18n/routing";
@@ -125,7 +126,10 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         locationName={selected?.name ?? t("title")}
         active="map"
       />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-5 pb-[max(2rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6">
+      <main
+        id={MAIN_CONTENT_ID}
+        className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-5 pb-[max(2rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6"
+      >
         <header className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             {t("title")}

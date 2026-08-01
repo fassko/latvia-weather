@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DailyForecastList } from "@/components/DailyForecastList";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
 import { ForecastError } from "@/components/ForecastError";
+import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { HourlyStripCard } from "@/components/HourlyStripCard";
 import { MetricCards } from "@/components/MetricCards";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
@@ -186,7 +187,10 @@ export default async function Home({ params, searchParams }: HomeProps) {
       <StalePageRefresh />
       <TopNav locationId={data.location.id} locationName={data.location.name} />
       <WeatherHero data={data} />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-6 pb-[max(2.5rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6">
+      <main
+        id={MAIN_CONTENT_ID}
+        className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-6 pb-[max(6rem,calc(4.5rem+env(safe-area-inset-bottom)))] sm:px-6"
+      >
         {data.isStale ? (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
             {tFooter("staleData")}

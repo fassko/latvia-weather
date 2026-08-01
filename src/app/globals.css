@@ -21,6 +21,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  /* Keep anchor and focus targets clear of the sticky header. */
+  scroll-padding-top: 4.5rem;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -607,6 +612,25 @@ body {
   color: #64748b;
   font-size: 0.68rem;
   line-height: 1.2;
+}
+
+.weather-map-time-control__retry {
+  margin-left: 0.4rem;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  background: #e0f2fe;
+  color: #075985;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.weather-map-time-control__retry:hover {
+  background: #bae6fd;
+}
+
+.dark .weather-map-time-control__retry {
+  background: rgb(12 74 110 / 0.6);
+  color: #e0f2fe;
 }
 
 .weather-map-time-control__days,

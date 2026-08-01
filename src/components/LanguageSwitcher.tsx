@@ -24,7 +24,7 @@ export function LanguageSwitcher() {
     <div
       className="flex shrink-0 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
       role="group"
-      aria-label="Language"
+      aria-label={t("groupLabel")}
     >
       {routing.locales.map((loc) => (
         <button
