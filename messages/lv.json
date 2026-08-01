@@ -370,6 +370,7 @@
   },
   "dailyList": {
     "title": "10 dienu prognoze",
-    "today": "Šodien"
+    "today": "Šodien",
+    "rainChance": "Lietus iespēja {value}%"
   }
 }
