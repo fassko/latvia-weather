@@ -370,6 +370,7 @@
   },
   "dailyList": {
     "title": "10-day forecast",
-    "today": "Today"
+    "today": "Today",
+    "rainChance": "Rain chance {value}%"
   }
 }

@@ -129,8 +129,16 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                     </span>
                   </div>
 
-                  <span className="w-10 shrink-0 text-right text-xs text-slate-500 tabular-nums dark:text-slate-400">
-                    {Math.round(summary.maxPrecipitationProbability)}%
+                  <span
+                    className="flex w-12 shrink-0 items-center justify-end gap-0.5 text-xs text-sky-600 tabular-nums dark:text-sky-400"
+                    aria-label={t("rainChance", {
+                      value: Math.round(summary.maxPrecipitationProbability),
+                    })}
+                  >
+                    <RainChanceIcon />
+                    <span aria-hidden="true">
+                      {Math.round(summary.maxPrecipitationProbability)}%
+                    </span>
                   </span>
                 </summary>
 
@@ -274,6 +282,24 @@ function DropletIcon() {
       aria-hidden="true"
     >
       <path d="M12 2.5S5.5 9.5 5.5 14a6.5 6.5 0 0 0 13 0c0-4.5-6.5-11.5-6.5-11.5Z" />
+    </svg>
+  );
+}
+
+function RainChanceIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5 shrink-0"
+      aria-hidden="true"
+    >
+      <path d="M7 15a4.5 4.5 0 0 1-.5-8.97A6 6 0 0 1 18 7a3.5 3.5 0 0 1 0 7" />
+      <path d="M8 18.5 7 20M12 18.5 11 20M16 18.5 15 20" />
     </svg>
   );
 }
