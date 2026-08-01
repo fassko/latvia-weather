@@ -286,7 +286,7 @@ export async function POST(request: Request) {
         "Do not use bullet points, numbered lists, or tables. Keep the response easy to scan on a phone.",
         `Current page locale: ${locale}. Current selected punkts ID: ${currentLocationId}.`,
         locationIntent.kind === "other"
-          ? `The latest user message asks about ${locationIntent.location.name}, which is different from the currently selected page location. Call get_weather_forecast with punkts "${locationIntent.location.id}". Do not use get_current_page_forecast for this turn.`
+          ? `The latest user message asks about ${locationIntent.location.name}, which is different from the currently selected page location. Use get_named_location_forecast for that place. Do not use get_current_page_forecast for this turn.`
           : "The latest user message does not name a different Latvian location, so use get_current_page_forecast for the selected page location.",
       ].join(" "),
       messages: await convertToModelMessages(messages),
@@ -314,7 +314,7 @@ export async function POST(request: Request) {
             ? {
                 type: "tool",
                 toolName: asksAboutOtherLocation
-                  ? "get_weather_forecast"
+                  ? "get_named_location_forecast"
                   : "get_current_page_forecast",
               }
             : "auto",
@@ -372,6 +372,21 @@ export async function POST(request: Request) {
             "Get the next 72 hours of weather forecast for the location currently selected on the page.",
           inputSchema: z.object({}),
           execute: async () => compactForecast(currentLocationId, locale),
+        },
+        get_named_location_forecast: {
+          description:
+            "Get the next 72 hours of weather forecast for the Latvian location named in the latest user message. The server resolves the location automatically.",
+          inputSchema: z.object({}),
+          execute: async () => {
+            if (locationIntent.kind !== "other") {
+              return {
+                error:
+                  "No different location was detected in the latest user message. Use get_current_page_forecast instead.",
+              };
+            }
+
+            return compactForecast(locationIntent.location.id, locale);
+          },
         },
       },
     });

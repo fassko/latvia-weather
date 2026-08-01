@@ -107,7 +107,8 @@ function getForecastSourceCaption(message: UIMessage): string | null {
     const toolName = getToolName(part);
     if (
       toolName !== "get_current_page_forecast" &&
-      toolName !== "get_weather_forecast"
+      toolName !== "get_weather_forecast" &&
+      toolName !== "get_named_location_forecast"
     ) {
       continue;
     }

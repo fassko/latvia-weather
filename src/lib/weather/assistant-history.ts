@@ -17,6 +17,57 @@ function isUIMessage(value: unknown): value is UIMessage {
   return Array.isArray(value.parts);
 }
 
+function compactForecastToolOutput(output: unknown): unknown {
+  if (!isRecord(output)) return output;
+
+  const location = isRecord(output.location)
+    ? {
+        id: typeof output.location.id === "string" ? output.location.id : undefined,
+        name:
+          typeof output.location.name === "string" ? output.location.name : undefined,
+      }
+    : undefined;
+
+  return {
+    sourceCaption:
+      typeof output.sourceCaption === "string" ? output.sourceCaption : undefined,
+    location,
+    trendStrip:
+      typeof output.trendStrip === "string" ? output.trendStrip : undefined,
+  };
+}
+
+function compactMessagePart(part: unknown): unknown {
+  if (!isRecord(part) || typeof part.type !== "string") return part;
+
+  if (
+    part.type === "tool-get_current_page_forecast" ||
+    part.type === "tool-get_weather_forecast" ||
+    part.type === "tool-get_named_location_forecast"
+  ) {
+    return {
+      ...part,
+      output: "output" in part ? compactForecastToolOutput(part.output) : part.output,
+    };
+  }
+
+  if (part.type.startsWith("tool-") && "output" in part) {
+    // Drop bulky list/search payloads; text answers are enough to restore the UI.
+    return Object.fromEntries(
+      Object.entries(part).filter(([key]) => key !== "output"),
+    );
+  }
+
+  return part;
+}
+
+function compactMessagesForStorage(messages: UIMessage[]): UIMessage[] {
+  return messages.slice(-MAX_STORED_MESSAGES).map((message) => ({
+    ...message,
+    parts: message.parts.map((part) => compactMessagePart(part) as typeof part),
+  }));
+}
+
 export function parseAssistantHistory(raw: string | null): UIMessage[] {
   if (!raw) return [];
 
@@ -31,7 +82,7 @@ export function parseAssistantHistory(raw: string | null): UIMessage[] {
 }
 
 export function serializeAssistantHistory(messages: UIMessage[]): string {
-  return JSON.stringify(messages.slice(-MAX_STORED_MESSAGES));
+  return JSON.stringify(compactMessagesForStorage(messages));
 }
 
 export function loadAssistantHistory(): UIMessage[] {
