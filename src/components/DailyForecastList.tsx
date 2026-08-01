@@ -1,6 +1,7 @@
 import { format, isWeekend } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
+import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { groupForecastsByDay, summarizeDay, type DailySummary } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
@@ -29,12 +30,16 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
   const windUnit = await getWindUnitsCookie();
   const todayKey = getLatviaDayKey(new Date());
 
-  const rows: DailyRow[] = groupForecastsByDay(forecasts).map((group) => ({
-    dayKey: group.dayKey,
-    date: group.date,
-    summary: summarizeDay(group.forecasts),
-    forecasts: group.forecasts,
-  }));
+  // Drop hours that have already passed so yesterday does not linger as the
+  // first day after midnight (e.g. Fri 22:00–23:00 still listed on Saturday).
+  const rows: DailyRow[] = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts)).map(
+    (group) => ({
+      dayKey: group.dayKey,
+      date: group.date,
+      summary: summarizeDay(group.forecasts),
+      forecasts: group.forecasts,
+    }),
+  );
 
   if (rows.length === 0) return null;
 
@@ -76,7 +81,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
 
           return (
             <li key={row.dayKey}>
-              <details className="group">
+              <details className="group" open={isToday}>
                 <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 sm:gap-4 dark:hover:bg-slate-800/60">
                   <ChevronIcon />
                   <div className="w-14 shrink-0 sm:w-16">

@@ -258,6 +258,51 @@ test("hourly forecast list starts from the current hour", () => {
   );
 });
 
+test("daily forecast groups drop prior days after Latvia midnight", () => {
+  const forecasts = [
+    "202607312200",
+    "202607312300",
+    "202608010900",
+    "202608011000",
+    "202608020800",
+  ].map((laiks) =>
+    parseHourlyForecast({
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks,
+      temperatura: "21",
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: "21",
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    }),
+  );
+
+  // Saturday 09:38 Europe/Riga — Friday late hours must not remain as day 1.
+  const groups = groupForecastsByDay(
+    getUpcomingHourlyForecasts(forecasts, new Date("2026-08-01T06:38:00.000Z")),
+  );
+
+  assert.deepEqual(
+    groups.map((group) => group.dayKey),
+    ["2026-08-01", "2026-08-02"],
+  );
+  assert.deepEqual(
+    groups[0].forecasts.map((forecast) => formatLaiks(forecast.time)),
+    ["202608010900", "202608011000"],
+  );
+});
+
 test("24h chart forecasts cover the next 24 hours from the current hour", () => {
   const forecasts = [
     "202607080800",
