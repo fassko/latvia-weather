@@ -1,9 +1,9 @@
 {
   "metadata": {
     "siteTitle": "Laika prognoze Latvijā",
-    "siteDescription": "Stundu laika prognoze Latvijai",
-    "locationTitle": "{name} — laika prognoze",
-    "locationDescription": "Stundu laika prognoze: {name}, Latvija"
+    "siteDescription": "Laika prognoze Latvijai pa stundām un 10 dienām: temperatūra, nokrišņi, vējš un brīdinājumi no LVĢMC.",
+    "locationTitle": "{name} laika prognoze — pa stundām un 10 dienām",
+    "locationDescription": "Laika prognoze pa stundām un 10 dienām: {name}, Latvija — temperatūra, nokrišņi, vējš un brīdinājumi no LVĢMC, atjaunināts ik 15 minūtes."
   },
   "footer": {
     "dataFrom": "Dati no",

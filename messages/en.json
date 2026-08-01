@@ -1,9 +1,9 @@
 {
   "metadata": {
     "siteTitle": "Latvia Weather",
-    "siteDescription": "Hourly weather forecast for Latvia",
-    "locationTitle": "{name} Weather",
-    "locationDescription": "Hourly weather forecast for {name}, Latvia"
+    "siteDescription": "Hourly and 10-day weather forecast for Latvia: temperature, rain, wind and warnings from LVĢMC.",
+    "locationTitle": "{name} weather forecast — hourly and 10-day",
+    "locationDescription": "Hourly and 10-day weather forecast for {name}, Latvia: temperature, rain, wind and warnings from LVĢMC, updated every 15 minutes."
   },
   "footer": {
     "dataFrom": "Data from",

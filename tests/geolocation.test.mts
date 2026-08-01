@@ -61,8 +61,10 @@ function position(latitude: number, longitude: number): GeolocationPosition {
       altitudeAccuracy: null,
       heading: null,
       speed: null,
+      toJSON: () => ({}),
     },
     timestamp: Date.now(),
+    toJSON: () => ({}),
   };
 }
 

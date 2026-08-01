@@ -11,6 +11,7 @@ import {
   TEMPERATURE_LEGEND_BANDS,
   type TemperatureLegendBandId,
 } from "@/lib/weather/map-temp";
+import { buildPageStructuredData } from "@/lib/seo/structured-data";
 import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
@@ -23,14 +24,19 @@ export async function generateMetadata({
 }: MapPageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "map" });
+  const tMetadata = await getTranslations({ locale, namespace: "metadata" });
   const baseUrl = getSiteUrl();
   const pageUrl = `${baseUrl}/${locale}/map`;
-  const languages = Object.fromEntries(
-    routing.locales.map((altLocale) => [
-      altLocale,
-      `${baseUrl}/${altLocale}/map`,
-    ]),
-  );
+  const imageUrl = `${baseUrl}/${locale}/map/opengraph-image`;
+  const languages = {
+    ...Object.fromEntries(
+      routing.locales.map((altLocale) => [
+        altLocale,
+        `${baseUrl}/${altLocale}/map`,
+      ]),
+    ),
+    "x-default": `${baseUrl}/${routing.defaultLocale}/map`,
+  };
 
   return {
     title: t("title"),
@@ -43,7 +49,17 @@ export async function generateMetadata({
       title: t("title"),
       description: t("description"),
       url: pageUrl,
+      siteName: tMetadata("siteTitle"),
+      locale: locale === "lv" ? "lv_LV" : "en_US",
+      alternateLocale: locale === "lv" ? ["en_US"] : ["lv_LV"],
       type: "website",
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+      images: [imageUrl],
     },
   };
 }
@@ -65,6 +81,7 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   const t = await getTranslations({ locale, namespace: "map" });
   const tErrors = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
+  const tMetadata = await getTranslations({ locale, namespace: "metadata" });
 
   let locations;
 
@@ -85,8 +102,24 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   const minTemp = Math.round(Math.min(...temps));
   const maxTemp = Math.round(Math.max(...temps));
 
+  const baseUrl = getSiteUrl();
+  const jsonLd = buildPageStructuredData({
+    locale,
+    pageUrl: `${baseUrl}/${locale}/map`,
+    name: t("title"),
+    description: t("description"),
+    breadcrumb: [
+      { name: tMetadata("siteTitle"), url: `${baseUrl}/${locale}` },
+      { name: t("title"), url: `${baseUrl}/${locale}/map` },
+    ],
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <TopNav
         locationId={selected?.id ?? DEFAULT_LOCATION_ID}
         locationName={selected?.name ?? t("title")}

@@ -1,5 +1,10 @@
 const DEFAULT_SITE_URL = "https://latvia-weather.com";
 
+/** Preview and development deployments must never be indexed as duplicates. */
+export function isIndexableDeployment(): boolean {
+  return !process.env.VERCEL_ENV || process.env.VERCEL_ENV === "production";
+}
+
 export function getSiteUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
