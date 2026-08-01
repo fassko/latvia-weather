@@ -78,7 +78,8 @@ export function buildPageStructuredData({
             "@type": "ListItem",
             position: index + 1,
             name: item.name,
-            item: item.url,
+            // The current page is the last crumb and carries no link.
+            ...(index === breadcrumb.length - 1 ? {} : { item: item.url }),
           })),
         },
         isBasedOn: {

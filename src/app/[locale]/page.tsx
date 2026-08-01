@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DailyForecastList } from "@/components/DailyForecastList";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
@@ -9,7 +8,7 @@ import { HourlyStripCard } from "@/components/HourlyStripCard";
 import { MetricCards } from "@/components/MetricCards";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { TopNav } from "@/components/TopNav";
-import { WeatherAssistant } from "@/components/WeatherAssistant";
+import { WeatherAssistantLoader } from "@/components/WeatherAssistantLoader";
 import { WeatherHero } from "@/components/WeatherHero";
 import { WeatherHighlights } from "@/components/WeatherHighlights";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
@@ -22,6 +21,7 @@ import {
   mergeForecastLocation,
 } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
+import { getSourceCaption } from "@/lib/weather/source-caption";
 import {
   DEFAULT_LOCATION_ID,
   isValidLocationId,
@@ -127,12 +127,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
 
   setRequestLocale(locale);
 
-  // An unknown `punkts` would otherwise render the default location under a URL
-  // that search engines index as a separate, duplicated page.
-  if (punkts !== undefined && !isValidLocationId(punkts)) {
-    redirect(`/${locale}`);
-  }
-
   const savedPunkts = await getLocationCookie();
   const locationId = resolveLocationId(punkts, savedPunkts);
   const t = await getTranslations({ locale, namespace: "errors" });
@@ -199,7 +193,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
         <WeatherWarnings locale={locale} warnings={warnings} />
         <MetricCards forecasts={data.forecasts} />
         <WeatherHighlights forecasts={data.forecasts} />
-        <WeatherAssistant
+        <WeatherAssistantLoader
           locale={locale}
           locationId={data.location.id}
           labels={{
@@ -215,10 +209,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
             error: tAssistant("error"),
             close: tAssistant("close"),
             open: tAssistant("open"),
-            sourceCaption:
-              locale === "lv"
-                ? `Balstīts uz šīs lietotnes LVĢMC prognozi — ${data.location.name}.`
-                : `Based on this app’s LVGMC forecast — ${data.location.name}.`,
+            sourceCaption: getSourceCaption(data.location.name, locale),
             examples: [
               tAssistant("examples.weekend"),
               tAssistant("examples.clothes", { location: data.location.name }),
