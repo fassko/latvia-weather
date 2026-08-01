@@ -38,7 +38,9 @@ export async function TopNav({
         <div className="min-w-0">
           <LocationCombobox selectedId={locationId} selectedName={locationName} />
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        {/* The control cluster is wider than a 320px phone, so it has to be
+            allowed to wrap rather than push the page sideways. */}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <RefreshButton />
           <WindUnitsToggle />
           <Suspense fallback={null}>

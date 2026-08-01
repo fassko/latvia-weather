@@ -150,7 +150,9 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         />
 
         <div
-          className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
+          // Positioning context for the swatch tooltips: centring them on the
+          // row keeps them on screen, which centring on a swatch does not.
+          className="relative flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
           role="list"
           aria-label={t("legend")}
         >
@@ -245,7 +247,7 @@ function LegendSwatch({
       tabIndex={0}
       title={`${label}: ${range}`}
       aria-label={`${label}: ${range}`}
-      className="group relative inline-flex cursor-help items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
+      className="group inline-flex cursor-help items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
     >
       <span
         className="inline-block h-2.5 w-2.5 rounded-full"
@@ -255,7 +257,7 @@ function LegendSwatch({
       {label}
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
+        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 max-w-full -translate-x-1/2 rounded-md bg-slate-900 px-2 py-1 text-center text-[0.7rem] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
       >
         {range}
       </span>
