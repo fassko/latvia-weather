@@ -3,6 +3,7 @@ import { DetailedForecastMobileDay } from "@/components/DetailedForecastMobileDa
 import { ForecastDaySection } from "@/components/ForecastDaySection";
 import { FeelsLikeText } from "@/components/FeelsLikeText";
 import { WindDirection } from "@/components/WindDirection";
+import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
@@ -16,7 +17,7 @@ interface WeatherTableProps {
 
 export async function WeatherTable({ forecasts }: WeatherTableProps) {
   const t = await getTranslations("table");
-  const dayGroups = groupForecastsByDay(forecasts);
+  const dayGroups = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts));
   const todayKey = getLatviaDayKey(new Date());
   const windUnit = await getWindUnitsCookie();
 
