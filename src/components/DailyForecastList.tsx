@@ -194,7 +194,7 @@ interface DayBreakdownProps {
 function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayBreakdownProps) {
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
-      <table className="min-w-full text-left text-sm">
+      <table className="relative min-w-full text-left text-sm">
         <caption className="sr-only">{labels.caption}</caption>
         <thead>
           <tr className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">

@@ -30,6 +30,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  /* Backstop against stray horizontal scroll on phones. `clip` rather than
+     `hidden` because `hidden` would turn the body into a scroll container and
+     break the sticky header. */
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {

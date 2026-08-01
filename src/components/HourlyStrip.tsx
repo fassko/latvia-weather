@@ -63,7 +63,10 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
               </div>
             ) : null}
             <div
-              className={`flex min-w-[4.25rem] flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
+              // `relative` keeps the visually hidden labels below anchored to
+              // the tile; absolute positioning would otherwise resolve against
+              // the page and stretch it far to the right.
+              className={`relative flex min-w-[4.25rem] flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
                 isNow ? activeTileClass : ""
               }`}
             >
