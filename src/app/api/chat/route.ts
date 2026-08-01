@@ -1,6 +1,7 @@
 import {
   convertToModelMessages,
   isStepCount,
+  isTextUIPart,
   streamText,
   type UIMessage,
 } from "ai";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/weather/fetch";
 import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
 import { checkChatRateLimit } from "@/lib/rate-limit";
+import { resolveAssistantLocationIntent } from "@/lib/weather/assistant-location";
 import { DEFAULT_LOCATION_ID, isValidLocationId } from "@/lib/weather/locations";
 import { searchLocations } from "@/lib/mcp/search-locations";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -144,6 +146,24 @@ function getRateLimitError(locale: string): string {
   return "Too many assistant messages. Please try again later.";
 }
 
+function getMessageText(message: UIMessage): string {
+  return message.parts
+    .filter(isTextUIPart)
+    .map((part) => part.text)
+    .join("");
+}
+
+function getLatestUserMessageText(messages: UIMessage[]): string {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.role === "user") {
+      return getMessageText(message);
+    }
+  }
+
+  return "";
+}
+
 function compactForecast(punkts: string, locale: string) {
   return Promise.all([getHourlyForecast(punkts), getLocationPoints()]).then(
     ([data, locations]) => {
@@ -222,9 +242,26 @@ export async function POST(request: Request) {
       ? locationId
       : DEFAULT_LOCATION_ID;
 
+    const locations = await getLocationPoints();
+    const locationIntent = resolveAssistantLocationIntent(
+      getLatestUserMessageText(messages),
+      locations,
+      currentLocationId,
+    );
+    const asksAboutOtherLocation = locationIntent.kind === "other";
+    const targetLocationId =
+      locationIntent.kind === "other"
+        ? locationIntent.location.id
+        : currentLocationId;
+    const maxAssistantSteps = asksAboutOtherLocation
+      ? Math.max(getMaxAssistantSteps(), 3)
+      : getMaxAssistantSteps();
+
     logAssistantEvent("chat_start", {
       locale,
       locationId: currentLocationId,
+      targetLocationId,
+      asksAboutOtherLocation,
       messageCount: messages.length,
       remaining: rateLimit.remaining,
     });
@@ -236,6 +273,7 @@ export async function POST(request: Request) {
         "The weather data from this app is the source of truth.",
         "Always use the provided tools for location lookup and forecast data before answering.",
         "Prefer get_current_page_forecast when the user does not explicitly ask about another Latvian location.",
+        "When the user explicitly names another Latvian location, use search_weather_locations and/or get_weather_forecast for that place instead of get_current_page_forecast.",
         "Do not answer weather questions from general model knowledge, memory, or assumptions.",
         "If forecast tool data is unavailable, say that the app forecast could not be loaded instead of guessing.",
         "The app UI renders the forecast source caption from tool output. Do not write a source line yourself.",
@@ -247,14 +285,18 @@ export async function POST(request: Request) {
         "For weather trend questions, copy the exact trendStrip from the forecast tool output into the answer. Do not invent another chart. Do not use a code block.",
         "Do not use bullet points, numbered lists, or tables. Keep the response easy to scan on a phone.",
         `Current page locale: ${locale}. Current selected punkts ID: ${currentLocationId}.`,
+        locationIntent.kind === "other"
+          ? `The latest user message asks about ${locationIntent.location.name}, which is different from the currently selected page location. Use get_named_location_forecast for that place. Do not use get_current_page_forecast for this turn.`
+          : "The latest user message does not name a different Latvian location, so use get_current_page_forecast for the selected page location.",
       ].join(" "),
       messages: await convertToModelMessages(messages),
-      stopWhen: isStepCount(getMaxAssistantSteps()),
+      stopWhen: isStepCount(maxAssistantSteps),
       onError({ error }) {
         logAssistantEvent("chat_error", {
           error: getErrorMessage(error),
           locale,
           locationId: currentLocationId,
+          targetLocationId,
           durationMs: Date.now() - startedAt,
         });
       },
@@ -262,13 +304,19 @@ export async function POST(request: Request) {
         logAssistantEvent("chat_finish", {
           locale,
           locationId: currentLocationId,
+          targetLocationId,
           durationMs: Date.now() - startedAt,
         });
       },
       prepareStep: ({ stepNumber }) => ({
         toolChoice:
           stepNumber === 0
-            ? { type: "tool", toolName: "get_current_page_forecast" }
+            ? {
+                type: "tool",
+                toolName: asksAboutOtherLocation
+                  ? "get_named_location_forecast"
+                  : "get_current_page_forecast",
+              }
             : "auto",
       }),
       tools: {
@@ -277,7 +325,6 @@ export async function POST(request: Request) {
             "List Latvian forecast locations with punkts IDs, names, regions, coordinates, and current temperature.",
           inputSchema: z.object({}),
           execute: async () => {
-            const locations = await getLocationPoints();
             return locations.map(
               ({ id, name, region, lat, lon, temperature, iconCode }) => ({
                 id,
@@ -298,7 +345,6 @@ export async function POST(request: Request) {
             query: z.string().min(1).describe("City, town, or region name."),
           }),
           execute: async ({ query }: { query: string }) => {
-            const locations = await getLocationPoints();
             return searchLocations(locations, query);
           },
         },
@@ -326,6 +372,21 @@ export async function POST(request: Request) {
             "Get the next 72 hours of weather forecast for the location currently selected on the page.",
           inputSchema: z.object({}),
           execute: async () => compactForecast(currentLocationId, locale),
+        },
+        get_named_location_forecast: {
+          description:
+            "Get the next 72 hours of weather forecast for the Latvian location named in the latest user message. The server resolves the location automatically.",
+          inputSchema: z.object({}),
+          execute: async () => {
+            if (locationIntent.kind !== "other") {
+              return {
+                error:
+                  "No different location was detected in the latest user message. Use get_current_page_forecast instead.",
+              };
+            }
+
+            return compactForecast(locationIntent.location.id, locale);
+          },
         },
       },
     });

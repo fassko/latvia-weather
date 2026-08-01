@@ -17,6 +17,11 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ASSISTANT_HISTORY_CHAT_ID,
+  loadAssistantHistory,
+  saveAssistantHistory,
+} from "@/lib/weather/assistant-history";
+import {
   isWeekendDayToken,
   splitWeekendDayParts,
 } from "@/lib/weather/weekend-highlight";
@@ -102,7 +107,8 @@ function getForecastSourceCaption(message: UIMessage): string | null {
     const toolName = getToolName(part);
     if (
       toolName !== "get_current_page_forecast" &&
-      toolName !== "get_weather_forecast"
+      toolName !== "get_weather_forecast" &&
+      toolName !== "get_named_location_forecast"
     ) {
       continue;
     }
@@ -236,6 +242,7 @@ export function WeatherAssistant({
 }: WeatherAssistantProps) {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [initialMessages] = useState<UIMessage[]>(() => loadAssistantHistory());
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const transport = useMemo(
     () =>
@@ -245,9 +252,18 @@ export function WeatherAssistant({
       }),
     [locale, locationId],
   );
-  const { messages, sendMessage, status, stop, error } = useChat({ transport });
+  const { messages, sendMessage, status, stop, error } = useChat({
+    id: ASSISTANT_HISTORY_CHAT_ID,
+    messages: initialMessages,
+    transport,
+  });
   const isStreaming = status === "submitted" || status === "streaming";
   const errorMessage = getAssistantErrorMessage(error, labels.error);
+
+  useEffect(() => {
+    if (status !== "ready" && status !== "error") return;
+    saveAssistantHistory(messages);
+  }, [messages, status]);
 
   useEffect(() => {
     if (!isOpen) return;
