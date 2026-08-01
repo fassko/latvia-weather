@@ -294,7 +294,7 @@ export function WeatherAssistant({
   // close, so keyboard users are never left on a hidden element.
   useEffect(() => {
     if (isOpen) {
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
       return;
     }
 
