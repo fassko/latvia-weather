@@ -9,7 +9,8 @@ export function ShareButton() {
   const t = useTranslations("share");
   const locale = useLocale();
   const searchParams = useSearchParams();
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+  const copied = status === "copied";
 
   async function handleShare() {
     const punkts = searchParams.get("punkts");
@@ -28,23 +29,29 @@ export function ShareButton() {
 
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      setStatus("copied");
     } catch {
-      // Clipboard may be unavailable
+      setStatus("error");
     }
+
+    window.setTimeout(() => setStatus("idle"), 2000);
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleShare}
-      aria-label={t("label")}
-      title={copied ? t("copied") : t("label")}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-sky-600 dark:hover:text-sky-300"
-    >
-      {copied ? <CheckIcon /> : <ShareIcon />}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleShare}
+        aria-label={t("label")}
+        title={copied ? t("copied") : t("label")}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-sky-300 hover:text-sky-700 focus-visible:border-sky-500 focus-visible:ring-2 focus-visible:ring-sky-500/20 focus-visible:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-sky-600 dark:hover:text-sky-300"
+      >
+        {copied ? <CheckIcon /> : <ShareIcon />}
+      </button>
+      <span role="status" aria-live="polite" className="sr-only">
+        {status === "copied" ? t("copied") : status === "error" ? t("copyError") : ""}
+      </span>
+    </>
   );
 }
 

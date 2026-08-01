@@ -1,9 +1,9 @@
 {
   "metadata": {
     "siteTitle": "Latvia Weather",
-    "siteDescription": "Hourly weather forecast for Latvia",
-    "locationTitle": "{name} Weather",
-    "locationDescription": "Hourly weather forecast for {name}, Latvia"
+    "siteDescription": "Hourly and 10-day weather forecast for Latvia: temperature, rain, wind and warnings from LVĢMC.",
+    "locationTitle": "{name} weather forecast — hourly and 10-day",
+    "locationDescription": "Hourly and 10-day weather forecast for {name}, Latvia: temperature, rain, wind and warnings from LVĢMC, updated every 15 minutes."
   },
   "footer": {
     "dataFrom": "Data from",
@@ -196,11 +196,13 @@
   },
   "share": {
     "label": "Share forecast",
-    "copied": "Link copied"
+    "copied": "Link copied",
+    "copyError": "Could not copy the link"
   },
   "refresh": {
     "label": "Refresh data",
-    "refreshing": "Refreshing…"
+    "refreshing": "Refreshing…",
+    "loadingForecast": "Loading forecast…"
   },
   "theme": {
     "switchToLight": "Switch to light mode",
@@ -218,12 +220,14 @@
   "language": {
     "switchTo": "Switch to {locale}",
     "en": "EN",
-    "lv": "LV"
+    "lv": "LV",
+    "groupLabel": "Language"
   },
   "nav": {
     "brand": "Latvia Weather",
     "home": "Home",
-    "map": "Map"
+    "map": "Map",
+    "skipToContent": "Skip to content"
   },
   "map": {
     "title": "Weather map",

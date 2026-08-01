@@ -5,7 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { ThemeScript } from "@/components/ThemeScript";
 import { ThemeSync } from "@/components/ThemeSync";
-import { getSiteUrl } from "@/lib/site";
+import { getSiteUrl, isIndexableDeployment } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   applicationName: "Latvia Weather",
   creator: "Latvia Weather",
+  authors: [{ name: "Kristaps Grinbergs", url: "https://kristaps.me/" }],
+  // Preview deployments share the same content as production and would compete
+  // with it in search results.
+  robots: isIndexableDeployment() ? undefined : { index: false, follow: false },
   openGraph: {
     siteName: "Latvia Weather",
     type: "website",
@@ -35,6 +39,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
 };
 
 export default function RootLayout({

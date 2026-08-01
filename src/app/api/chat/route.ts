@@ -16,11 +16,21 @@ import { checkChatRateLimit } from "@/lib/rate-limit";
 import { resolveAssistantLocationIntent } from "@/lib/weather/assistant-location";
 import { DEFAULT_LOCATION_ID, isValidLocationId } from "@/lib/weather/locations";
 import { searchLocations } from "@/lib/mcp/search-locations";
+import { getSourceCaption } from "@/lib/weather/source-caption";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 export const maxDuration = 30;
 
 const model = process.env.AI_MODEL ?? "deepseek/deepseek-v4-flash";
+
+/** Matches the client history cap in `assistant-history.ts`. */
+const MAX_REQUEST_MESSAGES = 40;
+
+const chatRequestSchema = z.object({
+  messages: z.array(z.custom<UIMessage>()).min(1).max(MAX_REQUEST_MESSAGES),
+  locale: z.enum(["en", "lv"]).default("en"),
+  locationId: z.string().max(16).default(DEFAULT_LOCATION_ID),
+});
 
 function getMaxAssistantSteps(): number {
   const value = Number(process.env.AI_MAX_STEPS ?? 2);
@@ -130,14 +140,6 @@ function getTrendStrip(forecasts: HourlyForecast[], locale: string): string {
     .join(" ");
 }
 
-function getSourceCaption(locationName: string, locale: string): string {
-  if (locale === "lv") {
-    return `Balstīts uz šīs lietotnes LVĢMC prognozi — ${locationName}.`;
-  }
-
-  return `Based on this app’s LVGMC forecast — ${locationName}.`;
-}
-
 function getRateLimitError(locale: string): string {
   if (locale === "lv") {
     return "Pārāk daudz jautājumu asistentam. Lūdzu, mēģini vēlāk.";
@@ -211,15 +213,16 @@ export async function POST(request: Request) {
       return Response.json({ error: gatewayConfigurationError }, { status: 500 });
     }
 
-    const {
-      messages,
-      locale: requestLocale = "en",
-      locationId = DEFAULT_LOCATION_ID,
-    }: {
-      messages: UIMessage[];
-      locale?: string;
-      locationId?: string;
-    } = await request.json();
+    const parsedRequest = chatRequestSchema.safeParse(await request.json());
+    if (!parsedRequest.success) {
+      logAssistantEvent("chat_invalid_request", {
+        error: parsedRequest.error.message,
+        durationMs: Date.now() - startedAt,
+      });
+      return Response.json({ error: "Invalid chat request" }, { status: 400 });
+    }
+
+    const { messages, locale: requestLocale, locationId } = parsedRequest.data;
     locale = requestLocale;
 
     const rateLimit = await checkChatRateLimit(request);
@@ -291,6 +294,8 @@ export async function POST(request: Request) {
       ].join(" "),
       messages: await convertToModelMessages(messages),
       stopWhen: isStepCount(maxAssistantSteps),
+      // Stop paying for tokens as soon as the client disconnects or hits Stop.
+      abortSignal: request.signal,
       onError({ error }) {
         logAssistantEvent("chat_error", {
           error: getErrorMessage(error),

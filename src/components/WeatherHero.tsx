@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { getTodayForecasts } from "@/lib/weather/chart-data";
 import { summarizeDay } from "@/lib/weather/daily";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
+import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey, getWindDirection, isNightIcon } from "@/lib/weather/parse";
 import { getWeatherSummaryParts } from "@/lib/weather/summary";
 import { formatLatviaDateTime } from "@/lib/weather/timezone";
@@ -66,6 +67,11 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
   const tWind = await getTranslations("wind");
   const windUnit = await getWindUnitsCookie();
 
+  const subtitle = getLocationSubtitle(
+    data.location.name,
+    data.location.region,
+    locale,
+  );
   const current = findCurrentForecast(data.forecasts);
   const theme = getWeatherHeaderTheme(current.iconCode);
   const today = summarizeDay(getTodayForecasts(data.forecasts));
@@ -94,9 +100,17 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
           {getConditionEmoji(current.iconCode)}
         </span>
 
-        <p className={`text-sm font-medium ${theme.muted}`}>
-          {formatLatviaDateTime(new Date(), locale, "headerDateTime")}
-        </p>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
+            {data.location.name}
+            {subtitle ? (
+              <span className={`font-normal ${theme.muted}`}>, {subtitle}</span>
+            ) : null}
+          </h1>
+          <p className={`text-sm font-medium ${theme.muted}`}>
+            {formatLatviaDateTime(new Date(), locale, "headerDateTime")}
+          </p>
+        </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1">
           <p className="flex items-start font-bold leading-none tabular-nums">

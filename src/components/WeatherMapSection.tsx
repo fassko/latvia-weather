@@ -192,6 +192,7 @@ function ForecastTimeControl({
   locale,
   onChange,
   onTogglePlay,
+  onRetry,
 }: {
   offsetHours: number;
   isPlaying: boolean;
@@ -200,8 +201,10 @@ function ForecastTimeControl({
   locale: string;
   onChange: (offsetHours: number) => void;
   onTogglePlay: () => void;
+  onRetry: () => void;
 }) {
   const tMap = useTranslations("map");
+  const tErrors = useTranslations("errors");
   const canStepBack = offsetHours > 0;
   const canStepForward = offsetHours < MAX_FORECAST_OFFSET_HOURS;
 
@@ -313,6 +316,15 @@ function ForecastTimeControl({
           : hasError
             ? tMap("forecastError")
             : "\u00a0"}
+        {hasError && !isLoading ? (
+          <button
+            type="button"
+            className="weather-map-time-control__retry"
+            onClick={onRetry}
+          >
+            {tErrors("tryAgain")}
+          </button>
+        ) : null}
       </p>
     </div>
   );
@@ -329,6 +341,7 @@ export function WeatherMapSection({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
   const [hasForecastError, setHasForecastError] = useState(false);
+  const [forecastRetryToken, setForecastRetryToken] = useState(0);
   const [mapWeatherCache, setMapWeatherCache] = useState(
     () => new Map<number, WeatherLocationPoint[]>([[0, locations]]),
   );
@@ -408,7 +421,7 @@ export function WeatherMapSection({
     return () => {
       ignore = true;
     };
-  }, [hasCachedForecast, offsetHours]);
+  }, [forecastRetryToken, hasCachedForecast, offsetHours]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -441,6 +454,12 @@ export function WeatherMapSection({
     setIsForecastLoading(
       nextOffsetHours !== 0 && !mapWeatherCache.has(nextOffsetHours),
     );
+  }
+
+  function handleForecastRetry() {
+    setHasForecastError(false);
+    setIsForecastLoading(true);
+    setForecastRetryToken((token) => token + 1);
   }
 
   function handleTogglePlay() {
@@ -549,7 +568,7 @@ export function WeatherMapSection({
           aria-valuemin={MOBILE_MAP_MIN_HEIGHT_PX}
           aria-valuemax={mobileMaxHeightPx}
           aria-valuenow={mobileMapHeightPx ?? undefined}
-          aria-orientation="horizontal"
+          aria-orientation="vertical"
           role="slider"
           tabIndex={0}
           onPointerDown={handleResizePointerDown}
@@ -569,6 +588,7 @@ export function WeatherMapSection({
         locale={locale}
         onChange={handleForecastOffsetChange}
         onTogglePlay={handleTogglePlay}
+        onRetry={handleForecastRetry}
       />
     </section>
   );

@@ -18,6 +18,8 @@ export const STALE_REFRESH_MS = REVALIDATE_SECONDS * 1000;
 
 const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
 const LOCATION_POINTS_BATCH_SIZE = 80;
+/** Caps the per-instance stale fallback so crawlers cannot grow it unbounded. */
+const HOURLY_FORECAST_CACHE_LIMIT = 64;
 
 interface CachedValue<T> {
   value: T;
@@ -47,10 +49,18 @@ function rememberLocationPoints(value: WeatherLocationPoint[]) {
 }
 
 function rememberHourlyForecast(punkts: string, value: WeatherData) {
+  // Re-inserting keeps the Map ordered from least to most recently used.
+  hourlyForecastCache.delete(punkts);
   hourlyForecastCache.set(punkts, {
     value,
     storedAt: Date.now(),
   });
+
+  while (hourlyForecastCache.size > HOURLY_FORECAST_CACHE_LIMIT) {
+    const oldestKey = hourlyForecastCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    hourlyForecastCache.delete(oldestKey);
+  }
 }
 
 function rememberWeatherWarnings(value: WeatherWarning[]) {

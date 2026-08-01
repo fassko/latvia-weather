@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
+import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { TopNav } from "@/components/TopNav";
 import { WeatherMapSection } from "@/components/WeatherMapSection";
 import { routing, type Locale } from "@/i18n/routing";
@@ -11,6 +12,7 @@ import {
   TEMPERATURE_LEGEND_BANDS,
   type TemperatureLegendBandId,
 } from "@/lib/weather/map-temp";
+import { buildPageStructuredData } from "@/lib/seo/structured-data";
 import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
@@ -23,14 +25,19 @@ export async function generateMetadata({
 }: MapPageProps): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "map" });
+  const tMetadata = await getTranslations({ locale, namespace: "metadata" });
   const baseUrl = getSiteUrl();
   const pageUrl = `${baseUrl}/${locale}/map`;
-  const languages = Object.fromEntries(
-    routing.locales.map((altLocale) => [
-      altLocale,
-      `${baseUrl}/${altLocale}/map`,
-    ]),
-  );
+  const imageUrl = `${baseUrl}/${locale}/map/opengraph-image`;
+  const languages = {
+    ...Object.fromEntries(
+      routing.locales.map((altLocale) => [
+        altLocale,
+        `${baseUrl}/${altLocale}/map`,
+      ]),
+    ),
+    "x-default": `${baseUrl}/${routing.defaultLocale}/map`,
+  };
 
   return {
     title: t("title"),
@@ -43,7 +50,17 @@ export async function generateMetadata({
       title: t("title"),
       description: t("description"),
       url: pageUrl,
+      siteName: tMetadata("siteTitle"),
+      locale: locale === "lv" ? "lv_LV" : "en_US",
+      alternateLocale: locale === "lv" ? ["en_US"] : ["lv_LV"],
       type: "website",
+      images: [{ url: imageUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+      images: [imageUrl],
     },
   };
 }
@@ -65,6 +82,7 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   const t = await getTranslations({ locale, namespace: "map" });
   const tErrors = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
+  const tMetadata = await getTranslations({ locale, namespace: "metadata" });
 
   let locations;
 
@@ -85,14 +103,33 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   const minTemp = Math.round(Math.min(...temps));
   const maxTemp = Math.round(Math.max(...temps));
 
+  const baseUrl = getSiteUrl();
+  const jsonLd = buildPageStructuredData({
+    locale,
+    pageUrl: `${baseUrl}/${locale}/map`,
+    name: t("title"),
+    description: t("description"),
+    breadcrumb: [
+      { name: tMetadata("siteTitle"), url: `${baseUrl}/${locale}` },
+      { name: t("title"), url: `${baseUrl}/${locale}/map` },
+    ],
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <TopNav
         locationId={selected?.id ?? DEFAULT_LOCATION_ID}
         locationName={selected?.name ?? t("title")}
         active="map"
       />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-5 pb-[max(2rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6">
+      <main
+        id={MAIN_CONTENT_ID}
+        className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-5 pb-[max(2rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6"
+      >
         <header className="flex flex-col gap-1.5">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             {t("title")}
@@ -113,7 +150,9 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         />
 
         <div
-          className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
+          // Positioning context for the swatch tooltips: centring them on the
+          // row keeps them on screen, which centring on a swatch does not.
+          className="relative flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
           role="list"
           aria-label={t("legend")}
         >
@@ -208,7 +247,7 @@ function LegendSwatch({
       tabIndex={0}
       title={`${label}: ${range}`}
       aria-label={`${label}: ${range}`}
-      className="group relative inline-flex cursor-help items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
+      className="group inline-flex cursor-help items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
     >
       <span
         className="inline-block h-2.5 w-2.5 rounded-full"
@@ -218,7 +257,7 @@ function LegendSwatch({
       {label}
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
+        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 max-w-full -translate-x-1/2 rounded-md bg-slate-900 px-2 py-1 text-center text-[0.7rem] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
       >
         {range}
       </span>
