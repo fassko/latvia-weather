@@ -1,15 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { getLatviaDayKey, parseLaiks } from "../src/lib/weather/timezone.ts";
 import { summarizeTodayBrief } from "../src/lib/weather/today-brief.ts";
 import type { HourlyForecast } from "../src/lib/weather/types.ts";
 
-function hour(laiksOffsetHours: number, overrides: Partial<HourlyForecast> = {}): HourlyForecast {
-  const time = new Date();
-  time.setMinutes(0, 0, 0);
-  time.setHours(time.getHours() + laiksOffsetHours);
+/** Build a forecast at a fixed Latvia wall-clock hour on today's Latvia date. */
+function todayHour(
+  hourOfDay: number,
+  overrides: Partial<HourlyForecast> = {},
+): HourlyForecast {
+  const dayKey = getLatviaDayKey(new Date()).replaceAll("-", "");
+  const laiks = `${dayKey}${String(hourOfDay).padStart(2, "0")}00`;
 
   return {
-    time,
+    time: parseLaiks(laiks),
     temperature: 18,
     feelsLike: 17,
     precipitation: 0,
@@ -30,10 +34,12 @@ function hour(laiksOffsetHours: number, overrides: Partial<HourlyForecast> = {})
 
 describe("summarizeTodayBrief", () => {
   it("returns high, low, and rain summary for today hours", () => {
+    // Use midday Latvia hours so the summary stays on today's day key even when
+    // CI runs near Europe/Riga midnight (local Date offsets can spill into tomorrow).
     const brief = summarizeTodayBrief([
-      hour(0, { temperature: 14, precipitationProbability: 20, precipitation: 0.2 }),
-      hour(1, { temperature: 21, precipitationProbability: 65, precipitation: 1.4 }),
-      hour(2, { temperature: 17, precipitationProbability: 40, precipitation: 0.3 }),
+      todayHour(10, { temperature: 14, precipitationProbability: 20, precipitation: 0.2 }),
+      todayHour(14, { temperature: 21, precipitationProbability: 65, precipitation: 1.4 }),
+      todayHour(18, { temperature: 17, precipitationProbability: 40, precipitation: 0.3 }),
     ]);
 
     assert.deepEqual(brief, {

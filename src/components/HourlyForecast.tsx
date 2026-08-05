@@ -4,7 +4,7 @@ import { HourlyForecastMobileDay } from "@/components/HourlyForecastMobileDay";
 import { ConditionEmojiServer } from "@/components/ConditionEmojiServer";
 import { WindDirection } from "@/components/WindDirection";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
-import { groupForecastsByDay, summarizeDay } from "@/lib/weather/daily";
+import { buildUpcomingDailyGroups } from "@/lib/weather/daily";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
@@ -17,7 +17,10 @@ interface HourlyForecastProps {
 
 export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
   const t = await getTranslations("hourly");
-  const dayGroups = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts));
+  const dayGroups = buildUpcomingDailyGroups(
+    forecasts,
+    getUpcomingHourlyForecasts(forecasts),
+  );
   const todayKey = getLatviaDayKey(new Date());
   const windUnit = await getWindUnitsCookie();
 
@@ -27,11 +30,11 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
         {t("title")}
       </h2>
       <div className="space-y-4 sm:hidden">
-        {dayGroups.map(({ dayKey, date, forecasts: dayForecasts }) => (
+        {dayGroups.map(({ dayKey, date, summary, forecasts: dayForecasts }) => (
           <HourlyForecastMobileDay
             key={dayKey}
             date={date}
-            summary={summarizeDay(dayForecasts)}
+            summary={summary}
             forecasts={dayForecasts}
             defaultExpanded={dayKey === todayKey}
           />
@@ -49,9 +52,7 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
             </tr>
           </thead>
           <tbody>
-            {dayGroups.map(({ dayKey, date, forecasts: dayForecasts }) => {
-              const summary = summarizeDay(dayForecasts);
-
+            {dayGroups.map(({ dayKey, date, summary, forecasts: dayForecasts }) => {
               return (
                 <ForecastDaySection
                   key={dayKey}

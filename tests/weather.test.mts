@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { distanceKm, findNearestLocation } from "../src/lib/weather/coordinates.ts";
-import { groupForecastsByDay } from "../src/lib/weather/daily.ts";
+import {
+  buildUpcomingDailyGroups,
+  groupForecastsByDay,
+} from "../src/lib/weather/daily.ts";
 import {
   formatLaiks,
   getHourlyForecast,
@@ -301,6 +304,58 @@ test("daily forecast groups drop prior days after Latvia midnight", () => {
     groups[0].forecasts.map((forecast) => formatLaiks(forecast.time)),
     ["202608010900", "202608011000"],
   );
+});
+
+test("late-evening today summary keeps the full-day temperature range", () => {
+  const tempsByLaiks: Record<string, string> = {
+    "202608051500": "27.1",
+    "202608051800": "28.7",
+    "202608052100": "24.7",
+    "202608052300": "23.2",
+    "202608060900": "20.0",
+    "202608061500": "27.0",
+  };
+
+  const forecasts = Object.entries(tempsByLaiks).map(([laiks, temperatura]) =>
+    parseHourlyForecast({
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks,
+      temperatura,
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: temperatura,
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    }),
+  );
+
+  // Wednesday 23:03 Europe/Riga — only 23:00 remains for today.
+  const now = new Date("2026-08-05T20:03:00.000Z");
+  const upcoming = getUpcomingHourlyForecasts(forecasts, now);
+  const groups = buildUpcomingDailyGroups(forecasts, upcoming);
+
+  assert.deepEqual(
+    groups.map((group) => group.dayKey),
+    ["2026-08-05", "2026-08-06"],
+  );
+  assert.deepEqual(
+    groups[0].forecasts.map((forecast) => formatLaiks(forecast.time)),
+    ["202608052300"],
+  );
+  assert.equal(groups[0].summary.minTemperature, 23.2);
+  assert.equal(groups[0].summary.maxTemperature, 28.7);
+  assert.equal(groups[1].summary.minTemperature, 20.0);
+  assert.equal(groups[1].summary.maxTemperature, 27.0);
 });
 
 test("24h chart forecasts cover the next 24 hours from the current hour", () => {
