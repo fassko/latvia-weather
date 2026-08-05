@@ -107,3 +107,39 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
     representativeIconCode: findRepresentativeIconCode(forecasts),
   };
 }
+
+export interface UpcomingDailyGroup {
+  dayKey: string;
+  date: Date;
+  /** Daily stats from all available hours that day (not only remaining ones). */
+  summary: DailySummary;
+  /** Hours still ahead — used for expandable hourly breakdowns. */
+  forecasts: HourlyForecast[];
+}
+
+/**
+ * Build day rows from upcoming hours, but summarize each day from every hour
+ * still present for that calendar day.
+ *
+ * Late in the evening, "today" may only have one remaining hour. Summarizing
+ * that alone collapses the daily high/low to a single temperature. Prior days
+ * stay excluded when `upcomingForecasts` has already dropped them.
+ */
+export function buildUpcomingDailyGroups(
+  forecasts: HourlyForecast[],
+  upcomingForecasts: HourlyForecast[],
+): UpcomingDailyGroup[] {
+  const fullDayForecasts = new Map(
+    groupForecastsByDay(forecasts).map((group) => [group.dayKey, group.forecasts]),
+  );
+
+  return groupForecastsByDay(upcomingForecasts).map((group) => {
+    const dayForecasts = fullDayForecasts.get(group.dayKey) ?? group.forecasts;
+    return {
+      dayKey: group.dayKey,
+      date: group.date,
+      summary: summarizeDay(dayForecasts),
+      forecasts: group.forecasts,
+    };
+  });
+}

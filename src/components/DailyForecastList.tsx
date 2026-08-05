@@ -2,7 +2,7 @@ import { format, isWeekend } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
-import { groupForecastsByDay, summarizeDay, type DailySummary } from "@/lib/weather/daily";
+import { buildUpcomingDailyGroups } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
 import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
@@ -11,13 +11,6 @@ import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import type { HourlyForecast } from "@/lib/weather/types";
 
 interface DailyForecastListProps {
-  forecasts: HourlyForecast[];
-}
-
-interface DailyRow {
-  dayKey: string;
-  date: Date;
-  summary: DailySummary;
   forecasts: HourlyForecast[];
 }
 
@@ -33,14 +26,9 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
 
   // Drop hours that have already passed so yesterday does not linger as the
   // first day after midnight (e.g. Fri 22:00–23:00 still listed on Saturday).
-  const rows: DailyRow[] = groupForecastsByDay(getUpcomingHourlyForecasts(forecasts)).map(
-    (group) => ({
-      dayKey: group.dayKey,
-      date: group.date,
-      summary: summarizeDay(group.forecasts),
-      forecasts: group.forecasts,
-    }),
-  );
+  // Summaries still use every available hour for that calendar day so late
+  // evening does not collapse today's high/low to a single remaining temp.
+  const rows = buildUpcomingDailyGroups(forecasts, getUpcomingHourlyForecasts(forecasts));
 
   if (rows.length === 0) return null;
 
