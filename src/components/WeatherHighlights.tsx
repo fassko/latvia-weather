@@ -53,7 +53,7 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
     {
       key: "peakRain",
       label: t("peakRain"),
-      value: `${Math.round(wettest.precipitationProbability)}%`,
+      value: `${Math.round(wettest.precipitationProbability)}% · ${wettest.precipitation.toFixed(1)} mm`,
       time: wettest.time,
       icon: <DropletIcon />,
       tone: "bg-sky-100 text-sky-500 dark:bg-sky-500/15 dark:text-sky-400",
