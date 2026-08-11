@@ -106,6 +106,10 @@ function getWindDirectionIconSize(period: ForecastPeriod) {
   return 14;
 }
 
+function getXAxisDomain(dataLength: number): [number, number] {
+  return [-0.5, Math.max(dataLength - 0.5, 0.5)];
+}
+
 function getConditionIconIndexes(data: ChartPoint[], period: ForecastPeriod): Set<number> {
   const indexes = new Set<number>();
   const step = getConditionIconStep(period);
@@ -204,6 +208,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     [forecasts, period],
   );
   const data = useMemo(() => toChartPoints(periodForecasts), [periodForecasts]);
+  const xAxisDomain = getXAxisDomain(data.length);
   const daySegments = useMemo(
     () => getDaySegments(data, dateLocale, locale),
     [data, dateLocale, locale],
@@ -403,7 +408,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
               <XAxis
                 dataKey="xIndex"
                 type="number"
-                domain={[0, Math.max(data.length - 1, 0)]}
+                domain={xAxisDomain}
                 ticks={hourTicks}
                 tick={{
                   fontSize: isMultiDay ? 10 : 11,
@@ -423,7 +428,7 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                   xAxisId="days"
                   dataKey="xIndex"
                   type="number"
-                  domain={[0, Math.max(data.length - 1, 0)]}
+                  domain={xAxisDomain}
                   ticks={daySegments.map((segment) => segment.midIndex)}
                   tick={({ x, y, payload }) => {
                     const tick = dayTickLabels.get(Number(payload.value));

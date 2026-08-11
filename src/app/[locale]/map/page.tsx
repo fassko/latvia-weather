@@ -5,6 +5,7 @@ import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { TopNav } from "@/components/TopNav";
 import { WeatherMapSection } from "@/components/WeatherMapSection";
 import { routing, type Locale } from "@/i18n/routing";
+import { getWeatherAlarmPolygons } from "@/lib/weather/alarms";
 import { getLocationPoints } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { DEFAULT_LOCATION_ID, isValidLocationId, resolveLocationId } from "@/lib/weather/locations";
@@ -17,7 +18,7 @@ import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ punkts?: string }>;
+  searchParams: Promise<{ alarms?: string; punkts?: string }>;
 }
 
 export async function generateMetadata({
@@ -67,7 +68,7 @@ export async function generateMetadata({
 
 export default async function MapPage({ params, searchParams }: MapPageProps) {
   const { locale } = await params;
-  const { punkts } = await searchParams;
+  const { alarms: alarmsParam, punkts } = await searchParams;
 
   if (!routing.locales.includes(locale as Locale)) {
     return null;
@@ -79,15 +80,20 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   const locationId = resolveLocationId(punkts, savedPunkts);
   const focusLocationId =
     punkts && isValidLocationId(punkts) ? punkts : undefined;
+  const initialShowAlarms = alarmsParam !== "0";
   const t = await getTranslations({ locale, namespace: "map" });
   const tErrors = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
   const tMetadata = await getTranslations({ locale, namespace: "metadata" });
 
   let locations;
+  let alarms;
 
   try {
-    locations = await getLocationPoints();
+    [locations, alarms] = await Promise.all([
+      getLocationPoints(),
+      getWeatherAlarmPolygons(),
+    ]);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : tErrors("loadWeatherData");
@@ -144,9 +150,11 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
 
         <WeatherMapSection
           locations={locations}
+          alarms={alarms}
           locale={locale}
           selectedId={selected?.id}
           focusLocationId={focusLocationId}
+          initialShowAlarms={initialShowAlarms}
         />
 
         <div

@@ -1,4 +1,5 @@
 import { LOCATION_POINT_IDS } from "./locations";
+import { getWeatherAlarmRegionLabelsByText } from "./alarms";
 import { parseHourlyForecast, parseLaiks, parseNumber } from "./parse";
 import type {
   HourlyForecastRaw,
@@ -35,6 +36,10 @@ const weatherWarningsCache: CachedValue<WeatherWarning[]> = {
   storedAt: 0,
 };
 const hourlyForecastCache = new Map<string, CachedValue<WeatherData>>();
+
+function normalizeWarningText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
 
 function isUsableStaleValue<T>(
   cache: CachedValue<T>,
@@ -196,8 +201,22 @@ export async function getWeatherWarnings(): Promise<WeatherWarning[]> {
     }
 
     const warnings = raw.map(parseWeatherWarning);
-    rememberWeatherWarnings(warnings);
-    return warnings;
+    const labelsByText = await getWeatherAlarmRegionLabelsByText();
+    const enrichedWarnings = warnings.map((warning) => {
+      const labels =
+        labelsByText.get(normalizeWarningText(warning.textLv)) ??
+        labelsByText.get(normalizeWarningText(warning.textEn));
+
+      return labels
+        ? {
+            ...warning,
+            regionNamesLv: labels.lv,
+            regionNamesEn: labels.en,
+          }
+        : warning;
+    });
+    rememberWeatherWarnings(enrichedWarnings);
+    return enrichedWarnings;
   } catch {
     if (isUsableStaleValue(weatherWarningsCache, (value) => value.length === 0)) {
       return weatherWarningsCache.value.map((warning) => ({

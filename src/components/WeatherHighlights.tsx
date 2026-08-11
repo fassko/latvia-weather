@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { getRemainingTodayForecasts } from "@/lib/weather/chart-data";
+import { getWindDirection } from "@/lib/weather/parse";
 import { formatLatviaTime } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
@@ -21,6 +22,7 @@ interface WeatherHighlightsProps {
 
 export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
   const t = await getTranslations("highlights");
+  const tWind = await getTranslations("wind");
   const windUnit = await getWindUnitsCookie();
   const period = getRemainingTodayForecasts(forecasts);
 
@@ -38,6 +40,7 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
     icon: ReactNode;
     tone: string;
     arrow?: number;
+    direction?: string;
   }[] = [
     {
       key: "warmest",
@@ -63,6 +66,7 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
       icon: <GustIcon />,
       tone: "bg-slate-100 text-slate-500 dark:bg-slate-700/50 dark:text-slate-300",
       arrow: windiest.windDirection,
+      direction: tWind(`directions.${getWindDirection(windiest.windDirection)}`),
     },
   ];
 
@@ -92,7 +96,12 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
               <p className="flex items-center justify-center gap-1 text-base font-bold tabular-nums text-slate-900 sm:justify-start sm:gap-1.5 sm:text-2xl dark:text-slate-100">
                 {item.value}
                 {item.arrow !== undefined ? (
-                  <WindArrow degrees={item.arrow} />
+                  <>
+                    <WindArrow degrees={item.arrow} />
+                    <span className="text-xs font-semibold text-slate-500 sm:text-sm dark:text-slate-400">
+                      {item.direction}
+                    </span>
+                  </>
                 ) : null}
               </p>
               <p className="text-[10px] text-slate-500 sm:text-xs dark:text-slate-400">

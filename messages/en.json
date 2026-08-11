@@ -266,7 +266,12 @@
     "forecastNextHour": "Next hour",
     "forecastPlay": "Play",
     "forecastPause": "Pause",
-    "resizeMap": "Drag to resize map height"
+    "resizeMap": "Drag to resize map height",
+    "warning": "Warning",
+    "warningValid": "Valid",
+    "warningMunicipalities": "Areas:",
+    "showAlarms": "Show weather warnings",
+    "hideAlarms": "Hide weather warnings"
   },
   "hero": {
     "feelsLike": "Feels like {temp}°",
@@ -361,6 +366,7 @@
     "expandAll": "Show all weather warning details",
     "show": "Show",
     "count": "{count, plural, one {# warning} other {# warnings}}",
+    "viewOnMap": "View on map",
     "levels": {
       "yellow": "Yellow",
       "orange": "Orange",
