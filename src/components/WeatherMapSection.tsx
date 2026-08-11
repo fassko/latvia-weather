@@ -11,7 +11,10 @@ import {
 } from "react";
 import { useTranslations } from "next-intl";
 import { MOBILE_MAP_MAX_WIDTH } from "@/lib/weather/map-view";
-import type { WeatherLocationPoint } from "@/lib/weather/types";
+import type {
+  WeatherAlarmPolygon,
+  WeatherLocationPoint,
+} from "@/lib/weather/types";
 
 const MAX_FORECAST_OFFSET_HOURS = 72;
 const HOUR_TICKS = Array.from({ length: 13 }, (_, index) => index * 6);
@@ -31,9 +34,11 @@ const WeatherMap = dynamic(
 
 interface WeatherMapSectionProps {
   locations: WeatherLocationPoint[];
+  alarms: WeatherAlarmPolygon[];
   locale: string;
   selectedId?: string;
   focusLocationId?: string;
+  initialShowAlarms?: boolean;
 }
 
 interface MapWeatherResponse {
@@ -332,9 +337,11 @@ function ForecastTimeControl({
 
 export function WeatherMapSection({
   locations,
+  alarms,
   locale,
   selectedId,
   focusLocationId,
+  initialShowAlarms = true,
 }: WeatherMapSectionProps) {
   const tMap = useTranslations("map");
   const [offsetHours, setOffsetHours] = useState(0);
@@ -556,9 +563,11 @@ export function WeatherMapSection({
       >
         <WeatherMap
           locations={displayLocations}
+          alarms={alarms}
           locale={locale}
           selectedId={selectedId}
           focusLocationId={focusLocationId}
+          initialShowAlarms={initialShowAlarms}
         />
       </div>
       {isMobileViewport ? (

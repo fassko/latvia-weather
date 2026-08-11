@@ -96,6 +96,30 @@ export interface WeatherWarning {
   level: WeatherWarningLevel;
   iconCode: string;
   regions: string[];
+  regionNamesLv?: string[];
+  regionNamesEn?: string[];
+  isStale?: boolean;
+}
+
+export interface WeatherAlarmPolygon {
+  id: string;
+  warningNo: string;
+  level: WeatherWarningLevel;
+  intensityLv: string;
+  intensityEn: string;
+  regionsLv: string;
+  regionsEn: string;
+  phenomenonLv: string;
+  phenomenonEn: string;
+  timeFrom: string;
+  timeTill: string;
+  textLv: string;
+  textEn: string;
+  risksLv: string;
+  risksEn: string;
+  municipalityNamesLv: string[];
+  municipalityNamesEn: string[];
+  rings: [number, number][][];
   isStale?: boolean;
 }
 

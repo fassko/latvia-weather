@@ -1,15 +1,23 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
-import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
+import {
+  getTodayForecasts,
+  getUpcomingHourlyForecasts,
+} from "@/lib/weather/chart-data";
 import {
   getConditionEmoji,
   getConditionKey,
   getWindDirection,
 } from "@/lib/weather/parse";
-import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
+import {
+  formatLatviaTime,
+  getLatviaDayKey,
+  getLatviaStartOfHour,
+  getLatviaWallClock,
+} from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -27,13 +35,34 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
   const locale = useLocale();
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = useWindUnit();
+  const currentHour = getLatviaStartOfHour(new Date());
+  const todayKey = getLatviaDayKey(new Date());
+  const pastToday = getTodayForecasts(forecasts).filter((forecast) => {
+    return (
+      getLatviaDayKey(forecast.time) === todayKey &&
+      getLatviaWallClock(forecast.time) < currentHour
+    );
+  });
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
+  const stripForecasts = [...pastToday, ...upcoming];
+  const currentTileRef = useRef<HTMLDivElement | null>(null);
   const activeTileClass =
     "bg-sky-50 ring-1 ring-inset ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30";
   const hoverTileClass =
     "hover:bg-sky-100/80 hover:ring-1 hover:ring-inset hover:ring-sky-300 dark:hover:bg-sky-500/15 dark:hover:ring-sky-500/50";
 
-  if (upcoming.length === 0) return null;
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      currentTileRef.current?.scrollIntoView({
+        block: "nearest",
+        inline: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [stripForecasts.length]);
+
+  if (stripForecasts.length === 0) return null;
 
   return (
     // A scrollable region needs to be focusable so it can also be scrolled with
@@ -44,11 +73,13 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
       aria-label={t("title")}
       tabIndex={0}
     >
-      {upcoming.map((forecast, index) => {
-        const isNow = index === 0;
+      {stripForecasts.map((forecast, index) => {
+        const isPast = getLatviaWallClock(forecast.time) < currentHour;
+        const isNow = !isPast && getLatviaWallClock(forecast.time).getTime() === currentHour.getTime();
         const isNewDay =
           index > 0 &&
-          getLatviaDayKey(forecast.time) !== getLatviaDayKey(upcoming[index - 1].time);
+          getLatviaDayKey(forecast.time) !==
+            getLatviaDayKey(stripForecasts[index - 1].time);
 
         return (
           <Fragment key={forecast.time.toISOString()}>
@@ -63,12 +94,13 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
               </div>
             ) : null}
             <div
+              ref={isNow ? currentTileRef : undefined}
               // `relative` keeps the visually hidden labels below anchored to
               // the tile; absolute positioning would otherwise resolve against
               // the page and stretch it far to the right.
               className={`relative flex min-w-[4.25rem] flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
                 isNow ? activeTileClass : ""
-              }`}
+              } ${isPast ? "opacity-45" : ""}`}
             >
               <span
                 className={`text-xs font-medium ${

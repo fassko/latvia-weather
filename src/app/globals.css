@@ -59,17 +59,62 @@ body {
 }
 
 .weather-map .leaflet-tile-pane {
-  /* Slight bump so pale basemap labels stay legible under markers */
-  filter: contrast(1.06) saturate(1.05);
+  /* Voyager is intentionally pale; bring back enough contrast for map reading. */
+  filter: brightness(0.94) contrast(1.18) saturate(1.18);
 }
 
 .dark .weather-map .leaflet-tile-pane {
   /* Invert Voyager into a dark basemap while keeping road/label contrast */
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.92) saturate(0.85);
+  filter: invert(1) hue-rotate(180deg) brightness(1.12) contrast(0.98) saturate(0.95);
 }
 
 .dark .weather-map {
   background: #0f172a;
+}
+
+.weather-map .leaflet-bar {
+  border-color: rgb(15 23 42 / 0.16);
+  overflow: hidden;
+}
+
+.weather-map .leaflet-bar a,
+.weather-map-locate__button {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.weather-map .leaflet-bar a:hover,
+.weather-map-locate__button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.weather-map .leaflet-bar a {
+  border-bottom-color: rgb(15 23 42 / 0.14);
+}
+
+.weather-map .leaflet-bar a:last-child {
+  border-bottom: none;
+}
+
+.dark .weather-map .leaflet-bar {
+  border-color: rgb(226 232 240 / 0.18);
+}
+
+.dark .weather-map .leaflet-bar a,
+.dark .weather-map-locate__button {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark .weather-map .leaflet-bar a:hover,
+.dark .weather-map-locate__button:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.dark .weather-map .leaflet-bar a {
+  border-bottom-color: rgb(226 232 240 / 0.16);
 }
 
 .weather-map-marker {
@@ -232,6 +277,21 @@ body {
 
 .weather-map-popup__link:hover {
   color: #0369a1;
+}
+
+.weather-map-alarm {
+  transition:
+    fill-opacity 160ms ease,
+    stroke-width 160ms ease;
+}
+
+.weather-map-alarm:hover {
+  fill-opacity: 0.32;
+  stroke-width: 3;
+}
+
+.weather-map-alarm-popup {
+  max-width: 19rem;
 }
 
 .weather-map-cluster {
@@ -398,7 +458,9 @@ body {
   margin-left: 10px !important;
   margin-top: 0 !important;
   margin-right: 10px !important;
-  margin-bottom: 10px !important;
+  margin-bottom: 0 !important;
+  border-top: 0;
+  border-radius: 0 !important;
 }
 
 .weather-map-locate__button {
@@ -409,16 +471,29 @@ body {
   padding: 0;
   border: none;
   border-radius: 4px;
-  background: #fff;
-  color: #0f172a;
   cursor: pointer;
   line-height: 26px;
   text-align: center;
   box-shadow: none;
 }
 
-.weather-map-locate__button:hover {
-  background: #f4f4f4;
+.weather-map-layer-toggle.leaflet-control {
+  margin-top: 10px !important;
+  border-top: 2px solid rgb(0 0 0 / 0.2);
+  border-radius: 4px 4px 0 0 !important;
+}
+
+.weather-map-layer-toggle__button {
+  border-radius: 2px 2px 0 0;
+}
+
+.weather-map-locate-wrap:last-child .weather-map-locate.leaflet-control {
+  margin-bottom: 10px !important;
+  border-radius: 0 0 4px 4px !important;
+}
+
+.weather-map-locate-wrap:last-child .weather-map-locate__button {
+  border-radius: 0 0 2px 2px;
 }
 
 .weather-map-locate__button:disabled {
@@ -437,6 +512,18 @@ body {
   vertical-align: middle;
 }
 
+.weather-map-layer-toggle__button[data-active="true"] {
+  color: #92400e;
+}
+
+.weather-map-layer-toggle__button[data-active="true"]:hover {
+  color: #78350f;
+}
+
+.weather-map-layer-toggle__button[data-active="false"] {
+  color: #64748b;
+}
+
 .weather-map-locate__error {
   float: left;
   clear: both;
@@ -451,13 +538,16 @@ body {
   line-height: 1.3;
 }
 
-.dark .weather-map-locate__button {
-  background: #0f172a;
-  color: #e2e8f0;
+.dark .weather-map-layer-toggle__button[data-active="true"] {
+  color: #fef3c7;
 }
 
-.dark .weather-map-locate__button:hover {
-  background: #1e293b;
+.dark .weather-map-layer-toggle__button[data-active="true"]:hover {
+  color: #fde68a;
+}
+
+.dark .weather-map-layer-toggle__button[data-active="false"] {
+  color: #94a3b8;
 }
 
 .dark .leaflet-touch .weather-map-locate.leaflet-bar {

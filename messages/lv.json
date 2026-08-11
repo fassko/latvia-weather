@@ -266,7 +266,12 @@
     "forecastNextHour": "Nākamā stunda",
     "forecastPlay": "Atskaņot",
     "forecastPause": "Pauzēt",
-    "resizeMap": "Velc, lai mainītu kartes augstumu"
+    "resizeMap": "Velc, lai mainītu kartes augstumu",
+    "warning": "Brīdinājums",
+    "warningValid": "Spēkā",
+    "warningMunicipalities": "Teritorijas:",
+    "showAlarms": "Rādīt brīdinājumus",
+    "hideAlarms": "Paslēpt brīdinājumus"
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°",
@@ -361,6 +366,7 @@
     "expandAll": "Rādīt visu brīdinājumu detaļas",
     "show": "Rādīt",
     "count": "{count, plural, one {# brīdinājums} other {# brīdinājumi}}",
+    "viewOnMap": "Skatīt kartē",
     "levels": {
       "yellow": "Dzeltenais",
       "orange": "Oranžais",

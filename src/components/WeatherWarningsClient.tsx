@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import type { WeatherWarning, WeatherWarningLevel } from "@/lib/weather/types";
 import { useDismissedWarningIds } from "@/lib/weather/use-dismissed-warning-ids";
 import {
@@ -47,6 +48,15 @@ function highestLevel(warnings: WeatherWarning[]): WeatherWarningLevel {
       ? warning.level
       : highest;
   }, "unknown");
+}
+
+function warningRegionText(warning: WeatherWarning, locale: string): string {
+  const regionNames =
+    locale === "lv" ? warning.regionNamesLv : warning.regionNamesEn;
+  const regions =
+    regionNames && regionNames.length > 0 ? regionNames : warning.regions;
+
+  return regions.join(", ");
 }
 
 export function WeatherWarningsClient({
@@ -160,16 +170,22 @@ export function WeatherWarningsClient({
               {visibleWarnings.map((warning) => {
                 const text =
                   locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
+                const regions = warningRegionText(warning, locale);
 
                 return (
                   <li key={warning.id}>
                     <p className="text-sm leading-6">{text}</p>
-                    <p className="mt-2 text-xs opacity-75">
-                      {t("source")} LVĢMC
-                      {warning.regions.length > 0
-                        ? ` · ${t("regions", { count: warning.regions.length })}`
-                        : ""}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs opacity-75">
+                      <p>
+                        {t("source")} LVĢMC{regions ? ` · ${regions}` : ""}
+                      </p>
+                      <Link
+                        href="/map?alarms=1"
+                        className="font-semibold underline underline-offset-2 transition hover:opacity-100"
+                      >
+                        {t("viewOnMap")}
+                      </Link>
+                    </div>
                   </li>
                 );
               })}

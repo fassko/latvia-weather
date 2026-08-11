@@ -2,10 +2,18 @@ import { format, isWeekend } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
-import { buildUpcomingDailyGroups } from "@/lib/weather/daily";
+import {
+  buildUpcomingDailyGroups,
+  groupForecastsByDay,
+} from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
-import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
+import {
+  formatLatviaTime,
+  getLatviaDayKey,
+  getLatviaStartOfHour,
+  getLatviaWallClock,
+} from "@/lib/weather/timezone";
 import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -22,13 +30,18 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
   const tWind = await getTranslations("wind");
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = await getWindUnitsCookie();
-  const todayKey = getLatviaDayKey(new Date());
+  const now = new Date();
+  const todayKey = getLatviaDayKey(now);
+  const currentHour = getLatviaStartOfHour(now);
 
   // Drop hours that have already passed so yesterday does not linger as the
   // first day after midnight (e.g. Fri 22:00–23:00 still listed on Saturday).
   // Summaries still use every available hour for that calendar day so late
   // evening does not collapse today's high/low to a single remaining temp.
   const rows = buildUpcomingDailyGroups(forecasts, getUpcomingHourlyForecasts(forecasts));
+  const forecastsByDay = new Map(
+    groupForecastsByDay(forecasts).map((group) => [group.dayKey, group.forecasts]),
+  );
 
   if (rows.length === 0) return null;
 
@@ -67,6 +80,8 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
             locale: dateLocale,
           });
           const weekend = isWeekend(row.date);
+          const breakdownForecasts =
+            isToday ? (forecastsByDay.get(row.dayKey) ?? row.forecasts) : row.forecasts;
 
           return (
             <li key={row.dayKey}>
@@ -132,7 +147,8 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                 </summary>
 
                 <DayBreakdown
-                  forecasts={row.forecasts}
+                  forecasts={breakdownForecasts}
+                  fadedBefore={isToday ? currentHour : undefined}
                   windUnit={windUnit}
                   formatWindDirection={(degrees) =>
                     tWind(`directions.${getWindDirection(degrees)}`)
@@ -162,6 +178,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
 
 interface DayBreakdownProps {
   forecasts: HourlyForecast[];
+  fadedBefore?: Date;
   windUnit: WindUnit;
   formatWindDirection: (degrees: number) => string;
   labels: {
@@ -179,7 +196,13 @@ interface DayBreakdownProps {
   };
 }
 
-function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayBreakdownProps) {
+function DayBreakdown({
+  forecasts,
+  fadedBefore,
+  windUnit,
+  formatWindDirection,
+  labels,
+}: DayBreakdownProps) {
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
       <table className="relative min-w-full text-left text-sm">
@@ -209,47 +232,53 @@ function DayBreakdown({ forecasts, windUnit, formatWindDirection, labels }: DayB
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {forecasts.map((forecast, index) => (
-            <tr
-              key={forecast.time.toISOString()}
-              className={`transition-colors duration-150 motion-reduce:transition-none hover:bg-sky-200 dark:hover:bg-slate-700 ${
-                index % 2 === 0
-                  ? "bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-300"
-                  : "bg-sky-50 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300"
-              }`}
-            >
-              <td className="py-1.5 pr-3 pl-3 tabular-nums">
-                <time dateTime={forecast.time.toISOString()}>
-                  {formatLatviaTime(forecast.time, "HH:mm")}
-                </time>
-              </td>
-              <td className="py-1.5 pr-3 text-base" aria-hidden="true">
-                {getConditionEmoji(forecast.iconCode)}
-              </td>
-              <td
-                className={`py-1.5 pr-3 font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
+          {forecasts.map((forecast, index) => {
+            const isPast =
+              fadedBefore != null &&
+              getLatviaWallClock(forecast.time) < fadedBefore;
+
+            return (
+              <tr
+                key={forecast.time.toISOString()}
+                className={`transition-colors duration-150 motion-reduce:transition-none hover:bg-sky-200 dark:hover:bg-slate-700 ${
+                  index % 2 === 0
+                    ? "bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                    : "bg-sky-50 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300"
+                } ${isPast ? "opacity-45" : ""}`}
               >
-                {Math.round(forecast.temperature)}°
-              </td>
-              <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.feelsLike)}°</td>
-              <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                {forecast.precipitation > 0 ? `${forecast.precipitation.toFixed(1)} mm` : "—"}
-              </td>
-              <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                {Math.round(forecast.precipitationProbability)}%
-              </td>
-              <td
-                className={`py-1.5 pr-3 whitespace-nowrap tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
-              >
-                {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
-                <WindArrow degrees={forecast.windDirection} />{" "}
-                {formatWindDirection(forecast.windDirection)}
-              </td>
-              <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.humidity)}%</td>
-              <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.cloudCover)}%</td>
-              <td className="py-1.5 tabular-nums">{forecast.pressure.toFixed(0)}</td>
-            </tr>
-          ))}
+                <td className="py-1.5 pr-3 pl-3 tabular-nums">
+                  <time dateTime={forecast.time.toISOString()}>
+                    {formatLatviaTime(forecast.time, "HH:mm")}
+                  </time>
+                </td>
+                <td className="py-1.5 pr-3 text-base" aria-hidden="true">
+                  {getConditionEmoji(forecast.iconCode)}
+                </td>
+                <td
+                  className={`py-1.5 pr-3 font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
+                >
+                  {Math.round(forecast.temperature)}°
+                </td>
+                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.feelsLike)}°</td>
+                <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
+                  {forecast.precipitation > 0 ? `${forecast.precipitation.toFixed(1)} mm` : "—"}
+                </td>
+                <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
+                  {Math.round(forecast.precipitationProbability)}%
+                </td>
+                <td
+                  className={`py-1.5 pr-3 whitespace-nowrap tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
+                >
+                  {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
+                  <WindArrow degrees={forecast.windDirection} />{" "}
+                  {formatWindDirection(forecast.windDirection)}
+                </td>
+                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.humidity)}%</td>
+                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.cloudCover)}%</td>
+                <td className="py-1.5 tabular-nums">{forecast.pressure.toFixed(0)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

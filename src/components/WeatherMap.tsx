@@ -32,7 +32,11 @@ import {
   fetchTodayBrief,
   type TodayBrief,
 } from "@/lib/weather/today-brief";
-import type { WeatherLocationPoint } from "@/lib/weather/types";
+import type {
+  WeatherAlarmPolygon,
+  WeatherLocationPoint,
+  WeatherWarningLevel,
+} from "@/lib/weather/types";
 import {
   LATVIA_BOUNDS,
   LATVIA_CENTER,
@@ -55,9 +59,11 @@ const TILE_URLS: Record<Theme, string> = {
 
 interface WeatherMapProps {
   locations: WeatherLocationPoint[];
+  alarms: WeatherAlarmPolygon[];
   locale: string;
   selectedId?: string;
   focusLocationId?: string;
+  initialShowAlarms?: boolean;
 }
 
 type MarkersById = Map<string, L.Marker>;
@@ -178,6 +184,81 @@ function createPopupContent(
   root.appendChild(link);
 
   void fillTodayBrief(location.id, today, labels);
+
+  return root;
+}
+
+function warningColor(level: WeatherWarningLevel): string {
+  switch (level) {
+    case "yellow":
+      return "#eab308";
+    case "orange":
+      return "#f97316";
+    case "red":
+      return "#dc2626";
+    default:
+      return "#64748b";
+  }
+}
+
+function formatAlarmTime(locale: string, value: string): string {
+  const time = new Date(value);
+  if (Number.isNaN(time.getTime())) return value;
+
+  return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
+    timeZone: "Europe/Riga",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(time);
+}
+
+function createAlarmPopupContent(
+  alarm: WeatherAlarmPolygon,
+  locale: string,
+  labels: {
+    warning: string;
+    valid: string;
+    municipalities: string;
+  },
+): HTMLElement {
+  const root = document.createElement("div");
+  root.className = "weather-map-popup weather-map-alarm-popup";
+
+  const title = document.createElement("p");
+  title.className = "weather-map-popup__title";
+  title.textContent =
+    locale === "lv"
+      ? `${alarm.intensityLv}: ${alarm.phenomenonLv}`
+      : `${alarm.intensityEn}: ${alarm.phenomenonEn}`;
+  root.appendChild(title);
+
+  const number = document.createElement("p");
+  number.className = "weather-map-popup__region";
+  number.textContent = `${labels.warning} ${alarm.warningNo}`;
+  root.appendChild(number);
+
+  const valid = document.createElement("p");
+  valid.className = "weather-map-popup__stats";
+  valid.textContent = `${labels.valid} ${formatAlarmTime(locale, alarm.timeFrom)}-${formatAlarmTime(locale, alarm.timeTill)}`;
+  root.appendChild(valid);
+
+  const text = document.createElement("p");
+  text.className = "weather-map-popup__today";
+  text.textContent = locale === "lv" ? alarm.textLv : alarm.textEn;
+  root.appendChild(text);
+
+  const municipalityNames =
+    locale === "lv" ? alarm.municipalityNamesLv : alarm.municipalityNamesEn;
+  if (municipalityNames.length > 0) {
+    const municipalities = document.createElement("p");
+    municipalities.className = "weather-map-popup__region";
+    const displayNames = municipalityNames.slice(0, 8);
+    const extraCount = municipalityNames.length - displayNames.length;
+    municipalities.textContent = `${labels.municipalities} ${displayNames.join(", ")}${extraCount > 0 ? ` +${extraCount}` : ""}`;
+    root.appendChild(municipalities);
+  }
 
   return root;
 }
@@ -330,7 +411,10 @@ function LocationMarkers({
   focusLocationId,
   markersByIdRef,
   clusterRef,
-}: WeatherMapProps & {
+}: Pick<
+  WeatherMapProps,
+  "locations" | "locale" | "selectedId" | "focusLocationId"
+> & {
   markersByIdRef: MutableRefObject<MarkersById>;
   clusterRef: MutableRefObject<L.MarkerClusterGroup | null>;
 }) {
@@ -462,6 +546,119 @@ function LocationMarkers({
   ]);
 
   return null;
+}
+
+function AlarmPolygons({
+  alarms,
+  locale,
+}: Pick<WeatherMapProps, "alarms" | "locale">) {
+  const map = useMap();
+  const tMap = useTranslations("map");
+
+  useEffect(() => {
+    const layer = L.layerGroup();
+
+    for (const alarm of alarms) {
+      const color = warningColor(alarm.level);
+
+      for (const ring of alarm.rings) {
+        const polygon = L.polygon(ring, {
+          color,
+          fillColor: color,
+          fillOpacity: alarm.level === "yellow" ? 0.18 : 0.22,
+          opacity: 0.9,
+          weight: alarm.level === "red" ? 3 : 2,
+          pane: "overlayPane",
+          className: `weather-map-alarm weather-map-alarm--${alarm.level}`,
+        });
+
+        polygon.bindPopup(
+          () =>
+            createAlarmPopupContent(alarm, locale, {
+              warning: tMap("warning"),
+              valid: tMap("warningValid"),
+              municipalities: tMap("warningMunicipalities"),
+            }),
+          { maxWidth: 320, className: "weather-map-popup-pane" },
+        );
+        polygon.addTo(layer);
+      }
+    }
+
+    layer.addTo(map);
+
+    return () => {
+      map.removeLayer(layer);
+    };
+  }, [alarms, locale, map, tMap]);
+
+  return null;
+}
+
+function AlarmToggleIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10.3 3.9 2.7 17.1A2 2 0 0 0 4.4 20h15.2a2 2 0 0 0 1.7-2.9L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 8v5" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function AlarmLayerControl({
+  alarmCount,
+  showAlarms,
+  onToggle,
+}: {
+  alarmCount: number;
+  showAlarms: boolean;
+  onToggle: () => void;
+}) {
+  const map = useMap();
+  const tMap = useTranslations("map");
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const corner = map
+    .getContainer()
+    .querySelector<HTMLElement>(".leaflet-top.leaflet-left");
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    L.DomEvent.disableClickPropagation(wrap);
+    L.DomEvent.disableScrollPropagation(wrap);
+  }, [corner]);
+
+  if (!corner || alarmCount === 0) return null;
+
+  const label = showAlarms ? tMap("hideAlarms") : tMap("showAlarms");
+
+  return createPortal(
+    <div ref={wrapRef} className="weather-map-locate-wrap">
+      <div className="leaflet-bar leaflet-control weather-map-locate weather-map-layer-toggle">
+        <button
+          type="button"
+          className="weather-map-locate__button weather-map-layer-toggle__button"
+          data-active={showAlarms ? "true" : "false"}
+          onClick={onToggle}
+          title={label}
+          aria-label={label}
+          aria-pressed={showAlarms}
+        >
+          <AlarmToggleIcon />
+        </button>
+      </div>
+    </div>,
+    corner,
+  );
 }
 
 function MapZoomDetailClass() {
@@ -697,12 +894,15 @@ function LocateMeControl({
 
 export function WeatherMap({
   locations,
+  alarms,
   locale,
   selectedId,
   focusLocationId,
+  initialShowAlarms = true,
 }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
+  const [showAlarms, setShowAlarms] = useState(initialShowAlarms);
   const markersByIdRef = useRef<MarkersById>(new Map());
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
 
@@ -745,6 +945,7 @@ export function WeatherMap({
       <FitLatvia enabled={!focusLocationId} />
       <InvalidateSizeOnContainerResize />
       <MapZoomDetailClass />
+      {showAlarms ? <AlarmPolygons alarms={alarms} locale={locale} /> : null}
       <LocationMarkers
         locations={locations}
         locale={locale}
@@ -752,6 +953,11 @@ export function WeatherMap({
         focusLocationId={focusLocationId}
         markersByIdRef={markersByIdRef}
         clusterRef={clusterRef}
+      />
+      <AlarmLayerControl
+        alarmCount={alarms.length}
+        showAlarms={showAlarms}
+        onToggle={() => setShowAlarms((current) => !current)}
       />
       <LocateMeControl
         locations={locations}
