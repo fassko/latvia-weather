@@ -4,6 +4,7 @@ import {
   DESKTOP_FIT_MAX_ZOOM,
   DESKTOP_FIT_PADDING,
   LATVIA_CENTER,
+  MAP_ZOOM_SNAP,
   MOBILE_DEFAULT_ZOOM,
   MOBILE_MAP_MAX_WIDTH,
   isMobileMapWidth,
@@ -34,5 +35,10 @@ describe("map overview helpers", () => {
       padding: DESKTOP_FIT_PADDING,
       maxZoom: DESKTOP_FIT_MAX_ZOOM,
     });
+  });
+
+  it("allows fractional zoom so tablet fits are not floored to zoom 7", () => {
+    assert.equal(MAP_ZOOM_SNAP, 0.25);
+    assert.ok(MAP_ZOOM_SNAP < 1);
   });
 });

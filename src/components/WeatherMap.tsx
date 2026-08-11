@@ -40,6 +40,7 @@ import type {
 import {
   LATVIA_BOUNDS,
   LATVIA_CENTER,
+  MAP_ZOOM_SNAP,
   MOBILE_DEFAULT_ZOOM,
   latviaOverviewForWidth,
 } from "@/lib/weather/map-view";
@@ -978,6 +979,7 @@ export function WeatherMap({
     <MapContainer
       center={LATVIA_CENTER}
       zoom={MOBILE_DEFAULT_ZOOM}
+      zoomSnap={MAP_ZOOM_SNAP}
       className="weather-map h-full w-full"
       scrollWheelZoom
       worldCopyJump={false}

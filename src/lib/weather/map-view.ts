@@ -17,8 +17,14 @@ export const MOBILE_MAP_MAX_WIDTH = 640;
  */
 export const MOBILE_DEFAULT_ZOOM = 7;
 
+/**
+ * Allow fractional overview zooms so large tablets are not stuck at zoom 7
+ * when the true fit is ~7.5–7.9 (Leaflet defaults to zoomSnap=1).
+ */
+export const MAP_ZOOM_SNAP = 0.25;
+
 export const DESKTOP_FIT_MAX_ZOOM = 8;
-export const DESKTOP_FIT_PADDING: [number, number] = [24, 24];
+export const DESKTOP_FIT_PADDING: [number, number] = [20, 20];
 
 export type LatviaOverview =
   | {
