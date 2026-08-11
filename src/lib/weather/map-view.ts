@@ -7,21 +7,30 @@ export const LATVIA_BOUNDS: [[number, number], [number, number]] = [
   [58.15, 28.4],
 ];
 
-/** Match Tailwind `sm`; narrow phones keep a less cropped overview. */
+/** Match Tailwind `sm` — phones stay in the mobile overview. */
 export const MOBILE_MAP_MAX_WIDTH = 640;
 
 /**
- * Fixed overview zooms keep Latvia filling the pane. fitBounds under-zooms
- * on typical widths because Latvia is much wider than it is tall.
+ * Narrow map panes under-zoom when fitting Latvia’s wide bounds (portrait
+ * phones especially). Prefer this fixed overview instead of fitBounds.
+ * Also used as the MapContainer initial zoom before FitLatvia runs.
  */
 export const MOBILE_DEFAULT_ZOOM = 7;
-export const DESKTOP_DEFAULT_ZOOM = 8;
 
-export type LatviaOverview = {
-  mode: "setView";
-  center: [number, number];
-  zoom: number;
-};
+export const DESKTOP_FIT_MAX_ZOOM = 8;
+export const DESKTOP_FIT_PADDING: [number, number] = [24, 24];
+
+export type LatviaOverview =
+  | {
+      mode: "setView";
+      center: [number, number];
+      zoom: number;
+    }
+  | {
+      mode: "fitBounds";
+      padding: [number, number];
+      maxZoom: number;
+    };
 
 export function isMobileMapWidth(width: number): boolean {
   return width > 0 && width < MOBILE_MAP_MAX_WIDTH;
@@ -29,9 +38,17 @@ export function isMobileMapWidth(width: number): boolean {
 
 /** Pick the default Latvia camera for the current map pane width. */
 export function latviaOverviewForWidth(mapWidth: number): LatviaOverview {
+  if (isMobileMapWidth(mapWidth)) {
+    return {
+      mode: "setView",
+      center: LATVIA_CENTER,
+      zoom: MOBILE_DEFAULT_ZOOM,
+    };
+  }
+
   return {
-    mode: "setView",
-    center: LATVIA_CENTER,
-    zoom: isMobileMapWidth(mapWidth) ? MOBILE_DEFAULT_ZOOM : DESKTOP_DEFAULT_ZOOM,
+    mode: "fitBounds",
+    padding: DESKTOP_FIT_PADDING,
+    maxZoom: DESKTOP_FIT_MAX_ZOOM,
   };
 }
