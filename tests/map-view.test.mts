@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  DESKTOP_DEFAULT_ZOOM,
-  LATVIA_CENTER,
-  MOBILE_DEFAULT_ZOOM,
+  LATVIA_FIT_MAX_ZOOM,
+  LATVIA_FIT_PADDING,
   MOBILE_MAP_MAX_WIDTH,
   isMobileMapWidth,
   latviaOverviewForWidth,
@@ -18,19 +17,19 @@ describe("map overview helpers", () => {
     assert.equal(isMobileMapWidth(0), false);
   });
 
-  it("uses a wider overview on mobile widths", () => {
+  it("fits the full Latvia bounds on mobile widths", () => {
     assert.deepEqual(latviaOverviewForWidth(390), {
-      mode: "setView",
-      center: LATVIA_CENTER,
-      zoom: MOBILE_DEFAULT_ZOOM,
+      mode: "fitBounds",
+      padding: LATVIA_FIT_PADDING,
+      maxZoom: LATVIA_FIT_MAX_ZOOM,
     });
   });
 
-  it("zooms in the default overview on wider map panes", () => {
+  it("fits the full Latvia bounds on wider map panes", () => {
     assert.deepEqual(latviaOverviewForWidth(960), {
-      mode: "setView",
-      center: LATVIA_CENTER,
-      zoom: DESKTOP_DEFAULT_ZOOM,
+      mode: "fitBounds",
+      padding: LATVIA_FIT_PADDING,
+      maxZoom: LATVIA_FIT_MAX_ZOOM,
     });
   });
 });

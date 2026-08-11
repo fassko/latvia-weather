@@ -7,27 +7,33 @@ export const LATVIA_BOUNDS: [[number, number], [number, number]] = [
   [58.15, 28.4],
 ];
 
-/** Match Tailwind `sm`; narrow phones keep a less cropped overview. */
+/** Match Tailwind `sm`; used for map chrome layout breakpoints. */
 export const MOBILE_MAP_MAX_WIDTH = 640;
 
-export const MOBILE_DEFAULT_ZOOM = 7;
-export const DESKTOP_DEFAULT_ZOOM = 8;
+/**
+ * Initial MapContainer zoom before FitLatvia runs. Kept low enough that the
+ * first paint does not crop Latvia on typical phone widths.
+ */
+export const MOBILE_DEFAULT_ZOOM = 6;
+
+export const LATVIA_FIT_PADDING: [number, number] = [28, 28];
+export const LATVIA_FIT_MAX_ZOOM = 8;
 
 export type LatviaOverview = {
-  mode: "setView";
-  center: [number, number];
-  zoom: number;
+  mode: "fitBounds";
+  padding: [number, number];
+  maxZoom: number;
 };
 
 export function isMobileMapWidth(width: number): boolean {
   return width > 0 && width < MOBILE_MAP_MAX_WIDTH;
 }
 
-/** Pick the default Latvia camera for the current map pane width. */
-export function latviaOverviewForWidth(mapWidth: number): LatviaOverview {
+/** Default Latvia camera: fit the full country into the current map pane. */
+export function latviaOverviewForWidth(_mapWidth: number): LatviaOverview {
   return {
-    mode: "setView",
-    center: LATVIA_CENTER,
-    zoom: isMobileMapWidth(mapWidth) ? MOBILE_DEFAULT_ZOOM : DESKTOP_DEFAULT_ZOOM,
+    mode: "fitBounds",
+    padding: LATVIA_FIT_PADDING,
+    maxZoom: LATVIA_FIT_MAX_ZOOM,
   };
 }
