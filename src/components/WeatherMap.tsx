@@ -34,6 +34,7 @@ import {
 } from "@/lib/weather/today-brief";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
 import {
+  LATVIA_BOUNDS,
   LATVIA_CENTER,
   MOBILE_DEFAULT_ZOOM,
   latviaOverviewForWidth,
@@ -518,7 +519,9 @@ function FitLatvia({ enabled }: { enabled: boolean }) {
       if (width <= 0) return;
 
       const overview = latviaOverviewForWidth(width);
-      map.setView(overview.center, overview.zoom, {
+      map.fitBounds(LATVIA_BOUNDS, {
+        padding: overview.padding,
+        maxZoom: overview.maxZoom,
         animate: false,
       });
     }
