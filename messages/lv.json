@@ -27,6 +27,7 @@
     "error": "Asistents nevarēja atbildēt. Pārbaudi AI Gateway konfigurāciju un mēģini vēlreiz.",
     "open": "Atvērt laikapstākļu asistentu",
     "close": "Aizvērt laikapstākļu asistentu",
+    "clear": "Notīrīt sarunu",
     "examples": {
       "rain": "Vai šodien vietā {location} līs?",
       "clothes": "Ko šovakar vilkt mugurā vietā {location}?",

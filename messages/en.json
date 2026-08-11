@@ -27,6 +27,7 @@
     "error": "The assistant could not answer. Check the AI Gateway configuration and try again.",
     "open": "Open weather assistant",
     "close": "Close weather assistant",
+    "clear": "Clear chat",
     "examples": {
       "rain": "Will it rain in {location} today?",
       "clothes": "What should I wear in {location} this evening?",
