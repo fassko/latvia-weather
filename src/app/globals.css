@@ -106,7 +106,20 @@ body {
 }
 
 .weather-map-marker__emoji {
-  font-size: 0.8rem;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  /* Mid-tone fills (esp. green/teal/yellow) wash out emoji glyphs */
+  background: rgb(255 255 255 / 0.94);
+  box-shadow:
+    0 0 0 1px rgb(15 23 42 / 0.1),
+    0 1px 2px rgb(15 23 42 / 0.12);
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 .weather-map-marker__wind {
@@ -247,7 +260,19 @@ body {
 }
 
 .weather-map-cluster__emoji {
-  font-size: 0.72rem;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow:
+    0 0 0 1px rgb(15 23 42 / 0.1),
+    0 1px 2px rgb(15 23 42 / 0.12);
+  font-size: 0.66rem;
+  line-height: 1;
 }
 
 .weather-map-cluster__temp {

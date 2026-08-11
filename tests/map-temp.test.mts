@@ -16,13 +16,17 @@ describe("map temperature helpers", () => {
 
   it("picks colder and warmer marker colors", () => {
     assert.equal(temperatureMarkerColor(-20), "#1e3a8a");
-    assert.equal(temperatureMarkerColor(12), "#14b8a6");
+    assert.equal(temperatureMarkerColor(12), "#0f766e");
+    assert.equal(temperatureMarkerColor(18), "#15803d");
     assert.equal(temperatureMarkerColor(32), "#ef4444");
   });
 
-  it("uses light text on deep cold and hot markers", () => {
+  it("uses light text on deep cold, mild green, and hot markers", () => {
     assert.equal(temperatureTextColor(-2), "#ffffff");
-    assert.equal(temperatureTextColor(12), "#0f172a");
+    assert.equal(temperatureTextColor(8), "#0f172a");
+    assert.equal(temperatureTextColor(12), "#ffffff");
+    assert.equal(temperatureTextColor(18), "#ffffff");
+    assert.equal(temperatureTextColor(23), "#0f172a");
     assert.equal(temperatureTextColor(31), "#ffffff");
   });
 
