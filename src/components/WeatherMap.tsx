@@ -214,6 +214,30 @@ function formatAlarmTime(locale: string, value: string): string {
   }).format(time);
 }
 
+function getAlarmAreaText(alarm: WeatherAlarmPolygon, locale: string): string {
+  const regionSummary = locale === "lv" ? alarm.regionsLv : alarm.regionsEn;
+  if (regionSummary.trim()) return regionSummary.trim();
+
+  const municipalityNames =
+    locale === "lv" ? alarm.municipalityNamesLv : alarm.municipalityNamesEn;
+
+  return municipalityNames.length <= 3 ? municipalityNames.join(", ") : "";
+}
+
+function estimateRingArea(ring: [number, number][]): number {
+  if (ring.length < 3) return 0;
+
+  let area = 0;
+
+  for (let index = 0; index < ring.length; index += 1) {
+    const [latA, lonA] = ring[index];
+    const [latB, lonB] = ring[(index + 1) % ring.length];
+    area += lonA * latB - lonB * latA;
+  }
+
+  return Math.abs(area) / 2;
+}
+
 function createAlarmPopupContent(
   alarm: WeatherAlarmPolygon,
   locale: string,
@@ -249,15 +273,12 @@ function createAlarmPopupContent(
   text.textContent = locale === "lv" ? alarm.textLv : alarm.textEn;
   root.appendChild(text);
 
-  const municipalityNames =
-    locale === "lv" ? alarm.municipalityNamesLv : alarm.municipalityNamesEn;
-  if (municipalityNames.length > 0) {
-    const municipalities = document.createElement("p");
-    municipalities.className = "weather-map-popup__region";
-    const displayNames = municipalityNames.slice(0, 8);
-    const extraCount = municipalityNames.length - displayNames.length;
-    municipalities.textContent = `${labels.municipalities} ${displayNames.join(", ")}${extraCount > 0 ? ` +${extraCount}` : ""}`;
-    root.appendChild(municipalities);
+  const areaText = getAlarmAreaText(alarm, locale);
+  if (areaText) {
+    const areas = document.createElement("p");
+    areas.className = "weather-map-popup__region";
+    areas.textContent = `${labels.municipalities} ${areaText}`;
+    root.appendChild(areas);
   }
 
   return root;
@@ -557,32 +578,39 @@ function AlarmPolygons({
 
   useEffect(() => {
     const layer = L.layerGroup();
+    const polygonEntries = alarms
+      .flatMap((alarm) =>
+        alarm.rings.map((ring) => ({
+          alarm,
+          ring,
+          area: estimateRingArea(ring),
+        })),
+      )
+      .toSorted((a, b) => b.area - a.area);
 
-    for (const alarm of alarms) {
+    for (const { alarm, ring } of polygonEntries) {
       const color = warningColor(alarm.level);
 
-      for (const ring of alarm.rings) {
-        const polygon = L.polygon(ring, {
-          color,
-          fillColor: color,
-          fillOpacity: alarm.level === "yellow" ? 0.18 : 0.22,
-          opacity: 0.9,
-          weight: alarm.level === "red" ? 3 : 2,
-          pane: "overlayPane",
-          className: `weather-map-alarm weather-map-alarm--${alarm.level}`,
-        });
+      const polygon = L.polygon(ring, {
+        color,
+        fillColor: color,
+        fillOpacity: alarm.level === "yellow" ? 0.18 : 0.22,
+        opacity: 0.9,
+        weight: alarm.level === "red" ? 3 : 2,
+        pane: "overlayPane",
+        className: `weather-map-alarm weather-map-alarm--${alarm.level}`,
+      });
 
-        polygon.bindPopup(
-          () =>
-            createAlarmPopupContent(alarm, locale, {
-              warning: tMap("warning"),
-              valid: tMap("warningValid"),
-              municipalities: tMap("warningMunicipalities"),
-            }),
-          { maxWidth: 320, className: "weather-map-popup-pane" },
-        );
-        polygon.addTo(layer);
-      }
+      polygon.bindPopup(
+        () =>
+          createAlarmPopupContent(alarm, locale, {
+            warning: tMap("warning"),
+            valid: tMap("warningValid"),
+            municipalities: tMap("warningMunicipalities"),
+          }),
+        { maxWidth: 320, className: "weather-map-popup-pane" },
+      );
+      polygon.addTo(layer);
     }
 
     layer.addTo(map);

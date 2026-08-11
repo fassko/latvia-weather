@@ -27,6 +27,7 @@
     "error": "The assistant could not answer. Check the AI Gateway configuration and try again.",
     "open": "Open weather assistant",
     "close": "Close weather assistant",
+    "clear": "Clear chat",
     "examples": {
       "rain": "Will it rain in {location} today?",
       "clothes": "What should I wear in {location} this evening?",
@@ -233,7 +234,7 @@
     "title": "Weather map",
     "description": "Map of current weather across all forecast locations in Latvia",
     "subtitle": "Current conditions at {count, plural, one {# location} other {# locations}} across Latvia. Tap a marker for details.",
-    "range": "Now: {min}° to {max}°",
+    "range": "Now: {min}°C to {max}°C",
     "loading": "Loading map…",
     "openForecast": "Open forecast",
     "wind": "Wind",
@@ -274,8 +275,8 @@
     "hideAlarms": "Hide weather warnings"
   },
   "hero": {
-    "feelsLike": "Feels like {temp}°",
-    "highLow": "H {high}° · L {low}°",
+    "feelsLike": "Feels like {temp}°C",
+    "highLow": "H {high}°C · L {low}°C",
     "showOnMap": "Show on map"
   },
   "summary": {

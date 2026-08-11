@@ -208,6 +208,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
             thinking: tAssistant("thinking"),
             error: tAssistant("error"),
             close: tAssistant("close"),
+            clear: tAssistant("clear"),
             open: tAssistant("open"),
             sourceCaption: getSourceCaption(data.location.name, locale),
             examples: [

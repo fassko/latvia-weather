@@ -117,7 +117,7 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
             <span className="text-6xl sm:text-7xl">
               {Math.round(current.temperature)}
             </span>
-            <span className="mt-1 text-2xl sm:text-3xl">°</span>
+            <span className="mt-1 text-2xl sm:text-3xl">°C</span>
           </p>
           <div className="flex items-center gap-2">
             <span className="text-3xl" aria-hidden="true">

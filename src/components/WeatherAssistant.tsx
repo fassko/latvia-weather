@@ -42,6 +42,7 @@ interface WeatherAssistantProps {
     error: string;
     examples: string[];
     close: string;
+    clear: string;
     open: string;
     sourceCaption: string;
   };
@@ -254,7 +255,15 @@ export function WeatherAssistant({
       }),
     [locale, locationId],
   );
-  const { messages, sendMessage, status, stop, error } = useChat({
+  const {
+    messages,
+    sendMessage,
+    status,
+    stop,
+    error,
+    setMessages,
+    clearError,
+  } = useChat({
     id: ASSISTANT_HISTORY_CHAT_ID,
     messages: initialMessages,
     transport,
@@ -320,6 +329,15 @@ export function WeatherAssistant({
     submitMessage(input);
   }
 
+  function handleClearChat() {
+    if (isStreaming) stop();
+    clearError();
+    setMessages([]);
+    saveAssistantHistory([]);
+    setInput("");
+    inputRef.current?.focus({ preventScroll: true });
+  }
+
   return (
     <>
       {isOpen ? (
@@ -374,6 +392,31 @@ export function WeatherAssistant({
                 {labels.subtitle}
               </p>
             </div>
+            <button
+              type="button"
+              aria-label={labels.clear}
+              title={labels.clear}
+              onClick={handleClearChat}
+              disabled={messages.length === 0 && !error && !input.trim()}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-slate-900 shadow-sm transition hover:bg-slate-100 focus:ring-4 focus:ring-[#477dd8]/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-45 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              >
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M6 6l1 14h10l1-14" />
+                <path d="M10 11v5" />
+                <path d="M14 11v5" />
+              </svg>
+            </button>
             <button
               type="button"
               aria-label={labels.close}

@@ -82,7 +82,7 @@ export function DetailedForecastMobileDay({
         <span className="min-w-0 flex-1">
           <span className="block font-semibold text-slate-900 dark:text-slate-100">{dateLabel}</span>
           <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">
-            {Math.round(summary.minTemperature)}° / {Math.round(summary.maxTemperature)}° ·{" "}
+            {Math.round(summary.minTemperature)}°C / {Math.round(summary.maxTemperature)}°C ·{" "}
             {tDaily("mmTotal", { value: summary.totalPrecipitation.toFixed(1) })}
           </span>
         </span>

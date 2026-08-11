@@ -120,7 +120,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
 
                   <div className="flex flex-1 items-center gap-2 sm:gap-3">
                     <span className="w-8 shrink-0 text-right text-sm text-slate-400 tabular-nums dark:text-slate-500">
-                      {low}°
+                      {low}°C
                     </span>
                     <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                       <div
@@ -129,7 +129,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                       />
                     </div>
                     <span className="w-8 shrink-0 text-left text-sm font-semibold text-slate-900 tabular-nums dark:text-slate-100">
-                      {high}°
+                      {high}°C
                     </span>
                   </div>
 
@@ -257,9 +257,9 @@ function DayBreakdown({
                 <td
                   className={`py-1.5 pr-3 font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
                 >
-                  {Math.round(forecast.temperature)}°
+                  {Math.round(forecast.temperature)}°C
                 </td>
-                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.feelsLike)}°</td>
+                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.feelsLike)}°C</td>
                 <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                   {forecast.precipitation > 0 ? `${forecast.precipitation.toFixed(1)} mm` : "—"}
                 </td>

@@ -27,6 +27,7 @@
     "error": "Asistents nevarēja atbildēt. Pārbaudi AI Gateway konfigurāciju un mēģini vēlreiz.",
     "open": "Atvērt laikapstākļu asistentu",
     "close": "Aizvērt laikapstākļu asistentu",
+    "clear": "Notīrīt sarunu",
     "examples": {
       "rain": "Vai šodien vietā {location} līs?",
       "clothes": "Ko šovakar vilkt mugurā vietā {location}?",
@@ -233,7 +234,7 @@
     "title": "Laika karte",
     "description": "Pašreizējais laiks visās Latvijas prognožu vietās kartē",
     "subtitle": "Pašreizējie apstākļi {count, plural, one {# vietā} other {# vietās}} Latvijā. Pieskaries punktam, lai uzzinātu vairāk.",
-    "range": "Tagad: no {min}° līdz {max}°",
+    "range": "Tagad: no {min}°C līdz {max}°C",
     "loading": "Ielādē karti…",
     "openForecast": "Atvērt prognozi",
     "wind": "Vējš",
@@ -274,8 +275,8 @@
     "hideAlarms": "Paslēpt brīdinājumus"
   },
   "hero": {
-    "feelsLike": "Šķiet kā {temp}°",
-    "highLow": "Augst. {high}° · Zem. {low}°",
+    "feelsLike": "Šķiet kā {temp}°C",
+    "highLow": "Augst. {high}°C · Zem. {low}°C",
     "showOnMap": "Rādīt kartē"
   },
   "summary": {

@@ -29,7 +29,11 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
   if (period.length === 0) return null;
 
   const warmest = maxBy(period, (f) => f.temperature);
-  const wettest = maxBy(period, (f) => f.precipitationProbability);
+  const rainiest = maxBy(period, (f) => f.precipitation);
+  const wettest =
+    rainiest.precipitation > 0
+      ? rainiest
+      : maxBy(period, (f) => f.precipitationProbability);
   const windiest = maxBy(period, (f) => f.windGust);
 
   const items: {
@@ -45,7 +49,7 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
     {
       key: "warmest",
       label: t("warmest"),
-      value: `${Math.round(warmest.temperature)}°`,
+      value: `${Math.round(warmest.temperature)}°C`,
       time: warmest.time,
       icon: <ThermometerIcon />,
       tone: "bg-orange-100 text-orange-500 dark:bg-orange-500/15 dark:text-orange-400",
@@ -53,7 +57,7 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
     {
       key: "peakRain",
       label: t("peakRain"),
-      value: `${Math.round(wettest.precipitationProbability)}%`,
+      value: `${Math.round(wettest.precipitationProbability)}% · ${wettest.precipitation.toFixed(1)} mm`,
       time: wettest.time,
       icon: <DropletIcon />,
       tone: "bg-sky-100 text-sky-500 dark:bg-sky-500/15 dark:text-sky-400",
