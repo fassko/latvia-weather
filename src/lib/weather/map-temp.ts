@@ -25,7 +25,7 @@ export function temperatureTextColor(temperature: number): string {
 
 export function formatMapTemperature(temperature: number): string {
   const rounded = Math.round(temperature);
-  return `${rounded > 0 ? "+" : ""}${rounded}°`;
+  return `${rounded > 0 ? "+" : ""}${rounded}°C`;
 }
 
 export type TemperatureLegendBandId =

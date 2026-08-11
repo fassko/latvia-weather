@@ -118,7 +118,7 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
                 {tConditions(getConditionKey(forecast.iconCode))}
               </span>
               <span className="text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                {Math.round(forecast.temperature)}°
+                {Math.round(forecast.temperature)}°C
               </span>
               <span className="text-xs tabular-nums text-sky-600 dark:text-sky-400">
                 <span aria-hidden="true">

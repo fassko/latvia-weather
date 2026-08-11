@@ -33,7 +33,7 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
       key: "feels",
       label: t("feels"),
       icon: <ThermometerIcon />,
-      value: `${Math.round(current.feelsLike)}°`,
+      value: `${Math.round(current.feelsLike)}°C`,
       sub: t(`feelsBand.${getFeelsBandKey(current.temperature, current.feelsLike)}`),
     },
     {

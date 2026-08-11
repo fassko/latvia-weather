@@ -9,9 +9,9 @@ import {
 
 describe("map temperature helpers", () => {
   it("formats signed temperatures", () => {
-    assert.equal(formatMapTemperature(12.6), "+13°");
-    assert.equal(formatMapTemperature(-3.2), "-3°");
-    assert.equal(formatMapTemperature(0), "0°");
+    assert.equal(formatMapTemperature(12.6), "+13°C");
+    assert.equal(formatMapTemperature(-3.2), "-3°C");
+    assert.equal(formatMapTemperature(0), "0°C");
   });
 
   it("picks colder and warmer marker colors", () => {
