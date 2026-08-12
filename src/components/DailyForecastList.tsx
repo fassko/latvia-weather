@@ -8,7 +8,7 @@ import {
 } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
-import { getSunTimesForLatviaDay, type SunTimes } from "@/lib/weather/sun";
+import type { SunTimes, SunTimesByDay } from "@/lib/weather/sun";
 import {
   formatLatviaTime,
   getLatviaDayKey,
@@ -17,14 +17,17 @@ import {
 } from "@/lib/weather/timezone";
 import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
-import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
+import type { HourlyForecast } from "@/lib/weather/types";
 
 interface DailyForecastListProps {
   forecasts: HourlyForecast[];
-  location: WeatherLocation;
+  sunTimesByDay: SunTimesByDay;
 }
 
-export async function DailyForecastList({ forecasts, location }: DailyForecastListProps) {
+export async function DailyForecastList({
+  forecasts,
+  sunTimesByDay,
+}: DailyForecastListProps) {
   const locale = await getLocale();
   const t = await getTranslations("dailyList");
   const tTable = await getTranslations("table");
@@ -84,7 +87,7 @@ export async function DailyForecastList({ forecasts, location }: DailyForecastLi
           const weekend = isWeekend(row.date);
           const breakdownForecasts =
             isToday ? (forecastsByDay.get(row.dayKey) ?? row.forecasts) : row.forecasts;
-          const sunTimes = getSunTimesForLatviaDay(row.dayKey, location.lat, location.lon);
+          const sunTimes = sunTimesByDay[row.dayKey] ?? null;
 
           return (
             <li key={row.dayKey}>

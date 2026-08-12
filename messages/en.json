@@ -12,7 +12,8 @@
     "developedBy": "Developed by",
     "authorName": "Kristaps",
     "onX": "X",
-    "onGitHub": "GitHub"
+    "onGitHub": "GitHub",
+    "sunTimesFrom": "Sunrise and sunset times from"
   },
   "assistant": {
     "title": "Forecast Mate",

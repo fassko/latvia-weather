@@ -1,4 +1,4 @@
-import { parseLaiks } from "./timezone";
+import { LATVIA_TIME_ZONE, parseLaiks } from "./timezone";
 
 const DAY_MS = 86_400_000;
 const J1970 = 2_440_588;
@@ -11,6 +11,18 @@ const SOLAR_DISC_ANGLE = -0.833 * RAD;
 export interface SunTimes {
   sunrise: Date;
   sunset: Date;
+}
+
+export type SunTimesByDay = Record<string, SunTimes>;
+
+interface SunriseSunsetApiDay {
+  date: string;
+  sunrise: string | null;
+  sunset: string | null;
+}
+
+interface SunriseSunsetApiRangeResponse {
+  results?: SunriseSunsetApiDay[] | SunriseSunsetApiDay;
 }
 
 function toJulian(date: Date): number {
@@ -122,4 +134,85 @@ export function getSunTimesForLatviaDay(
   lon: number,
 ): SunTimes | null {
   return getSunTimes(parseLaiks(`${dayKey.replaceAll("-", "")}1200`), lat, lon);
+}
+
+function fallbackSunTimesByDay(
+  dayKeys: readonly string[],
+  lat: number,
+  lon: number,
+): SunTimesByDay {
+  return Object.fromEntries(
+    dayKeys.flatMap((dayKey) => {
+      const sunTimes = getSunTimesForLatviaDay(dayKey, lat, lon);
+      return sunTimes ? [[dayKey, sunTimes] as const] : [];
+    }),
+  );
+}
+
+export async function getAuthoritativeSunTimesByDay(
+  dayKeys: readonly string[],
+  lat: number,
+  lon: number,
+): Promise<SunTimesByDay> {
+  const uniqueDayKeys = Array.from(new Set(dayKeys)).sort();
+
+  if (
+    uniqueDayKeys.length === 0 ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lon)
+  ) {
+    return {};
+  }
+
+  const fallback = () => fallbackSunTimesByDay(uniqueDayKeys, lat, lon);
+  const url = new URL("https://api.sunrisesunset.io/json");
+  url.searchParams.set("lat", String(lat));
+  url.searchParams.set("lng", String(lon));
+  url.searchParams.set("date_start", uniqueDayKeys[0]);
+  url.searchParams.set("date_end", uniqueDayKeys[uniqueDayKeys.length - 1]);
+  url.searchParams.set("timezone", LATVIA_TIME_ZONE);
+  url.searchParams.set("time_format", "24");
+  url.searchParams.set("elevation", "false");
+
+  try {
+    const response = await fetch(url, {
+      next: { revalidate: 86_400 },
+    });
+
+    if (!response.ok) return fallback();
+
+    const raw = (await response.json()) as SunriseSunsetApiRangeResponse;
+    const days = Array.isArray(raw.results)
+      ? raw.results
+      : raw.results
+        ? [raw.results]
+        : null;
+
+    if (!days) return fallback();
+
+    const requestedDays = new Set(uniqueDayKeys);
+    const entries = days.flatMap((day) => {
+      if (!requestedDays.has(day.date) || !day.sunrise || !day.sunset) return [];
+
+      return [
+        [
+          day.date,
+          {
+            sunrise: parseLaiks(`${day.date.replaceAll("-", "")}${day.sunrise.slice(0, 5).replace(":", "")}`),
+            sunset: parseLaiks(`${day.date.replaceAll("-", "")}${day.sunset.slice(0, 5).replace(":", "")}`),
+          },
+        ] as const,
+      ];
+    });
+
+    const sunTimesByDay = Object.fromEntries(entries);
+
+    for (const [dayKey, sunTimes] of Object.entries(fallback())) {
+      sunTimesByDay[dayKey] ??= sunTimes;
+    }
+
+    return sunTimesByDay;
+  } catch {
+    return fallback();
+  }
 }

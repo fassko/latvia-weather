@@ -12,7 +12,8 @@
     "developedBy": "Izstrādāja",
     "authorName": "Kristaps",
     "onX": "X",
-    "onGitHub": "GitHub"
+    "onGitHub": "GitHub",
+    "sunTimesFrom": "Saullēkta un saulrieta laiki no"
   },
   "assistant": {
     "title": "Laika Palīgs",
