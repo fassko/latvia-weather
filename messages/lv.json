@@ -62,7 +62,9 @@
     "humidity": "Mitrums",
     "cloudCover": "Mākoņi",
     "wind": "Vējš",
-    "pressure": "Spiediens"
+    "pressure": "Spiediens",
+    "sunrise": "Saullēkts",
+    "sunset": "Saulriets"
   },
   "forecastViews": {
     "ariaLabel": "Prognozes skati",
@@ -98,6 +100,8 @@
     "temperature": "Temperatūra",
     "precipitation": "Nokrišņi",
     "wind": "Vējš",
+    "sunrise": "Saullēkts",
+    "sunset": "Saulriets",
     "rainPeak": "Visvairāk lietus ap plkst. {time}: {amount} mm, {chance}% iespēja",
     "rainChancePeak": "Lielākā lietus iespēja ap plkst. {time}: {chance}%",
     "noRainExpected": "Nākamajās 24 stundās lietus nav gaidāms"
@@ -277,7 +281,9 @@
   "hero": {
     "feelsLike": "Šķiet kā {temp}°C",
     "highLow": "Augst. {high}°C · Zem. {low}°C",
-    "showOnMap": "Rādīt kartē"
+    "showOnMap": "Rādīt kartē",
+    "sunrise": "Saullēkts",
+    "sunset": "Saulriets"
   },
   "summary": {
     "cond": {
@@ -313,9 +319,12 @@
     "gusts": "Brāzmas",
     "rain": "Lietus",
     "clouds": "Mākoņi",
+    "sunrise": "Saullēkts",
+    "sunset": "Saulriets",
     "uvIndex": "UV indekss",
     "pressure": "Spiediens",
     "hpa": "hPa",
+    "today": "Šodien",
     "direction": "{direction} virziens",
     "rainNextHour": "Iespēja nākamajā stundā",
     "feelsBand": {
@@ -377,7 +386,9 @@
   },
   "hourlyCard": {
     "title": "Pa stundām · Temperatūra un lietus",
-    "now": "Tagad"
+    "now": "Tagad",
+    "sunrise": "Saullēkts",
+    "sunset": "Saulriets"
   },
   "dailyList": {
     "title": "10 dienu prognoze",

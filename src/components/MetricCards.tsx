@@ -8,9 +8,11 @@ import {
   getWindBandKey,
 } from "@/lib/weather/metric-descriptors";
 import { getWindDirection } from "@/lib/weather/parse";
+import { getSunTimes } from "@/lib/weather/sun";
+import { formatLatviaTime } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
-import type { HourlyForecast } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
 
 function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
   const now = Date.now();
@@ -20,13 +22,15 @@ function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
 
 interface MetricCardsProps {
   forecasts: HourlyForecast[];
+  location: WeatherLocation;
 }
 
-export async function MetricCards({ forecasts }: MetricCardsProps) {
+export async function MetricCards({ forecasts, location }: MetricCardsProps) {
   const t = await getTranslations("metrics");
   const tWind = await getTranslations("wind");
   const windUnit = await getWindUnitsCookie();
   const current = findCurrentForecast(forecasts);
+  const sunTimes = getSunTimes(current.time, location.lat, location.lon);
 
   const cards: { key: string; label: string; icon: ReactNode; value: string; sub: ReactNode }[] = [
     {
@@ -80,6 +84,25 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
     },
   ];
 
+  if (sunTimes) {
+    cards.push(
+      {
+        key: "sunrise",
+        label: t("sunrise"),
+        icon: <SunriseIcon />,
+        value: formatLatviaTime(sunTimes.sunrise, "HH:mm"),
+        sub: t("today"),
+      },
+      {
+        key: "sunset",
+        label: t("sunset"),
+        icon: <SunsetIcon />,
+        value: formatLatviaTime(sunTimes.sunset, "HH:mm"),
+        sub: t("today"),
+      },
+    );
+  }
+
   if (current.uvIndex !== null) {
     cards.push({
       key: "uv",
@@ -106,7 +129,7 @@ export async function MetricCards({ forecasts }: MetricCardsProps) {
       >
         {t("title")}
       </h2>
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-4 lg:grid-cols-8">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {cards.map((card) => (
           <div
             key={card.key}
@@ -198,6 +221,22 @@ function CloudIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass} aria-hidden="true">
       <path d="M7 18a4.5 4.5 0 0 1-.5-8.97A6 6 0 0 1 18 10a3.5 3.5 0 0 1 0 8Z" />
+    </svg>
+  );
+}
+
+function SunriseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass} aria-hidden="true">
+      <path d="M12 2v8M5.2 11.2l-1.4-1.4M20.2 9.8l-1.4 1.4M4 18h16M2 22h20M7 18a5 5 0 0 1 10 0M8 6l4-4 4 4" />
+    </svg>
+  );
+}
+
+function SunsetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={iconClass} aria-hidden="true">
+      <path d="M12 10V2M5.2 11.2l-1.4-1.4M20.2 9.8l-1.4 1.4M4 18h16M2 22h20M7 18a5 5 0 0 1 10 0M16 6l-4 4-4-4" />
     </svg>
   );
 }

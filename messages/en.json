@@ -62,7 +62,9 @@
     "humidity": "Humidity",
     "cloudCover": "Clouds",
     "wind": "Wind",
-    "pressure": "Pressure"
+    "pressure": "Pressure",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset"
   },
   "forecastViews": {
     "ariaLabel": "Forecast views",
@@ -98,6 +100,8 @@
     "temperature": "Temperature",
     "precipitation": "Precipitation",
     "wind": "Wind",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
     "rainPeak": "Rain mostly around {time}: {amount} mm, {chance}% chance",
     "rainChancePeak": "Highest rain chance around {time}: {chance}%",
     "noRainExpected": "No rain expected in the next 24 hours"
@@ -277,7 +281,9 @@
   "hero": {
     "feelsLike": "Feels like {temp}°C",
     "highLow": "H {high}°C · L {low}°C",
-    "showOnMap": "Show on map"
+    "showOnMap": "Show on map",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset"
   },
   "summary": {
     "cond": {
@@ -313,9 +319,12 @@
     "gusts": "Gusts",
     "rain": "Rain",
     "clouds": "Clouds",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
     "uvIndex": "UV Index",
     "pressure": "Pressure",
     "hpa": "hPa",
+    "today": "Today",
     "direction": "{direction} direction",
     "rainNextHour": "Chance next hour",
     "feelsBand": {
@@ -377,7 +386,9 @@
   },
   "hourlyCard": {
     "title": "Hourly · Temperature & rain",
-    "now": "Now"
+    "now": "Now",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset"
   },
   "dailyList": {
     "title": "10-day forecast",

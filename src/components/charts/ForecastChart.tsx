@@ -34,8 +34,9 @@ import {
   formatWindSpeed,
   getWindSpeedUnitSuffix,
 } from "@/lib/weather/wind-units";
+import { getSunTimesForLatviaDay } from "@/lib/weather/sun";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
-import type { HourlyForecast } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 type ChartSeriesKey = "temperature" | "precipitation" | "windSpeed";
@@ -53,6 +54,11 @@ const WIND_ARROW_COLOR = "#7c3aed";
 
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
+  location: WeatherLocation;
+  sunLabels: {
+    sunrise: string;
+    sunset: string;
+  };
 }
 
 interface ConditionDotProps {
@@ -65,6 +71,13 @@ interface ConditionDotProps {
 interface ChartPreferences {
   period: ForecastPeriod;
   hiddenSeries: ChartSeriesKey[];
+}
+
+interface SunChartMarker {
+  key: string;
+  x: number;
+  label: string;
+  shortLabel: string;
 }
 
 function getForecastsForPeriod(forecasts: HourlyForecast[], period: ForecastPeriod) {
@@ -168,6 +181,31 @@ function parseChartPreferences(value: string | null): ChartPreferences | null {
   }
 }
 
+function getSunEventX(data: ChartPoint[], time: Date): number | null {
+  if (data.length === 0) return null;
+
+  const timeMs = time.getTime();
+  const firstTime = new Date(data[0].time).getTime();
+  const lastTime = new Date(data[data.length - 1].time).getTime();
+
+  if (timeMs < firstTime || timeMs > lastTime) return null;
+
+  for (let index = 1; index < data.length; index += 1) {
+    const previous = data[index - 1];
+    const next = data[index];
+    const previousTime = new Date(previous.time).getTime();
+    const nextTime = new Date(next.time).getTime();
+
+    if (timeMs <= nextTime) {
+      const span = Math.max(nextTime - previousTime, 1);
+      const ratio = (timeMs - previousTime) / span;
+      return previous.xIndex + (next.xIndex - previous.xIndex) * ratio;
+    }
+  }
+
+  return data[data.length - 1].xIndex;
+}
+
 function getInitialChartPreferences(): ChartPreferences {
   if (typeof window === "undefined") {
     return { period: 1, hiddenSeries: [] };
@@ -181,7 +219,7 @@ function getInitialChartPreferences(): ChartPreferences {
   );
 }
 
-export function ForecastChart({ forecasts }: ForecastChartProps) {
+export function ForecastChart({ forecasts, location, sunLabels }: ForecastChartProps) {
   const locale = useLocale();
   const t = useTranslations("chart");
   const tConditions = useTranslations("conditions");
@@ -214,6 +252,32 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
     [data, dateLocale, locale],
   );
   const hourTicks = useMemo(() => getHourTicksForPeriod(data, period), [data, period]);
+  const sunMarkers = useMemo<SunChartMarker[]>(() => {
+    const markers: SunChartMarker[] = [];
+    const dayKeys = Array.from(new Set(data.map((point) => point.dayKey)));
+
+    for (const dayKey of dayKeys) {
+      const sunTimes = getSunTimesForLatviaDay(dayKey, location.lat, location.lon);
+      if (!sunTimes) continue;
+
+      for (const event of [
+        { key: "sunrise", icon: "☀️", time: sunTimes.sunrise, label: sunLabels.sunrise },
+        { key: "sunset", icon: "🌙", time: sunTimes.sunset, label: sunLabels.sunset },
+      ]) {
+        const x = getSunEventX(data, event.time);
+        if (x == null) continue;
+
+        markers.push({
+          key: `${dayKey}-${event.key}`,
+          x,
+          label: `${event.icon} ${formatLatviaTime(event.time, "HH:mm")} ${event.label}`,
+          shortLabel: event.icon,
+        });
+      }
+    }
+
+    return markers;
+  }, [data, location.lat, location.lon, sunLabels.sunrise, sunLabels.sunset]);
   const conditionIconIndexes = useMemo(
     () => getConditionIconIndexes(data, period),
     [data, period],
@@ -393,6 +457,33 @@ export function ForecastChart({ forecasts }: ForecastChartProps) {
                   stroke={colors.grid}
                   strokeWidth={1}
                   strokeDasharray="2 4"
+                />
+              ))}
+              {sunMarkers.map((marker) => (
+                <ReferenceLine
+                  key={marker.key}
+                  x={marker.x}
+                  yAxisId="temp"
+                  stroke="#f59e0b"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 3"
+                  label={
+                    period === 1
+                      ? {
+                          value: marker.label,
+                          position: "top",
+                          fill: "#b45309",
+                          fontSize: 11,
+                          fontWeight: 600,
+                        }
+                      : {
+                          value: marker.shortLabel,
+                          position: "insideTop",
+                          fill: "#f59e0b",
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }
+                  }
                 />
               ))}
               {isMultiDay &&
