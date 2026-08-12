@@ -8,11 +8,11 @@ import {
   getWindBandKey,
 } from "@/lib/weather/metric-descriptors";
 import { getWindDirection } from "@/lib/weather/parse";
-import { getSunTimes } from "@/lib/weather/sun";
-import { formatLatviaTime } from "@/lib/weather/timezone";
+import type { SunTimesByDay } from "@/lib/weather/sun";
+import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
-import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
+import type { HourlyForecast } from "@/lib/weather/types";
 
 function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
   const now = Date.now();
@@ -22,15 +22,15 @@ function findCurrentForecast(forecasts: HourlyForecast[]): HourlyForecast {
 
 interface MetricCardsProps {
   forecasts: HourlyForecast[];
-  location: WeatherLocation;
+  sunTimesByDay: SunTimesByDay;
 }
 
-export async function MetricCards({ forecasts, location }: MetricCardsProps) {
+export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps) {
   const t = await getTranslations("metrics");
   const tWind = await getTranslations("wind");
   const windUnit = await getWindUnitsCookie();
   const current = findCurrentForecast(forecasts);
-  const sunTimes = getSunTimes(current.time, location.lat, location.lon);
+  const sunTimes = sunTimesByDay[getLatviaDayKey(current.time)];
 
   const cards: { key: string; label: string; icon: ReactNode; value: string; sub: ReactNode }[] = [
     {

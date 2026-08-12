@@ -1,17 +1,22 @@
 import { getTranslations } from "next-intl/server";
 import { HourlyStrip } from "@/components/HourlyStrip";
-import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
+import type { SunTimesByDay } from "@/lib/weather/sun";
+import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyStripCardProps {
   forecasts: HourlyForecast[];
-  location: WeatherLocation;
+  sunTimesByDay: SunTimesByDay;
   sunLabels: {
     sunrise: string;
     sunset: string;
   };
 }
 
-export async function HourlyStripCard({ forecasts, location, sunLabels }: HourlyStripCardProps) {
+export async function HourlyStripCard({
+  forecasts,
+  sunTimesByDay,
+  sunLabels,
+}: HourlyStripCardProps) {
   const t = await getTranslations("hourly");
 
   return (
@@ -25,7 +30,11 @@ export async function HourlyStripCard({ forecasts, location, sunLabels }: Hourly
       >
         {t("title")}
       </h2>
-      <HourlyStrip forecasts={forecasts} location={location} sunLabels={sunLabels} />
+      <HourlyStrip
+        forecasts={forecasts}
+        sunTimesByDay={sunTimesByDay}
+        sunLabels={sunLabels}
+      />
     </section>
   );
 }

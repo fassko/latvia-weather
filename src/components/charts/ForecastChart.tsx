@@ -34,9 +34,9 @@ import {
   formatWindSpeed,
   getWindSpeedUnitSuffix,
 } from "@/lib/weather/wind-units";
-import { getSunTimesForLatviaDay } from "@/lib/weather/sun";
+import type { SunTimesByDay } from "@/lib/weather/sun";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
-import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
+import type { HourlyForecast } from "@/lib/weather/types";
 
 type ForecastPeriod = 1 | 3 | 7;
 type ChartSeriesKey = "temperature" | "precipitation" | "windSpeed";
@@ -54,7 +54,7 @@ const WIND_ARROW_COLOR = "#7c3aed";
 
 interface ForecastChartProps {
   forecasts: HourlyForecast[];
-  location: WeatherLocation;
+  sunTimesByDay: SunTimesByDay;
   sunLabels: {
     sunrise: string;
     sunset: string;
@@ -77,7 +77,6 @@ interface SunChartMarker {
   key: string;
   x: number;
   label: string;
-  shortLabel: string;
 }
 
 function getForecastsForPeriod(forecasts: HourlyForecast[], period: ForecastPeriod) {
@@ -219,7 +218,11 @@ function getInitialChartPreferences(): ChartPreferences {
   );
 }
 
-export function ForecastChart({ forecasts, location, sunLabels }: ForecastChartProps) {
+export function ForecastChart({
+  forecasts,
+  sunTimesByDay,
+  sunLabels,
+}: ForecastChartProps) {
   const locale = useLocale();
   const t = useTranslations("chart");
   const tConditions = useTranslations("conditions");
@@ -253,11 +256,13 @@ export function ForecastChart({ forecasts, location, sunLabels }: ForecastChartP
   );
   const hourTicks = useMemo(() => getHourTicksForPeriod(data, period), [data, period]);
   const sunMarkers = useMemo<SunChartMarker[]>(() => {
+    if (period !== 1) return [];
+
     const markers: SunChartMarker[] = [];
     const dayKeys = Array.from(new Set(data.map((point) => point.dayKey)));
 
     for (const dayKey of dayKeys) {
-      const sunTimes = getSunTimesForLatviaDay(dayKey, location.lat, location.lon);
+      const sunTimes = sunTimesByDay[dayKey];
       if (!sunTimes) continue;
 
       for (const event of [
@@ -271,13 +276,12 @@ export function ForecastChart({ forecasts, location, sunLabels }: ForecastChartP
           key: `${dayKey}-${event.key}`,
           x,
           label: `${event.icon} ${formatLatviaTime(event.time, "HH:mm")} ${event.label}`,
-          shortLabel: event.icon,
         });
       }
     }
 
     return markers;
-  }, [data, location.lat, location.lon, sunLabels.sunrise, sunLabels.sunset]);
+  }, [data, period, sunLabels.sunrise, sunLabels.sunset, sunTimesByDay]);
   const conditionIconIndexes = useMemo(
     () => getConditionIconIndexes(data, period),
     [data, period],
@@ -467,23 +471,13 @@ export function ForecastChart({ forecasts, location, sunLabels }: ForecastChartP
                   stroke="#f59e0b"
                   strokeWidth={1.5}
                   strokeDasharray="4 3"
-                  label={
-                    period === 1
-                      ? {
-                          value: marker.label,
-                          position: "top",
-                          fill: "#b45309",
-                          fontSize: 11,
-                          fontWeight: 600,
-                        }
-                      : {
-                          value: marker.shortLabel,
-                          position: "insideTop",
-                          fill: "#f59e0b",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }
-                  }
+                  label={{
+                    value: marker.label,
+                    position: "top",
+                    fill: "#b45309",
+                    fontSize: 11,
+                    fontWeight: 600,
+                  }}
                 />
               ))}
               {isMultiDay &&

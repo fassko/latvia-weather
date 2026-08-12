@@ -18,14 +18,14 @@ import {
   getLatviaStartOfHour,
   getLatviaWallClock,
 } from "@/lib/weather/timezone";
-import { getSunTimesForLatviaDay } from "@/lib/weather/sun";
+import type { SunTimesByDay } from "@/lib/weather/sun";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
-import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
+import type { HourlyForecast } from "@/lib/weather/types";
 
 interface HourlyStripProps {
   forecasts: HourlyForecast[];
-  location: WeatherLocation;
+  sunTimesByDay: SunTimesByDay;
   sunLabels: {
     sunrise: string;
     sunset: string;
@@ -37,7 +37,7 @@ type SunEvent = { event: "sunrise" | "sunset"; time: Date };
 
 function getSunEventsByForecastTime(
   forecasts: HourlyForecast[],
-  location: WeatherLocation,
+  sunTimesByDay: SunTimesByDay,
 ): Map<string, SunEvent[]> {
   const eventsByForecastTime = new Map<string, SunEvent[]>();
   const dayKeys = Array.from(new Set(forecasts.map((forecast) => getLatviaDayKey(forecast.time))));
@@ -46,7 +46,7 @@ function getSunEventsByForecastTime(
     const dayForecasts = forecasts.filter(
       (forecast) => getLatviaDayKey(forecast.time) === dayKey,
     );
-    const sunTimes = getSunTimesForLatviaDay(dayKey, location.lat, location.lon);
+    const sunTimes = sunTimesByDay[dayKey];
     if (!sunTimes || dayForecasts.length === 0) continue;
 
     for (const sunEvent of [
@@ -72,7 +72,7 @@ function getSunEventsByForecastTime(
 
 export function HourlyStrip({
   forecasts,
-  location,
+  sunTimesByDay,
   sunLabels,
   hours = 24,
 }: HourlyStripProps) {
@@ -93,7 +93,10 @@ export function HourlyStrip({
   });
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
   const stripForecasts = [...pastToday, ...upcoming];
-  const sunEventsByForecastTime = getSunEventsByForecastTime(stripForecasts, location);
+  const sunEventsByForecastTime = getSunEventsByForecastTime(
+    stripForecasts,
+    sunTimesByDay,
+  );
   const stripRef = useRef<HTMLDivElement | null>(null);
   const currentTileRef = useRef<HTMLDivElement | null>(null);
   const activeTileClass =

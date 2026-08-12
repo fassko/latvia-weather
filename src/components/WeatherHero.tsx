@@ -5,7 +5,7 @@ import { summarizeDay } from "@/lib/weather/daily";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
 import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey, getWindDirection, isNightIcon } from "@/lib/weather/parse";
-import { getSunTimesForLatviaDay } from "@/lib/weather/sun";
+import type { SunTimesByDay } from "@/lib/weather/sun";
 import { getWeatherSummaryParts } from "@/lib/weather/summary";
 import { formatLatviaDateTime, formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
@@ -58,9 +58,10 @@ function MapPinIcon() {
 
 interface WeatherHeroProps {
   data: WeatherData;
+  sunTimesByDay: SunTimesByDay;
 }
 
-export async function WeatherHero({ data }: WeatherHeroProps) {
+export async function WeatherHero({ data, sunTimesByDay }: WeatherHeroProps) {
   const locale = await getLocale();
   const t = await getTranslations("hero");
   const tConditions = await getTranslations("conditions");
@@ -78,11 +79,7 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
   const today = summarizeDay(getTodayForecasts(data.forecasts));
   const summary = getWeatherSummaryParts(current);
   const night = isNightIcon(current.iconCode);
-  const sunTimes = getSunTimesForLatviaDay(
-    getLatviaDayKey(current.time),
-    data.location.lat,
-    data.location.lon,
-  );
+  const sunTimes = sunTimesByDay[getLatviaDayKey(current.time)];
 
   return (
     <section

@@ -22,6 +22,8 @@ import {
 } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { getSourceCaption } from "@/lib/weather/source-caption";
+import { getAuthoritativeSunTimesByDay } from "@/lib/weather/sun";
+import { getLatviaDayKey } from "@/lib/weather/timezone";
 import {
   DEFAULT_LOCATION_ID,
   isValidLocationId,
@@ -151,6 +153,11 @@ export default async function Home({ params, searchParams }: HomeProps) {
   }
 
   data = mergeForecastLocation(data, locations);
+  const sunTimesByDay = await getAuthoritativeSunTimesByDay(
+    data.forecasts.map((forecast) => getLatviaDayKey(forecast.time)),
+    data.location.lat,
+    data.location.lon,
+  );
 
   const pageUrl = `${getSiteUrl()}${localizedPath(
     locale,
@@ -181,7 +188,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
       />
       <StalePageRefresh />
       <TopNav locationId={data.location.id} locationName={data.location.name} />
-      <WeatherHero data={data} />
+      <WeatherHero data={data} sunTimesByDay={sunTimesByDay} />
       <main
         id={MAIN_CONTENT_ID}
         className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-6 pb-[max(6rem,calc(4.5rem+env(safe-area-inset-bottom)))] sm:px-6"
@@ -192,7 +199,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
           </p>
         ) : null}
         <WeatherWarnings locale={locale} warnings={warnings} />
-        <MetricCards forecasts={data.forecasts} location={data.location} />
+        <MetricCards forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
         <WeatherHighlights forecasts={data.forecasts} />
         <WeatherAssistantLoader
           locale={locale}
@@ -221,7 +228,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
         />
         <HourlyStripCard
           forecasts={data.forecasts}
-          location={data.location}
+          sunTimesByDay={sunTimesByDay}
           sunLabels={{
             sunrise: tTable("sunrise"),
             sunset: tTable("sunset"),
@@ -229,13 +236,13 @@ export default async function Home({ params, searchParams }: HomeProps) {
         />
         <ForecastChartsSection
           forecasts={data.forecasts}
-          location={data.location}
+          sunTimesByDay={sunTimesByDay}
           sunLabels={{
             sunrise: tTable("sunrise"),
             sunset: tTable("sunset"),
           }}
         />
-        <DailyForecastList forecasts={data.forecasts} location={data.location} />
+        <DailyForecastList forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
         <footer className="flex flex-col gap-2 pt-4 pb-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:text-slate-400">
           <p>
             {tFooter("dataFrom")}{" "}
@@ -248,6 +255,17 @@ export default async function Home({ params, searchParams }: HomeProps) {
               LVĢMC
             </a>
             . {tFooter("updatedEvery")}
+            {" "}
+            {tFooter("sunTimesFrom")}{" "}
+            <a
+              href="https://sunrisesunset.io/"
+              className="underline hover:text-slate-700 dark:hover:text-slate-200"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              SunriseSunset.io
+            </a>
+            .
           </p>
           <p>
             {tFooter("developedBy")}{" "}
