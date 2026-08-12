@@ -133,6 +133,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
   const tFooter = await getTranslations({ locale, namespace: "footer" });
   const tAssistant = await getTranslations({ locale, namespace: "assistant" });
   const tMetadata = await getTranslations({ locale, namespace: "metadata" });
+  const tTable = await getTranslations({ locale, namespace: "table" });
 
   let data;
   let locations;
@@ -191,7 +192,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
           </p>
         ) : null}
         <WeatherWarnings locale={locale} warnings={warnings} />
-        <MetricCards forecasts={data.forecasts} />
+        <MetricCards forecasts={data.forecasts} location={data.location} />
         <WeatherHighlights forecasts={data.forecasts} />
         <WeatherAssistantLoader
           locale={locale}
@@ -218,9 +219,23 @@ export default async function Home({ params, searchParams }: HomeProps) {
             ],
           }}
         />
-        <HourlyStripCard forecasts={data.forecasts} />
-        <ForecastChartsSection forecasts={data.forecasts} />
-        <DailyForecastList forecasts={data.forecasts} />
+        <HourlyStripCard
+          forecasts={data.forecasts}
+          location={data.location}
+          sunLabels={{
+            sunrise: tTable("sunrise"),
+            sunset: tTable("sunset"),
+          }}
+        />
+        <ForecastChartsSection
+          forecasts={data.forecasts}
+          location={data.location}
+          sunLabels={{
+            sunrise: tTable("sunrise"),
+            sunset: tTable("sunset"),
+          }}
+        />
+        <DailyForecastList forecasts={data.forecasts} location={data.location} />
         <footer className="flex flex-col gap-2 pt-4 pb-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:text-slate-400">
           <p>
             {tFooter("dataFrom")}{" "}

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import type { HourlyForecast } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
 
 const ForecastChart = dynamic(
   () => import("@/components/charts/ForecastChart").then((mod) => mod.ForecastChart),
@@ -16,9 +16,18 @@ const ForecastChart = dynamic(
 
 interface ForecastChartsSectionProps {
   forecasts: HourlyForecast[];
+  location: WeatherLocation;
+  sunLabels: {
+    sunrise: string;
+    sunset: string;
+  };
 }
 
-export function ForecastChartsSection({ forecasts }: ForecastChartsSectionProps) {
+export function ForecastChartsSection({
+  forecasts,
+  location,
+  sunLabels,
+}: ForecastChartsSectionProps) {
   const t = useTranslations("chart");
 
   return (
@@ -26,7 +35,7 @@ export function ForecastChartsSection({ forecasts }: ForecastChartsSectionProps)
       aria-label={t("title")}
       className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900"
     >
-      <ForecastChart forecasts={forecasts} />
+      <ForecastChart forecasts={forecasts} location={location} sunLabels={sunLabels} />
     </section>
   );
 }

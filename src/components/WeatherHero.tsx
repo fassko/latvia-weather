@@ -5,8 +5,9 @@ import { summarizeDay } from "@/lib/weather/daily";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
 import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey, getWindDirection, isNightIcon } from "@/lib/weather/parse";
+import { getSunTimesForLatviaDay } from "@/lib/weather/sun";
 import { getWeatherSummaryParts } from "@/lib/weather/summary";
-import { formatLatviaDateTime } from "@/lib/weather/timezone";
+import { formatLatviaDateTime, formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
@@ -77,6 +78,11 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
   const today = summarizeDay(getTodayForecasts(data.forecasts));
   const summary = getWeatherSummaryParts(current);
   const night = isNightIcon(current.iconCode);
+  const sunTimes = getSunTimesForLatviaDay(
+    getLatviaDayKey(current.time),
+    data.location.lat,
+    data.location.lon,
+  );
 
   return (
     <section
@@ -152,6 +158,22 @@ export async function WeatherHero({ data }: WeatherHeroProps) {
               {tWind(`directions.${getWindDirection(current.windDirection)}`)}
             </span>
           </span>
+          {sunTimes ? (
+            <>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
+              >
+                <span aria-hidden="true">☀️</span>
+                {t("sunrise")} {formatLatviaTime(sunTimes.sunrise, "HH:mm")}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
+              >
+                <span aria-hidden="true">🌙</span>
+                {t("sunset")} {formatLatviaTime(sunTimes.sunset, "HH:mm")}
+              </span>
+            </>
+          ) : null}
           <Link
             href={`/map?punkts=${encodeURIComponent(data.location.id)}`}
             className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/25 ${theme.text}`}

@@ -18,16 +18,64 @@ import {
   getLatviaStartOfHour,
   getLatviaWallClock,
 } from "@/lib/weather/timezone";
+import { getSunTimesForLatviaDay } from "@/lib/weather/sun";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
-import type { HourlyForecast } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
 
 interface HourlyStripProps {
   forecasts: HourlyForecast[];
+  location: WeatherLocation;
+  sunLabels: {
+    sunrise: string;
+    sunset: string;
+  };
   hours?: number;
 }
 
-export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
+type SunEvent = { event: "sunrise" | "sunset"; time: Date };
+
+function getSunEventsByForecastTime(
+  forecasts: HourlyForecast[],
+  location: WeatherLocation,
+): Map<string, SunEvent[]> {
+  const eventsByForecastTime = new Map<string, SunEvent[]>();
+  const dayKeys = Array.from(new Set(forecasts.map((forecast) => getLatviaDayKey(forecast.time))));
+
+  for (const dayKey of dayKeys) {
+    const dayForecasts = forecasts.filter(
+      (forecast) => getLatviaDayKey(forecast.time) === dayKey,
+    );
+    const sunTimes = getSunTimesForLatviaDay(dayKey, location.lat, location.lon);
+    if (!sunTimes || dayForecasts.length === 0) continue;
+
+    for (const sunEvent of [
+      { event: "sunrise", time: sunTimes.sunrise },
+      { event: "sunset", time: sunTimes.sunset },
+    ] satisfies SunEvent[]) {
+      const nearest = dayForecasts.reduce((best, forecast) => {
+        const bestDistance = Math.abs(best.time.getTime() - sunEvent.time.getTime());
+        const forecastDistance = Math.abs(forecast.time.getTime() - sunEvent.time.getTime());
+
+        return forecastDistance < bestDistance ? forecast : best;
+      });
+      const key = nearest.time.toISOString();
+      const events = eventsByForecastTime.get(key) ?? [];
+      events.push(sunEvent);
+      events.sort((a, b) => a.time.getTime() - b.time.getTime());
+      eventsByForecastTime.set(key, events);
+    }
+  }
+
+  return eventsByForecastTime;
+}
+
+export function HourlyStrip({
+  forecasts,
+  location,
+  sunLabels,
+  hours = 24,
+}: HourlyStripProps) {
   const t = useTranslations("hourlyCard");
   const tConditions = useTranslations("conditions");
   const tDaily = useTranslations("dailyList");
@@ -45,6 +93,8 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
   });
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
   const stripForecasts = [...pastToday, ...upcoming];
+  const sunEventsByForecastTime = getSunEventsByForecastTime(stripForecasts, location);
+  const stripRef = useRef<HTMLDivElement | null>(null);
   const currentTileRef = useRef<HTMLDivElement | null>(null);
   const activeTileClass =
     "bg-sky-50 ring-1 ring-inset ring-sky-200 dark:bg-sky-500/10 dark:ring-sky-500/30";
@@ -53,10 +103,11 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      currentTileRef.current?.scrollIntoView({
-        block: "nearest",
-        inline: "start",
-      });
+      const strip = stripRef.current;
+      const currentTile = currentTileRef.current;
+      if (!strip || !currentTile) return;
+
+      strip.scrollLeft = currentTile.offsetLeft - strip.offsetLeft;
     });
 
     return () => window.cancelAnimationFrame(frame);
@@ -68,6 +119,7 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
     // A scrollable region needs to be focusable so it can also be scrolled with
     // the keyboard.
     <div
+      ref={stripRef}
       className="mt-4 flex gap-1.5 overflow-x-auto pb-2 focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:outline-none"
       role="group"
       aria-label={t("title")}
@@ -80,6 +132,7 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
           index > 0 &&
           getLatviaDayKey(forecast.time) !==
             getLatviaDayKey(stripForecasts[index - 1].time);
+        const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
 
         return (
           <Fragment key={forecast.time.toISOString()}>
@@ -111,6 +164,21 @@ export function HourlyStrip({ forecasts, hours = 24 }: HourlyStripProps) {
               >
                 {isNow ? t("now") : formatLatviaTime(forecast.time, "HH:mm")}
               </span>
+              {sunEvents.length > 0 ? (
+                <span className="flex flex-col items-center gap-0.5 text-[10px] leading-none text-amber-700 dark:text-amber-300">
+                  {sunEvents.map((sunEvent) => (
+                    <span key={sunEvent.event} className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1 py-0.5 dark:bg-amber-950/50">
+                      <span aria-hidden="true">
+                        {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
+                      </span>
+                      <time dateTime={sunEvent.time.toISOString()}>
+                        {formatLatviaTime(sunEvent.time, "HH:mm")}
+                      </time>
+                      <span className="sr-only">{sunLabels[sunEvent.event]}</span>
+                    </span>
+                  ))}
+                </span>
+              ) : null}
               <span className="text-xl" aria-hidden="true">
                 {getConditionEmoji(forecast.iconCode)}
               </span>

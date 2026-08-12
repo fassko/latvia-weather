@@ -8,6 +8,7 @@ import {
 } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
+import { getSunTimesForLatviaDay, type SunTimes } from "@/lib/weather/sun";
 import {
   formatLatviaTime,
   getLatviaDayKey,
@@ -16,13 +17,14 @@ import {
 } from "@/lib/weather/timezone";
 import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
-import type { HourlyForecast } from "@/lib/weather/types";
+import type { HourlyForecast, WeatherLocation } from "@/lib/weather/types";
 
 interface DailyForecastListProps {
   forecasts: HourlyForecast[];
+  location: WeatherLocation;
 }
 
-export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
+export async function DailyForecastList({ forecasts, location }: DailyForecastListProps) {
   const locale = await getLocale();
   const t = await getTranslations("dailyList");
   const tTable = await getTranslations("table");
@@ -82,6 +84,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
           const weekend = isWeekend(row.date);
           const breakdownForecasts =
             isToday ? (forecastsByDay.get(row.dayKey) ?? row.forecasts) : row.forecasts;
+          const sunTimes = getSunTimesForLatviaDay(row.dayKey, location.lat, location.lon);
 
           return (
             <li key={row.dayKey}>
@@ -144,10 +147,23 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                       {Math.round(summary.maxPrecipitationProbability)}%
                     </span>
                   </span>
+                  {sunTimes ? (
+                    <span className="hidden shrink-0 items-center gap-1.5 text-[11px] font-medium tabular-nums text-amber-700 sm:flex dark:text-amber-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-1 dark:bg-amber-950/50">
+                        <span aria-hidden="true">☀️</span>
+                        {formatLatviaTime(sunTimes.sunrise, "HH:mm")}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-1 dark:bg-amber-950/50">
+                        <span aria-hidden="true">🌙</span>
+                        {formatLatviaTime(sunTimes.sunset, "HH:mm")}
+                      </span>
+                    </span>
+                  ) : null}
                 </summary>
 
                 <DayBreakdown
                   forecasts={breakdownForecasts}
+                  sunTimes={sunTimes}
                   fadedBefore={isToday ? currentHour : undefined}
                   windUnit={windUnit}
                   formatWindDirection={(degrees) =>
@@ -165,6 +181,8 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
                     humidity: tTable("humidity"),
                     cloudCover: tTable("cloudCover"),
                     pressure: tTable("pressure"),
+                    sunrise: tTable("sunrise"),
+                    sunset: tTable("sunset"),
                   }}
                 />
               </details>
@@ -178,6 +196,7 @@ export async function DailyForecastList({ forecasts }: DailyForecastListProps) {
 
 interface DayBreakdownProps {
   forecasts: HourlyForecast[];
+  sunTimes: SunTimes | null;
   fadedBefore?: Date;
   windUnit: WindUnit;
   formatWindDirection: (degrees: number) => string;
@@ -193,16 +212,51 @@ interface DayBreakdownProps {
     humidity: string;
     cloudCover: string;
     pressure: string;
+    sunrise: string;
+    sunset: string;
   };
+}
+
+type SunEvent = { event: "sunrise" | "sunset"; time: Date };
+
+function getSunEventsByForecastTime(
+  forecasts: HourlyForecast[],
+  sunTimes: SunTimes | null,
+): Map<string, SunEvent[]> {
+  const eventsByForecastTime = new Map<string, SunEvent[]>();
+
+  if (!sunTimes || forecasts.length === 0) return eventsByForecastTime;
+
+  for (const sunEvent of [
+    { event: "sunrise", time: sunTimes.sunrise },
+    { event: "sunset", time: sunTimes.sunset },
+  ] satisfies SunEvent[]) {
+    const nearest = forecasts.reduce((best, forecast) => {
+      const bestDistance = Math.abs(best.time.getTime() - sunEvent.time.getTime());
+      const forecastDistance = Math.abs(forecast.time.getTime() - sunEvent.time.getTime());
+
+      return forecastDistance < bestDistance ? forecast : best;
+    });
+    const key = nearest.time.toISOString();
+    const events = eventsByForecastTime.get(key) ?? [];
+    events.push(sunEvent);
+    events.sort((a, b) => a.time.getTime() - b.time.getTime());
+    eventsByForecastTime.set(key, events);
+  }
+
+  return eventsByForecastTime;
 }
 
 function DayBreakdown({
   forecasts,
+  sunTimes,
   fadedBefore,
   windUnit,
   formatWindDirection,
   labels,
 }: DayBreakdownProps) {
+  const sunEventsByForecastTime = getSunEventsByForecastTime(forecasts, sunTimes);
+
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
       <table className="relative min-w-full text-left text-sm">
@@ -233,6 +287,7 @@ function DayBreakdown({
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
           {forecasts.map((forecast, index) => {
+            const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
             const isPast =
               fadedBefore != null &&
               getLatviaWallClock(forecast.time) < fadedBefore;
@@ -250,6 +305,24 @@ function DayBreakdown({
                   <time dateTime={forecast.time.toISOString()}>
                     {formatLatviaTime(forecast.time, "HH:mm")}
                   </time>
+                  {sunEvents.length > 0 ? (
+                    <span className="mt-1 flex flex-col gap-1 text-[11px] leading-none text-amber-700 dark:text-amber-300">
+                      {sunEvents.map((sunEvent) => (
+                        <span
+                          key={sunEvent.event}
+                          className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-1.5 py-1 font-medium tabular-nums dark:bg-amber-950/50"
+                        >
+                          <span aria-hidden="true">
+                            {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
+                          </span>
+                          <time dateTime={sunEvent.time.toISOString()}>
+                            {formatLatviaTime(sunEvent.time, "HH:mm")}
+                          </time>
+                          <span>{labels[sunEvent.event]}</span>
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
                 </td>
                 <td className="py-1.5 pr-3 text-base" aria-hidden="true">
                   {getConditionEmoji(forecast.iconCode)}
