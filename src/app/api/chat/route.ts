@@ -16,6 +16,7 @@ import { checkChatRateLimit } from "@/lib/rate-limit";
 import { resolveAssistantLocationIntent } from "@/lib/weather/assistant-location";
 import { DEFAULT_LOCATION_ID, isValidLocationId } from "@/lib/weather/locations";
 import { searchLocations } from "@/lib/mcp/search-locations";
+import { buildAssistantTimingContext } from "@/lib/weather/assistant-context";
 import { getSourceCaption } from "@/lib/weather/source-caption";
 import type { HourlyForecast } from "@/lib/weather/types";
 
@@ -170,13 +171,16 @@ function compactForecast(punkts: string, locale: string) {
   return Promise.all([getHourlyForecast(punkts), getLocationPoints()]).then(
     ([data, locations]) => {
       const forecast = mergeForecastLocation(data, locations);
+      const now = new Date();
 
       return {
         location: forecast.location,
         sourceCaption: getSourceCaption(forecast.location.name, locale),
         trendStrip: getTrendStrip(forecast.forecasts, locale),
-        fetchedAt: forecast.fetchedAt.toISOString(),
+        requestedAt: now.toISOString(),
+        firstForecastHour: forecast.fetchedAt.toISOString(),
         isStale: Boolean(forecast.isStale),
+        timing: buildAssistantTimingContext(forecast.forecasts, now),
         hourly: forecast.forecasts.slice(0, 72).map((hour) => ({
           time: hour.time.toISOString(),
           temperature: hour.temperature,
@@ -282,6 +286,12 @@ export async function POST(request: Request) {
         "The app UI renders the forecast source caption from tool output. Do not write a source line yourself.",
         getLocaleInstructions(locale),
         "Keep answers practical and cite forecast times as Latvia local time. Treat Europe/Riga as an internal timezone identifier only; do not write it in user-facing answers.",
+        "Forecast tool output includes timing.nowLocalTime (authoritative current Latvia time), timing.nextHour (precomputed rain for the next 60 minutes), and timing.upcomingRainWindows.",
+        "'Next hour' always means the next 60 minutes from timing.nowLocalTime, not the previous calendar hour bucket.",
+        "When the user asks whether it will rain in the next hour, base the bold headline on timing.nextHour.willRain and keep the timing paragraph consistent with that answer.",
+        "If timing.nextHour.willRain is true, do not claim it is dry in the next hour, even when the current hour bucket is mostly dry.",
+        "If timing.nextHour.willRain is false, do not mention rain arriving within timing.nextHour.overlappingHours.",
+        "The bold headline and timing paragraphs must never contradict each other.",
         "Format answers as compact Markdown: start with one relevant weather emoji and a bold one-line summary, then use two or three short paragraphs for timing, risk, and advice.",
         "Use **bold** for important temperatures, rain chances, wind, and recommendation words.",
         "When discussing a week or multi-day forecast, mention Saturday/Sunday or sestdiena/svētdiena by name so the UI can highlight weekend days.",
