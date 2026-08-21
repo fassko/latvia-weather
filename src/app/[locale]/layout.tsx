@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { SetHtmlLang } from "@/components/SetHtmlLang";
 import { SkipToContent } from "@/components/SkipToContent";
+import { CookieConsent } from "@/components/CookieConsent";
 import { routing, type Locale } from "@/i18n/routing";
 
 interface LocaleLayoutProps {
@@ -29,6 +30,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       <SetHtmlLang />
       <SkipToContent />
       {children}
+      <CookieConsent />
     </NextIntlClientProvider>
   );
 }
