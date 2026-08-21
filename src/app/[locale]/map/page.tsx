@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ForecastError } from "@/components/ForecastError";
 import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
+import { LegalLinks } from "@/components/LegalLinks";
 import { TopNav } from "@/components/TopNav";
 import { WeatherMapSection } from "@/components/WeatherMapSection";
 import { routing, type Locale } from "@/i18n/routing";
@@ -189,6 +190,7 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
               LVĢMC
             </a>
             . {tFooter("updatedEvery")}
+            {" · "}<LegalLinks />
           </p>
         </footer>
       </main>

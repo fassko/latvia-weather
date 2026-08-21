@@ -4,6 +4,7 @@ import { DailyForecastList } from "@/components/DailyForecastList";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
 import { ForecastError } from "@/components/ForecastError";
 import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
+import { LegalLinks } from "@/components/LegalLinks";
 import { HourlyStripCard } from "@/components/HourlyStripCard";
 import { MetricCards } from "@/components/MetricCards";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
@@ -295,6 +296,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
             >
               {tFooter("onGitHub")}
             </a>
+            {" · "}<LegalLinks />
           </p>
         </footer>
       </main>
