@@ -119,12 +119,9 @@ export function HourlyStrip({
   if (stripForecasts.length === 0) return null;
 
   return (
-    // A scrollable region needs to be focusable so it can also be scrolled with
-    // the keyboard. Subgrid keeps hour metrics aligned when only some columns
-    // show a sunrise/sunset badge.
     <div
       ref={stripRef}
-      className="mt-4 grid auto-cols-max grid-flow-col grid-rows-[repeat(6,auto)] gap-x-1.5 gap-y-1 overflow-x-auto pb-2 focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:outline-none"
+      className="mt-4 grid auto-cols-max grid-flow-col grid-rows-[repeat(5,auto)] gap-x-1.5 gap-y-1 overflow-x-auto pb-2 focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:outline-none"
       role="group"
       aria-label={t("title")}
       tabIndex={0}
@@ -141,7 +138,7 @@ export function HourlyStrip({
         return (
           <Fragment key={forecast.time.toISOString()}>
             {isNewDay ? (
-              <div className="row-span-6 flex shrink-0 items-center gap-1.5 self-stretch pl-1">
+              <div className="row-span-5 flex shrink-0 items-center gap-1.5 self-stretch pl-1">
                 <span className="h-10 w-px bg-slate-200 dark:bg-slate-700" />
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 [writing-mode:vertical-rl] rotate-180 dark:text-slate-500">
                   {formatLatviaTime(forecast.time, getDatePattern(locale, "dailyDate"), {
@@ -152,38 +149,38 @@ export function HourlyStrip({
             ) : null}
             <div
               ref={isNow ? currentTileRef : undefined}
-              // `relative` keeps the visually hidden labels below anchored to
-              // the tile; absolute positioning would otherwise resolve against
-              // the page and stretch it far to the right.
-              className={`relative row-span-6 grid min-w-[4.25rem] grid-rows-subgrid justify-items-center rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
+              className={`relative row-span-5 grid min-w-[4.25rem] grid-rows-subgrid justify-items-center rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
                 isNow ? activeTileClass : ""
               } ${isPast ? "opacity-45" : ""}`}
             >
-              <span
-                className={`text-xs font-medium ${
-                  isNow
-                    ? "text-sky-600 dark:text-sky-300"
-                    : "text-slate-500 dark:text-slate-400"
-                }`}
-              >
-                {isNow ? t("now") : formatLatviaTime(forecast.time, "HH:mm")}
-              </span>
-              <span className="flex flex-col items-center justify-center gap-0.5 text-[10px] leading-none text-amber-700 dark:text-amber-300">
-                {sunEvents.map((sunEvent) => (
-                  <span
-                    key={sunEvent.event}
-                    className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1 py-0.5 dark:bg-amber-950/50"
-                  >
-                    <span aria-hidden="true">
-                      {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
+              {sunEvents.length > 0 ? (
+                <span className="flex flex-col items-center gap-0.5">
+                  {sunEvents.map((sunEvent) => (
+                    <span
+                      key={sunEvent.event}
+                      className="inline-flex items-center gap-0.5 text-xs font-medium tabular-nums text-amber-600 dark:text-amber-300"
+                    >
+                      <span aria-hidden="true">
+                        {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
+                      </span>
+                      <time dateTime={sunEvent.time.toISOString()}>
+                        {formatLatviaTime(sunEvent.time, "HH:mm")}
+                      </time>
+                      <span className="sr-only">{sunLabels[sunEvent.event]}</span>
                     </span>
-                    <time dateTime={sunEvent.time.toISOString()}>
-                      {formatLatviaTime(sunEvent.time, "HH:mm")}
-                    </time>
-                    <span className="sr-only">{sunLabels[sunEvent.event]}</span>
-                  </span>
-                ))}
-              </span>
+                  ))}
+                </span>
+              ) : (
+                <span
+                  className={`text-xs font-medium ${
+                    isNow
+                      ? "text-sky-600 dark:text-sky-300"
+                      : "text-slate-500 dark:text-slate-400"
+                  }`}
+                >
+                  {isNow ? t("now") : formatLatviaTime(forecast.time, "HH:mm")}
+                </span>
+              )}
               <span className="flex flex-col items-center justify-center">
                 <span className="text-xl" aria-hidden="true">
                   {getConditionEmoji(forecast.iconCode)}
