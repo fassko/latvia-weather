@@ -18,6 +18,7 @@ import {
   getLatviaStartOfHour,
   getLatviaWallClock,
 } from "@/lib/weather/timezone";
+import { getSunEventsByForecastTime } from "@/lib/weather/sun-events";
 import type { SunTimesByDay } from "@/lib/weather/sun";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
@@ -31,43 +32,6 @@ interface HourlyStripProps {
     sunset: string;
   };
   hours?: number;
-}
-
-type SunEvent = { event: "sunrise" | "sunset"; time: Date };
-
-function getSunEventsByForecastTime(
-  forecasts: HourlyForecast[],
-  sunTimesByDay: SunTimesByDay,
-): Map<string, SunEvent[]> {
-  const eventsByForecastTime = new Map<string, SunEvent[]>();
-  const dayKeys = Array.from(new Set(forecasts.map((forecast) => getLatviaDayKey(forecast.time))));
-
-  for (const dayKey of dayKeys) {
-    const dayForecasts = forecasts.filter(
-      (forecast) => getLatviaDayKey(forecast.time) === dayKey,
-    );
-    const sunTimes = sunTimesByDay[dayKey];
-    if (!sunTimes || dayForecasts.length === 0) continue;
-
-    for (const sunEvent of [
-      { event: "sunrise", time: sunTimes.sunrise },
-      { event: "sunset", time: sunTimes.sunset },
-    ] satisfies SunEvent[]) {
-      const nearest = dayForecasts.reduce((best, forecast) => {
-        const bestDistance = Math.abs(best.time.getTime() - sunEvent.time.getTime());
-        const forecastDistance = Math.abs(forecast.time.getTime() - sunEvent.time.getTime());
-
-        return forecastDistance < bestDistance ? forecast : best;
-      });
-      const key = nearest.time.toISOString();
-      const events = eventsByForecastTime.get(key) ?? [];
-      events.push(sunEvent);
-      events.sort((a, b) => a.time.getTime() - b.time.getTime());
-      eventsByForecastTime.set(key, events);
-    }
-  }
-
-  return eventsByForecastTime;
 }
 
 export function HourlyStrip({
@@ -94,7 +58,7 @@ export function HourlyStrip({
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
   const stripForecasts = [...pastToday, ...upcoming];
   const sunEventsByForecastTime = getSunEventsByForecastTime(
-    stripForecasts,
+    forecasts,
     sunTimesByDay,
   );
   const stripRef = useRef<HTMLDivElement | null>(null);
@@ -153,24 +117,7 @@ export function HourlyStrip({
                 isNow ? activeTileClass : ""
               } ${isPast ? "opacity-45" : ""}`}
             >
-              {sunEvents.length > 0 ? (
-                <span className="flex flex-col items-center gap-0.5">
-                  {sunEvents.map((sunEvent) => (
-                    <span
-                      key={sunEvent.event}
-                      className="inline-flex items-center gap-0.5 text-xs font-medium tabular-nums text-amber-600 dark:text-amber-300"
-                    >
-                      <span aria-hidden="true">
-                        {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
-                      </span>
-                      <time dateTime={sunEvent.time.toISOString()}>
-                        {formatLatviaTime(sunEvent.time, "HH:mm")}
-                      </time>
-                      <span className="sr-only">{sunLabels[sunEvent.event]}</span>
-                    </span>
-                  ))}
-                </span>
-              ) : (
+              <span className="flex flex-col items-center gap-0.5">
                 <span
                   className={`text-xs font-medium ${
                     isNow
@@ -180,7 +127,25 @@ export function HourlyStrip({
                 >
                   {isNow ? t("now") : formatLatviaTime(forecast.time, "HH:mm")}
                 </span>
-              )}
+                {sunEvents.length > 0 ? (
+                  <span className="flex flex-col items-center gap-0.5">
+                    {sunEvents.map((sunEvent) => (
+                      <span
+                        key={sunEvent.event}
+                        className="inline-flex items-center gap-0.5 text-[10px] font-medium tabular-nums text-amber-600 dark:text-amber-300"
+                      >
+                        <span aria-hidden="true">
+                          {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
+                        </span>
+                        <time dateTime={sunEvent.time.toISOString()}>
+                          {formatLatviaTime(sunEvent.time, "HH:mm")}
+                        </time>
+                        <span className="sr-only">{sunLabels[sunEvent.event]}</span>
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
+              </span>
               <span className="flex flex-col items-center justify-center">
                 <span className="text-xl" aria-hidden="true">
                   {getConditionEmoji(forecast.iconCode)}
