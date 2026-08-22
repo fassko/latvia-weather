@@ -9,6 +9,7 @@ import {
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
 import type { SunTimes, SunTimesByDay } from "@/lib/weather/sun";
+import { getSunEventsByForecastTime, type SunEvent } from "@/lib/weather/sun-events";
 import {
   formatLatviaTime,
   getLatviaDayKey,
@@ -220,36 +221,6 @@ interface DayBreakdownProps {
   };
 }
 
-type SunEvent = { event: "sunrise" | "sunset"; time: Date };
-
-function getSunEventsByForecastTime(
-  forecasts: HourlyForecast[],
-  sunTimes: SunTimes | null,
-): Map<string, SunEvent[]> {
-  const eventsByForecastTime = new Map<string, SunEvent[]>();
-
-  if (!sunTimes || forecasts.length === 0) return eventsByForecastTime;
-
-  for (const sunEvent of [
-    { event: "sunrise", time: sunTimes.sunrise },
-    { event: "sunset", time: sunTimes.sunset },
-  ] satisfies SunEvent[]) {
-    const nearest = forecasts.reduce((best, forecast) => {
-      const bestDistance = Math.abs(best.time.getTime() - sunEvent.time.getTime());
-      const forecastDistance = Math.abs(forecast.time.getTime() - sunEvent.time.getTime());
-
-      return forecastDistance < bestDistance ? forecast : best;
-    });
-    const key = nearest.time.toISOString();
-    const events = eventsByForecastTime.get(key) ?? [];
-    events.push(sunEvent);
-    events.sort((a, b) => a.time.getTime() - b.time.getTime());
-    eventsByForecastTime.set(key, events);
-  }
-
-  return eventsByForecastTime;
-}
-
 function DayBreakdown({
   forecasts,
   sunTimes,
@@ -258,7 +229,11 @@ function DayBreakdown({
   formatWindDirection,
   labels,
 }: DayBreakdownProps) {
-  const sunEventsByForecastTime = getSunEventsByForecastTime(forecasts, sunTimes);
+  const dayKey = forecasts[0] ? getLatviaDayKey(forecasts[0].time) : null;
+  const sunEventsByForecastTime =
+    sunTimes && dayKey
+      ? getSunEventsByForecastTime(forecasts, { [dayKey]: sunTimes })
+      : new Map<string, SunEvent[]>();
 
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
