@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import {
@@ -124,10 +124,7 @@ export function HourlyStrip({
   });
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
   const stripForecasts = [...pastToday, ...upcoming];
-  const stripTimeline = useMemo(
-    () => buildStripTimeline(stripForecasts, sunTimesByDay),
-    [stripForecasts, sunTimesByDay],
-  );
+  const stripTimeline = buildStripTimeline(stripForecasts, sunTimesByDay);
   const stripRef = useRef<HTMLDivElement | null>(null);
   const currentTileRef = useRef<HTMLDivElement | null>(null);
   const activeTileClass =
