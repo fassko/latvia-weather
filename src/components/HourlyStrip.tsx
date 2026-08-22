@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import {
@@ -35,39 +35,70 @@ interface HourlyStripProps {
 
 type SunEvent = { event: "sunrise" | "sunset"; time: Date };
 
-function getSunEventsByForecastTime(
-  forecasts: HourlyForecast[],
+type StripItem =
+  | { kind: "forecast"; forecast: HourlyForecast }
+  | { kind: "sun"; sunEvent: SunEvent };
+
+function getSunEventsInRange(
+  stripForecasts: HourlyForecast[],
   sunTimesByDay: SunTimesByDay,
-): Map<string, SunEvent[]> {
-  const eventsByForecastTime = new Map<string, SunEvent[]>();
-  const dayKeys = Array.from(new Set(forecasts.map((forecast) => getLatviaDayKey(forecast.time))));
+): SunEvent[] {
+  if (stripForecasts.length === 0) return [];
+
+  const rangeStart = stripForecasts[0].time.getTime();
+  const rangeEnd = stripForecasts[stripForecasts.length - 1].time.getTime();
+  const dayKeys = Array.from(
+    new Set(stripForecasts.map((forecast) => getLatviaDayKey(forecast.time))),
+  );
+  const events: SunEvent[] = [];
 
   for (const dayKey of dayKeys) {
-    const dayForecasts = forecasts.filter(
-      (forecast) => getLatviaDayKey(forecast.time) === dayKey,
-    );
     const sunTimes = sunTimesByDay[dayKey];
-    if (!sunTimes || dayForecasts.length === 0) continue;
+    if (!sunTimes) continue;
 
     for (const sunEvent of [
-      { event: "sunrise", time: sunTimes.sunrise },
-      { event: "sunset", time: sunTimes.sunset },
-    ] satisfies SunEvent[]) {
-      const nearest = dayForecasts.reduce((best, forecast) => {
-        const bestDistance = Math.abs(best.time.getTime() - sunEvent.time.getTime());
-        const forecastDistance = Math.abs(forecast.time.getTime() - sunEvent.time.getTime());
-
-        return forecastDistance < bestDistance ? forecast : best;
-      });
-      const key = nearest.time.toISOString();
-      const events = eventsByForecastTime.get(key) ?? [];
-      events.push(sunEvent);
-      events.sort((a, b) => a.time.getTime() - b.time.getTime());
-      eventsByForecastTime.set(key, events);
+      { event: "sunrise" as const, time: sunTimes.sunrise },
+      { event: "sunset" as const, time: sunTimes.sunset },
+    ]) {
+      const eventMs = sunEvent.time.getTime();
+      if (eventMs >= rangeStart && eventMs <= rangeEnd) {
+        events.push(sunEvent);
+      }
     }
   }
 
-  return eventsByForecastTime;
+  return events.sort((a, b) => a.time.getTime() - b.time.getTime());
+}
+
+function buildStripTimeline(
+  stripForecasts: HourlyForecast[],
+  sunTimesByDay: SunTimesByDay,
+): StripItem[] {
+  const sunEvents = getSunEventsInRange(stripForecasts, sunTimesByDay);
+  const timeline: StripItem[] = stripForecasts.map((forecast) => ({
+    kind: "forecast",
+    forecast,
+  }));
+
+  for (const sunEvent of sunEvents) {
+    const insertIndex = timeline.findIndex(
+      (item) =>
+        item.kind === "forecast" &&
+        item.forecast.time.getTime() > sunEvent.time.getTime(),
+    );
+    const sunItem: StripItem = { kind: "sun", sunEvent };
+    if (insertIndex === -1) {
+      timeline.push(sunItem);
+    } else {
+      timeline.splice(insertIndex, 0, sunItem);
+    }
+  }
+
+  return timeline;
+}
+
+function getStripItemTime(item: StripItem): Date {
+  return item.kind === "forecast" ? item.forecast.time : item.sunEvent.time;
 }
 
 export function HourlyStrip({
@@ -93,9 +124,9 @@ export function HourlyStrip({
   });
   const upcoming = getUpcomingHourlyForecasts(forecasts).slice(0, hours);
   const stripForecasts = [...pastToday, ...upcoming];
-  const sunEventsByForecastTime = getSunEventsByForecastTime(
-    stripForecasts,
-    sunTimesByDay,
+  const stripTimeline = useMemo(
+    () => buildStripTimeline(stripForecasts, sunTimesByDay),
+    [stripForecasts, sunTimesByDay],
   );
   const stripRef = useRef<HTMLDivElement | null>(null);
   const currentTileRef = useRef<HTMLDivElement | null>(null);
@@ -114,34 +145,69 @@ export function HourlyStrip({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [stripForecasts.length]);
+  }, [stripTimeline.length]);
 
-  if (stripForecasts.length === 0) return null;
+  if (stripTimeline.length === 0) return null;
 
   return (
-    // A scrollable region needs to be focusable so it can also be scrolled with
-    // the keyboard. Subgrid keeps hour metrics aligned when only some columns
-    // show a sunrise/sunset badge.
     <div
       ref={stripRef}
-      className="mt-4 grid auto-cols-max grid-flow-col grid-rows-[repeat(6,auto)] gap-x-1.5 gap-y-1 overflow-x-auto pb-2 focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:outline-none"
+      className="mt-4 grid auto-cols-max grid-flow-col grid-rows-[repeat(5,auto)] gap-x-1.5 gap-y-1 overflow-x-auto pb-2 focus-visible:ring-2 focus-visible:ring-sky-500/70 focus-visible:outline-none"
       role="group"
       aria-label={t("title")}
       tabIndex={0}
     >
-      {stripForecasts.map((forecast, index) => {
-        const isPast = getLatviaWallClock(forecast.time) < currentHour;
-        const isNow = !isPast && getLatviaWallClock(forecast.time).getTime() === currentHour.getTime();
+      {stripTimeline.map((item, index) => {
+        const itemTime = getStripItemTime(item);
         const isNewDay =
           index > 0 &&
-          getLatviaDayKey(forecast.time) !==
-            getLatviaDayKey(stripForecasts[index - 1].time);
-        const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
+          getLatviaDayKey(itemTime) !==
+            getLatviaDayKey(getStripItemTime(stripTimeline[index - 1]));
+
+        if (item.kind === "sun") {
+          return (
+            <Fragment key={`${item.sunEvent.event}-${item.sunEvent.time.toISOString()}`}>
+              {isNewDay ? (
+                <div className="row-span-5 flex shrink-0 items-center gap-1.5 self-stretch pl-1">
+                  <span className="h-10 w-px bg-slate-200 dark:bg-slate-700" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 [writing-mode:vertical-rl] rotate-180 dark:text-slate-500">
+                    {formatLatviaTime(itemTime, getDatePattern(locale, "dailyDate"), {
+                      locale: dateLocale,
+                    })}
+                  </span>
+                </div>
+              ) : null}
+              <div className="row-span-5 grid min-w-[4.25rem] grid-rows-subgrid justify-items-center rounded-xl px-2 py-2.5">
+                <time
+                  dateTime={item.sunEvent.time.toISOString()}
+                  className="text-xs font-medium tabular-nums text-amber-600 dark:text-amber-300"
+                >
+                  {formatLatviaTime(item.sunEvent.time, "HH:mm")}
+                </time>
+                <span className="flex flex-col items-center justify-center">
+                  <span className="text-xl" aria-hidden="true">
+                    {item.sunEvent.event === "sunrise" ? "☀️" : "🌙"}
+                  </span>
+                  <span className="sr-only">{sunLabels[item.sunEvent.event]}</span>
+                </span>
+                <span aria-hidden="true" />
+                <span aria-hidden="true" />
+                <span aria-hidden="true" />
+              </div>
+            </Fragment>
+          );
+        }
+
+        const forecast = item.forecast;
+        const isPast = getLatviaWallClock(forecast.time) < currentHour;
+        const isNow =
+          !isPast &&
+          getLatviaWallClock(forecast.time).getTime() === currentHour.getTime();
 
         return (
           <Fragment key={forecast.time.toISOString()}>
             {isNewDay ? (
-              <div className="row-span-6 flex shrink-0 items-center gap-1.5 self-stretch pl-1">
+              <div className="row-span-5 flex shrink-0 items-center gap-1.5 self-stretch pl-1">
                 <span className="h-10 w-px bg-slate-200 dark:bg-slate-700" />
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 [writing-mode:vertical-rl] rotate-180 dark:text-slate-500">
                   {formatLatviaTime(forecast.time, getDatePattern(locale, "dailyDate"), {
@@ -152,10 +218,7 @@ export function HourlyStrip({
             ) : null}
             <div
               ref={isNow ? currentTileRef : undefined}
-              // `relative` keeps the visually hidden labels below anchored to
-              // the tile; absolute positioning would otherwise resolve against
-              // the page and stretch it far to the right.
-              className={`relative row-span-6 grid min-w-[4.25rem] grid-rows-subgrid justify-items-center rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
+              className={`relative row-span-5 grid min-w-[4.25rem] grid-rows-subgrid justify-items-center rounded-xl px-2 py-2.5 transition-colors duration-150 motion-reduce:transition-none ${hoverTileClass} ${
                 isNow ? activeTileClass : ""
               } ${isPast ? "opacity-45" : ""}`}
             >
@@ -167,22 +230,6 @@ export function HourlyStrip({
                 }`}
               >
                 {isNow ? t("now") : formatLatviaTime(forecast.time, "HH:mm")}
-              </span>
-              <span className="flex flex-col items-center justify-center gap-0.5 text-[10px] leading-none text-amber-700 dark:text-amber-300">
-                {sunEvents.map((sunEvent) => (
-                  <span
-                    key={sunEvent.event}
-                    className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1 py-0.5 dark:bg-amber-950/50"
-                  >
-                    <span aria-hidden="true">
-                      {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
-                    </span>
-                    <time dateTime={sunEvent.time.toISOString()}>
-                      {formatLatviaTime(sunEvent.time, "HH:mm")}
-                    </time>
-                    <span className="sr-only">{sunLabels[sunEvent.event]}</span>
-                  </span>
-                ))}
               </span>
               <span className="flex flex-col items-center justify-center">
                 <span className="text-xl" aria-hidden="true">
