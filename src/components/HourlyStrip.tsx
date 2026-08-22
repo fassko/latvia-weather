@@ -18,7 +18,7 @@ import {
   getLatviaStartOfHour,
   getLatviaWallClock,
 } from "@/lib/weather/timezone";
-import { getSunEventsByForecastTime } from "@/lib/weather/sun-events";
+import { getSunEventsByForecastTime, isSunEventInForecastHour } from "@/lib/weather/sun-events";
 import type { SunTimesByDay } from "@/lib/weather/sun";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
@@ -98,6 +98,9 @@ export function HourlyStrip({
           getLatviaDayKey(forecast.time) !==
             getLatviaDayKey(stripForecasts[index - 1].time);
         const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
+        const inHourSunEvent = sunEvents.find((sunEvent) =>
+          isSunEventInForecastHour(sunEvent, forecast),
+        );
 
         return (
           <Fragment key={forecast.time.toISOString()}>
@@ -117,7 +120,17 @@ export function HourlyStrip({
                 isNow ? activeTileClass : ""
               } ${isPast ? "opacity-45" : ""}`}
             >
-              <span className="flex flex-col items-center gap-0.5">
+              {inHourSunEvent ? (
+                <span className="inline-flex items-center gap-0.5 text-xs font-medium tabular-nums text-amber-600 dark:text-amber-300">
+                  <span aria-hidden="true">
+                    {inHourSunEvent.event === "sunrise" ? "☀️" : "🌙"}
+                  </span>
+                  <time dateTime={inHourSunEvent.time.toISOString()}>
+                    {formatLatviaTime(inHourSunEvent.time, "HH:mm")}
+                  </time>
+                  <span className="sr-only">{sunLabels[inHourSunEvent.event]}</span>
+                </span>
+              ) : (
                 <span
                   className={`text-xs font-medium ${
                     isNow
@@ -127,25 +140,7 @@ export function HourlyStrip({
                 >
                   {isNow ? t("now") : formatLatviaTime(forecast.time, "HH:mm")}
                 </span>
-                {sunEvents.length > 0 ? (
-                  <span className="flex flex-col items-center gap-0.5">
-                    {sunEvents.map((sunEvent) => (
-                      <span
-                        key={sunEvent.event}
-                        className="inline-flex items-center gap-0.5 text-[10px] font-medium tabular-nums text-amber-600 dark:text-amber-300"
-                      >
-                        <span aria-hidden="true">
-                          {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
-                        </span>
-                        <time dateTime={sunEvent.time.toISOString()}>
-                          {formatLatviaTime(sunEvent.time, "HH:mm")}
-                        </time>
-                        <span className="sr-only">{sunLabels[sunEvent.event]}</span>
-                      </span>
-                    ))}
-                  </span>
-                ) : null}
-              </span>
+              )}
               <span className="flex flex-col items-center justify-center">
                 <span className="text-xl" aria-hidden="true">
                   {getConditionEmoji(forecast.iconCode)}

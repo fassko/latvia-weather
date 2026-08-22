@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getSunEventsByForecastTime } from "../src/lib/weather/sun-events.ts";
+import {
+  getSunEventsByForecastTime,
+  isSunEventInForecastHour,
+} from "../src/lib/weather/sun-events.ts";
 import { parseHourlyForecast } from "../src/lib/weather/parse.ts";
 import { parseLaiks } from "../src/lib/weather/timezone.ts";
 
@@ -64,17 +67,18 @@ test("sun events match against full-day forecasts, not a limited strip subset", 
     },
   };
 
-  const wrongMatch = getSunEventsByForecastTime(stripOnly, sunTimesByDay);
+  const sparseDayMatch = getSunEventsByForecastTime(stripOnly, sunTimesByDay);
   const correctMatch = getSunEventsByForecastTime(fullDayForecasts, sunTimesByDay);
 
   const nineAmKey = makeForecasts(["202608220900"])[0].time.toISOString();
+  const eightPmKey = makeForecasts(["202608222000"])[0].time.toISOString();
   const ninePmKey = makeForecasts(["202608222100"])[0].time.toISOString();
   const sixAmKey = makeForecasts(["202608220600"])[0].time.toISOString();
 
-  assert.deepEqual(
-    wrongMatch.get(nineAmKey)?.map((event) => event.event),
-    ["sunset"],
-    "limited strip incorrectly attaches sunset to 09:00",
+  assert.equal(
+    sparseDayMatch.get(nineAmKey),
+    undefined,
+    "sparse day data does not attach distant sunset to 09:00",
   );
   assert.equal(
     correctMatch.get(nineAmKey),
@@ -82,11 +86,26 @@ test("sun events match against full-day forecasts, not a limited strip subset", 
     "full-day matching keeps 09:00 free of sunset",
   );
   assert.deepEqual(
-    correctMatch.get(ninePmKey)?.map((event) => event.event),
+    correctMatch.get(eightPmKey)?.map((event) => event.event),
     ["sunset"],
+    "sunset at 20:43 belongs to the 20:00 hour bucket",
+  );
+  assert.equal(
+    correctMatch.get(ninePmKey),
+    undefined,
+    "sunset does not attach to 21:00 when 20:00 contains it",
   );
   assert.deepEqual(
     correctMatch.get(sixAmKey)?.map((event) => event.event),
     ["sunrise"],
   );
+});
+
+test("isSunEventInForecastHour matches events within the forecast hour bucket", () => {
+  const sixAm = makeForecasts(["202608220600"])[0];
+  const sunrise = { event: "sunrise" as const, time: parseLaiks("202608220606") };
+  const sunset = { event: "sunset" as const, time: parseLaiks("202608222043") };
+
+  assert.equal(isSunEventInForecastHour(sunrise, sixAm), true);
+  assert.equal(isSunEventInForecastHour(sunset, sixAm), false);
 });
