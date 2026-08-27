@@ -2,7 +2,7 @@
 
 import { isWeekend } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   Bar,
@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { useChartColors, WEEKEND_TICK_COLOR } from "@/components/charts/chart-theme";
 import { getDateFnsLocale } from "@/lib/date-locale";
+import { useHoverCapable } from "@/lib/use-hover-capable";
 import {
   filterForecastsByDayCount,
   formatChartTooltipLabel,
@@ -234,6 +235,10 @@ export function ForecastChart({
   const [hiddenSeries, setHiddenSeries] = useState<Set<ChartSeriesKey>>(
     () => new Set(getInitialChartPreferences().hiddenSeries),
   );
+  /** `false` hides the tooltip (e.g. while panning); `undefined` lets Recharts own visibility. */
+  const [tooltipActive, setTooltipActive] = useState<boolean | undefined>(undefined);
+  const chartScrollRef = useRef<HTMLDivElement>(null);
+  const canHover = useHoverCapable();
   const colors = useChartColors();
   const windUnit = useWindUnit();
   const windAxisUnit = getWindSpeedUnitSuffix(windUnit);
@@ -320,6 +325,24 @@ export function ForecastChart({
       }),
     );
   }, [hiddenSeries, period]);
+
+  useEffect(() => {
+    const scrollEl = chartScrollRef.current;
+    if (!scrollEl) return;
+
+    const dismissTooltipWhileScrolling = () => {
+      setTooltipActive(false);
+    };
+
+    scrollEl.addEventListener("scroll", dismissTooltipWhileScrolling, { passive: true });
+    return () => {
+      scrollEl.removeEventListener("scroll", dismissTooltipWhileScrolling);
+    };
+  }, []);
+
+  const allowTooltipInteraction = () => {
+    setTooltipActive((current) => (current === false ? undefined : current));
+  };
 
   const toggleSeries = (dataKey: unknown) => {
     if (!isChartSeriesKey(dataKey)) return;
@@ -433,7 +456,11 @@ export function ForecastChart({
           ))}
         </div>
       </div>
-      <div className="overflow-x-auto pb-1">
+      <div
+        ref={chartScrollRef}
+        className="overflow-x-auto pb-1"
+        onPointerDown={allowTooltipInteraction}
+      >
           <div
             className={`min-w-[700px] sm:min-w-0 ${
               isMultiDay ? "h-80 md:h-[400px]" : "h-72"
@@ -571,6 +598,9 @@ export function ForecastChart({
                 tickFormatter={(value) => convertWindSpeed(Number(value), windUnit).toFixed(1)}
               />
               <Tooltip
+                // Touch/coarse pointers: tap to inspect. Hover would open on scroll/pan.
+                trigger={canHover ? "hover" : "click"}
+                active={tooltipActive}
                 wrapperStyle={{
                   maxWidth: "none",
                 }}
