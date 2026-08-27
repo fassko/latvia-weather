@@ -28,9 +28,19 @@ function saveConsent(consent: Consent) {
   window.dispatchEvent(new Event("lw-cookie-consent-changed"));
 }
 
+/** True only after client hydration so we do not flash the banner before cookies are readable. */
+function useHasHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
 /** Runs optional measurement only after an affirmative, granular choice. */
 export function CookieConsent() {
   const t = useTranslations("cookies");
+  const hasHydrated = useHasHydrated();
   const cookieSnapshot = useSyncExternalStore(
     (notify) => {
       window.addEventListener("lw-cookie-consent-changed", notify);
@@ -74,7 +84,7 @@ export function CookieConsent() {
     <>
       {Analytics ? <Analytics /> : null}
       {SpeedInsights ? <SpeedInsights /> : null}
-      {consent === null ? (
+      {hasHydrated && consent === null ? (
         <section
           className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:p-5"
           aria-label={t("title")}
