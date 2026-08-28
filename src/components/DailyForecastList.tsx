@@ -92,7 +92,7 @@ export async function DailyForecastList({
 
           return (
             <li key={row.dayKey}>
-              <details className="group" open={isToday}>
+              <details className="group">
                 <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 sm:gap-4 dark:hover:bg-slate-800/60">
                   <ChevronIcon />
                   <div className="w-14 shrink-0 sm:w-16">
