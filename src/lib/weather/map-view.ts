@@ -7,33 +7,54 @@ export const LATVIA_BOUNDS: [[number, number], [number, number]] = [
   [58.15, 28.4],
 ];
 
-/** Match Tailwind `sm`; used for map chrome layout breakpoints. */
+/** Match Tailwind `sm` — phones stay in the mobile overview. */
 export const MOBILE_MAP_MAX_WIDTH = 640;
 
 /**
- * Initial MapContainer zoom before FitLatvia runs. Kept low enough that the
- * first paint does not crop Latvia on typical phone widths.
+ * Narrow map panes under-zoom when fitting Latvia’s wide bounds (portrait
+ * phones especially). Prefer this fixed overview instead of fitBounds.
+ * Also used as the MapContainer initial zoom before FitLatvia runs.
  */
-export const MOBILE_DEFAULT_ZOOM = 6;
+export const MOBILE_DEFAULT_ZOOM = 7;
 
-export const LATVIA_FIT_PADDING: [number, number] = [28, 28];
-export const LATVIA_FIT_MAX_ZOOM = 8;
+/**
+ * Allow fractional overview zooms so large tablets are not stuck at zoom 7
+ * when the true fit is ~7.5–7.9 (Leaflet defaults to zoomSnap=1).
+ */
+export const MAP_ZOOM_SNAP = 0.25;
 
-export type LatviaOverview = {
-  mode: "fitBounds";
-  padding: [number, number];
-  maxZoom: number;
-};
+export const DESKTOP_FIT_MAX_ZOOM = 8;
+export const DESKTOP_FIT_PADDING: [number, number] = [20, 20];
+
+export type LatviaOverview =
+  | {
+      mode: "setView";
+      center: [number, number];
+      zoom: number;
+    }
+  | {
+      mode: "fitBounds";
+      padding: [number, number];
+      maxZoom: number;
+    };
 
 export function isMobileMapWidth(width: number): boolean {
   return width > 0 && width < MOBILE_MAP_MAX_WIDTH;
 }
 
-/** Default Latvia camera: fit the full country into the current map pane. */
-export function latviaOverviewForWidth(_mapWidth: number): LatviaOverview {
+/** Pick the default Latvia camera for the current map pane width. */
+export function latviaOverviewForWidth(mapWidth: number): LatviaOverview {
+  if (isMobileMapWidth(mapWidth)) {
+    return {
+      mode: "setView",
+      center: LATVIA_CENTER,
+      zoom: MOBILE_DEFAULT_ZOOM,
+    };
+  }
+
   return {
     mode: "fitBounds",
-    padding: LATVIA_FIT_PADDING,
-    maxZoom: LATVIA_FIT_MAX_ZOOM,
+    padding: DESKTOP_FIT_PADDING,
+    maxZoom: DESKTOP_FIT_MAX_ZOOM,
   };
 }

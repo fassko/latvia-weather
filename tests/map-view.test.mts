@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  LATVIA_FIT_MAX_ZOOM,
-  LATVIA_FIT_PADDING,
+  DESKTOP_FIT_MAX_ZOOM,
+  DESKTOP_FIT_PADDING,
+  LATVIA_CENTER,
+  MAP_ZOOM_SNAP,
+  MOBILE_DEFAULT_ZOOM,
   MOBILE_MAP_MAX_WIDTH,
   isMobileMapWidth,
   latviaOverviewForWidth,
@@ -17,19 +20,25 @@ describe("map overview helpers", () => {
     assert.equal(isMobileMapWidth(0), false);
   });
 
-  it("fits the full Latvia bounds on mobile widths", () => {
+  it("uses a fixed zoom on mobile widths so Latvia is not under-zoomed", () => {
     assert.deepEqual(latviaOverviewForWidth(390), {
-      mode: "fitBounds",
-      padding: LATVIA_FIT_PADDING,
-      maxZoom: LATVIA_FIT_MAX_ZOOM,
+      mode: "setView",
+      center: LATVIA_CENTER,
+      zoom: MOBILE_DEFAULT_ZOOM,
     });
+    assert.equal(MOBILE_DEFAULT_ZOOM, 7);
   });
 
   it("fits the full Latvia bounds on wider map panes", () => {
     assert.deepEqual(latviaOverviewForWidth(960), {
       mode: "fitBounds",
-      padding: LATVIA_FIT_PADDING,
-      maxZoom: LATVIA_FIT_MAX_ZOOM,
+      padding: DESKTOP_FIT_PADDING,
+      maxZoom: DESKTOP_FIT_MAX_ZOOM,
     });
+  });
+
+  it("allows fractional zoom so tablet fits are not floored to zoom 7", () => {
+    assert.equal(MAP_ZOOM_SNAP, 0.25);
+    assert.ok(MAP_ZOOM_SNAP < 1);
   });
 });

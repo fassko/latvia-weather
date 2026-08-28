@@ -40,6 +40,7 @@ import type {
 import {
   LATVIA_BOUNDS,
   LATVIA_CENTER,
+  MAP_ZOOM_SNAP,
   MOBILE_DEFAULT_ZOOM,
   latviaOverviewForWidth,
 } from "@/lib/weather/map-view";
@@ -732,6 +733,24 @@ function InvalidateSizeOnContainerResize() {
   return null;
 }
 
+function applyLatviaOverview(map: L.Map) {
+  map.invalidateSize({ animate: false });
+  const width = map.getSize().x;
+  if (width <= 0) return;
+
+  const overview = latviaOverviewForWidth(width);
+  if (overview.mode === "setView") {
+    map.setView(overview.center, overview.zoom, { animate: false });
+    return;
+  }
+
+  map.fitBounds(LATVIA_BOUNDS, {
+    padding: overview.padding,
+    maxZoom: overview.maxZoom,
+    animate: false,
+  });
+}
+
 function FitLatvia({ enabled }: { enabled: boolean }) {
   const map = useMap();
 
@@ -739,21 +758,26 @@ function FitLatvia({ enabled }: { enabled: boolean }) {
     if (!enabled) return;
 
     function applyOverview() {
-      map.invalidateSize();
-      const width = map.getSize().x;
-      if (width <= 0) return;
-
-      const overview = latviaOverviewForWidth(width);
-      map.fitBounds(LATVIA_BOUNDS, {
-        padding: overview.padding,
-        maxZoom: overview.maxZoom,
-        animate: false,
-      });
+      applyLatviaOverview(map);
     }
 
     applyOverview();
     const frame = requestAnimationFrame(applyOverview);
-    return () => cancelAnimationFrame(frame);
+
+    const container = map.getContainer();
+    const parent = container.parentElement;
+    let observer: ResizeObserver | undefined;
+    if (parent) {
+      observer = new ResizeObserver(() => {
+        applyOverview();
+      });
+      observer.observe(parent);
+    }
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
   }, [enabled, map]);
 
   return null;
@@ -955,6 +979,7 @@ export function WeatherMap({
     <MapContainer
       center={LATVIA_CENTER}
       zoom={MOBILE_DEFAULT_ZOOM}
+      zoomSnap={MAP_ZOOM_SNAP}
       className="weather-map h-full w-full"
       scrollWheelZoom
       worldCopyJump={false}
