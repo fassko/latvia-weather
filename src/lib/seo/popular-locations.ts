@@ -3,6 +3,7 @@ import {
   type LocationPointId,
 } from "@/lib/weather/locations";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
+import { locationSlug } from "@/lib/site";
 
 /**
  * Major cities/towns for crawlable internal links (sitemap alone is not enough).
@@ -37,8 +38,10 @@ export function pickPopularLocations(
   });
 }
 
-export function popularLocationHref(locationId: string): string {
+export function popularLocationHref(locationId: string, locationName?: string): string {
   return locationId === DEFAULT_LOCATION_ID
     ? "/"
-    : `/?punkts=${encodeURIComponent(locationId)}`;
+    : `/punkts/${encodeURIComponent(
+        locationName ? locationSlug(locationName) : locationId,
+      )}`;
 }

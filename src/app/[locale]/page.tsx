@@ -33,17 +33,13 @@ import {
 } from "@/lib/weather/locations";
 import { getSiteUrl, localizedPath } from "@/lib/site";
 
-interface HomeProps {
+export interface HomeProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ punkts?: string }>;
 }
 
 function buildPagePath(locale: string, punkts?: string): string {
-  const query =
-    punkts && punkts !== DEFAULT_LOCATION_ID
-      ? `?punkts=${encodeURIComponent(punkts)}`
-      : "";
-  return `/${locale}${query}`;
+  return localizedPath(locale, punkts === DEFAULT_LOCATION_ID ? undefined : punkts);
 }
 
 /** `/og` can read query params; file-based opengraph-image cannot. */
@@ -59,15 +55,23 @@ function getLocaleName(locale: string): "lv_LV" | "en_US" {
   return locale === "lv" ? "lv_LV" : "en_US";
 }
 
-function buildLanguageAlternates(baseUrl: string, punkts?: string) {
+function buildLanguageAlternates(baseUrl: string, punkts?: string, locationName?: string) {
   return {
     ...Object.fromEntries(
       routing.locales.map((altLocale) => [
         altLocale,
-        `${baseUrl}${buildPagePath(altLocale, punkts)}`,
+        `${baseUrl}${localizedPath(
+          altLocale,
+          punkts === DEFAULT_LOCATION_ID ? undefined : punkts,
+          locationName,
+        )}`,
       ]),
     ),
-    "x-default": `${baseUrl}${buildPagePath(routing.defaultLocale, punkts)}`,
+    "x-default": `${baseUrl}${localizedPath(
+      routing.defaultLocale,
+      punkts === DEFAULT_LOCATION_ID ? undefined : punkts,
+      locationName,
+    )}`,
   };
 }
 
@@ -81,20 +85,31 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
   // Canonical and hreflang describe the requested URL, never the visitor's
   // cookie: a personalised canonical would point crawlers at the wrong page.
   const canonicalLocationId = punkts && isValidLocationId(punkts) ? punkts : undefined;
-  const pageUrl = `${baseUrl}${buildPagePath(locale, canonicalLocationId)}`;
   const imageUrl = `${baseUrl}${buildOgImagePath(locale, locationId)}`;
-  const languages = buildLanguageAlternates(baseUrl, canonicalLocationId);
 
   let title = t("siteTitle");
   let description = t("siteDescription");
+  let canonicalPath = buildPagePath(locale, canonicalLocationId);
+  let canonicalLocationName: string | undefined;
 
   try {
     const data = await getHourlyForecast(locationId);
     title = t("locationTitle", { name: data.location.name });
     description = t("locationDescription", { name: data.location.name });
+    if (canonicalLocationId) {
+      canonicalLocationName = data.location.name;
+      canonicalPath = localizedPath(locale, canonicalLocationId, data.location.name);
+    }
   } catch {
     // Fall back to generic site metadata when the forecast is unavailable.
   }
+
+  const pageUrl = `${baseUrl}${canonicalPath}`;
+  const languages = buildLanguageAlternates(
+    baseUrl,
+    canonicalLocationId,
+    canonicalLocationName,
+  );
 
   return {
     title,
@@ -165,6 +180,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
   const pageUrl = `${getSiteUrl()}${localizedPath(
     locale,
     data.location.id === DEFAULT_LOCATION_ID ? undefined : data.location.id,
+    data.location.name,
   )}`;
   const jsonLd = buildPageStructuredData({
     locale,

@@ -21,6 +21,7 @@ import {
   temperatureTextColor,
 } from "@/lib/weather/map-temp";
 import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
+import { localizedPath } from "@/lib/site";
 import {
   getActiveTheme,
   THEME_CHANGE_EVENT,
@@ -68,9 +69,12 @@ interface WeatherMapProps {
 
 type MarkersById = Map<string, L.Marker>;
 
-function forecastHref(locale: string, locationId: string): string {
-  if (locationId === DEFAULT_LOCATION_ID) return `/${locale}`;
-  return `/${locale}?punkts=${encodeURIComponent(locationId)}`;
+function forecastHref(locale: string, locationId: string, locationName: string): string {
+  return localizedPath(
+    locale,
+    locationId === DEFAULT_LOCATION_ID ? undefined : locationId,
+    locationName,
+  );
 }
 
 function escapeHtml(value: string): string {
@@ -179,7 +183,7 @@ function createPopupContent(
 
   const link = document.createElement("a");
   link.className = "weather-map-popup__link";
-  link.href = forecastHref(locale, location.id);
+  link.href = forecastHref(locale, location.id, location.name);
   link.textContent = labels.openForecast;
   root.appendChild(link);
 

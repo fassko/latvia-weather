@@ -38,7 +38,7 @@ export async function PopularPlaces({
           return (
             <li key={location.id}>
               <Link
-                href={popularLocationHref(location.id)}
+                href={popularLocationHref(location.id, location.name)}
                 className={
                   isCurrent
                     ? "font-semibold text-sky-800 underline dark:text-sky-300"

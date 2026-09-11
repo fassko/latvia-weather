@@ -6,6 +6,7 @@ import {
   popularLocationHref,
 } from "../src/lib/seo/popular-locations.ts";
 import { isValidLocationId, DEFAULT_LOCATION_ID } from "../src/lib/weather/locations.ts";
+import { locationSlug } from "../src/lib/site.ts";
 import type { WeatherLocationPoint } from "../src/lib/weather/types.ts";
 
 test("popular location IDs are valid forecast points", () => {
@@ -48,7 +49,12 @@ test("pickPopularLocations preserves curated order and skips missing", () => {
   );
 });
 
-test("popularLocationHref omits punkts for the default city", () => {
+test("popularLocationHref uses readable, crawlable location paths", () => {
   assert.equal(popularLocationHref(DEFAULT_LOCATION_ID), "/");
-  assert.equal(popularLocationHref("P770"), "/?punkts=P770");
+  assert.equal(popularLocationHref("P770", "Liepāja"), "/punkts/liepaja");
+});
+
+test("locationSlug creates readable URLs without point IDs", () => {
+  assert.equal(locationSlug("Babīte"), "babite");
+  assert.equal(locationSlug("Rīga, Centrs"), "riga-centrs");
 });
