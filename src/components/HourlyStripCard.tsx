@@ -26,7 +26,7 @@ export async function HourlyStripCard({
     >
       <h2
         id="hourly-strip-heading"
-        className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+        className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
       >
         {t("title")}
       </h2>

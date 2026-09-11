@@ -17,14 +17,17 @@ export function WindUnitsToggle() {
     router.refresh();
   }
 
+  const visibleLabel = unit === "ms" ? "m/s" : "km/h";
+  const switchHint = unit === "ms" ? t("switchToKmh") : t("switchToMs");
+
   return (
     <button
       type="button"
       onClick={handleToggle}
-      aria-label={unit === "ms" ? t("switchToKmh") : t("switchToMs")}
+      aria-label={`${visibleLabel}. ${switchHint}`}
       className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
     >
-      {unit === "ms" ? "m/s" : "km/h"}
+      {visibleLabel}
     </button>
   );
 }

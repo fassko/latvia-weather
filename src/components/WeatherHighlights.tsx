@@ -78,7 +78,7 @@ export async function WeatherHighlights({ forecasts }: WeatherHighlightsProps) {
     <section aria-labelledby="highlights-heading" className="space-y-3">
       <h2
         id="highlights-heading"
-        className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+        className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
       >
         {t("title")}
       </h2>

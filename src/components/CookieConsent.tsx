@@ -8,6 +8,8 @@ import { Link } from "@/i18n/navigation";
 const CONSENT_COOKIE = "lw_cookie_consent";
 const CONSENT_MAX_AGE = 60 * 60 * 24 * 180;
 const OPEN_SETTINGS_EVENT = "lw-open-cookie-settings";
+/** Wait past typical LCP so the weather hero paints first, not this sheet. */
+const BANNER_DELAY_MS = 3500;
 
 type Consent = { analytics: boolean };
 
@@ -51,6 +53,7 @@ export function CookieConsent() {
   );
   const consent = useMemo(() => parseConsent(cookieSnapshot), [cookieSnapshot]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bannerDelayElapsed, setBannerDelayElapsed] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [Analytics, setAnalyticsComponent] = useState<ComponentType | null>(null);
   const [SpeedInsights, setSpeedInsightsComponent] = useState<ComponentType | null>(null);
@@ -63,6 +66,12 @@ export function CookieConsent() {
     window.addEventListener(OPEN_SETTINGS_EVENT, openSettings);
     return () => window.removeEventListener(OPEN_SETTINGS_EVENT, openSettings);
   }, [consent]);
+
+  useEffect(() => {
+    if (!hasHydrated || consent !== null) return;
+    const id = window.setTimeout(() => setBannerDelayElapsed(true), BANNER_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, [hasHydrated, consent]);
 
   useEffect(() => {
     if (!consent?.analytics) return;
@@ -80,55 +89,110 @@ export function CookieConsent() {
     setSettingsOpen(false);
   };
 
+  const showCompactBanner =
+    hasHydrated && bannerDelayElapsed && consent === null && !settingsOpen;
+
   return (
     <>
       {Analytics ? <Analytics /> : null}
       {SpeedInsights ? <SpeedInsights /> : null}
-      {hasHydrated && consent === null ? (
+      {showCompactBanner ? (
         <section
-          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:p-5"
+          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-lg rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
           aria-label={t("title")}
-          role="dialog"
-          aria-modal="true"
+          role="region"
         >
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t("title")}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {t("description")} {" "}
-            <Link href="/privacy" className="font-medium underline underline-offset-2">
-              {t("privacyLink")}
-            </Link>
-            .
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button onClick={() => choose({ analytics: true })} className="rounded-lg bg-sky-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-sky-800">
-              {t("acceptAll")}
-            </button>
-            <button onClick={() => choose({ analytics: false })} className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
-              {t("rejectOptional")}
-            </button>
-            <button onClick={() => { setAnalytics(false); setSettingsOpen(true); }} className="rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 underline hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
-              {t("manage")}
-            </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <p className="min-w-0 flex-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+              {t("bannerShort")}{" "}
+              <Link
+                href="/privacy"
+                className="font-medium text-slate-800 underline underline-offset-2 dark:text-slate-100"
+              >
+                {t("privacyLink")}
+              </Link>
+            </p>
+            <div className="flex shrink-0 flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => choose({ analytics: true })}
+                className="min-h-10 rounded-lg bg-sky-700 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-800"
+              >
+                {t("acceptAll")}
+              </button>
+              <button
+                type="button"
+                onClick={() => choose({ analytics: false })}
+                className="min-h-10 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
+              >
+                {t("rejectOptional")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAnalytics(false);
+                  setSettingsOpen(true);
+                }}
+                className="min-h-10 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 underline hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
+              >
+                {t("manage")}
+              </button>
+            </div>
           </div>
         </section>
       ) : null}
 
       {settingsOpen ? (
-        <section className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[51] mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900" aria-label={t("settingsTitle")} role="dialog" aria-modal="true">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t("settingsTitle")}</h2>
+        <section
+          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[51] mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+          aria-label={t("settingsTitle")}
+          role="dialog"
+          aria-modal="true"
+        >
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            {t("settingsTitle")}
+          </h2>
           <div className="mt-4 space-y-4 text-sm">
             <div>
-              <p className="font-medium text-slate-900 dark:text-slate-100">{t("necessaryTitle")}</p>
-              <p className="mt-1 leading-5 text-slate-600 dark:text-slate-300">{t("necessaryDescription")}</p>
+              <p className="font-medium text-slate-900 dark:text-slate-100">
+                {t("necessaryTitle")}
+              </p>
+              <p className="mt-1 leading-5 text-slate-600 dark:text-slate-300">
+                {t("necessaryDescription")}
+              </p>
             </div>
             <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/70">
-              <input type="checkbox" checked={analytics} onChange={(event) => setAnalytics(event.target.checked)} className="mt-1 h-4 w-4 accent-sky-700" />
-              <span><span className="block font-medium text-slate-900 dark:text-slate-100">{t("analyticsTitle")}</span><span className="mt-1 block leading-5 text-slate-600 dark:text-slate-300">{t("analyticsDescription")}</span></span>
+              <input
+                type="checkbox"
+                checked={analytics}
+                onChange={(event) => setAnalytics(event.target.checked)}
+                className="mt-1 h-4 w-4 accent-sky-700"
+              />
+              <span>
+                <span className="block font-medium text-slate-900 dark:text-slate-100">
+                  {t("analyticsTitle")}
+                </span>
+                <span className="mt-1 block leading-5 text-slate-600 dark:text-slate-300">
+                  {t("analyticsDescription")}
+                </span>
+              </span>
             </label>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
-            <button onClick={() => choose({ analytics })} className="rounded-lg bg-sky-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-sky-800">{t("save")}</button>
-            <button onClick={() => setSettingsOpen(false)} className="rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{t("cancel")}</button>
+            <button
+              type="button"
+              onClick={() => choose({ analytics })}
+              className="rounded-lg bg-sky-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+            >
+              {t("save")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(false)}
+              className="rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              {t("cancel")}
+            </button>
           </div>
         </section>
       ) : null}

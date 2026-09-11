@@ -1,11 +1,6 @@
-import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocationCombobox } from "@/components/LocationCombobox";
-import { RefreshButton } from "@/components/RefreshButton";
-import { ShareButton } from "@/components/ShareButton";
-import { ThemeSegmentedToggle } from "@/components/ThemeSegmentedToggle";
-import { WindUnitsToggle } from "@/components/WindUnitsToggle";
+import { NavControls } from "@/components/NavControls";
 import { Link } from "@/i18n/navigation";
 
 interface TopNavProps {
@@ -26,6 +21,7 @@ export async function TopNav({
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
         <Link
           href="/"
+          aria-label={t("brand")}
           className="flex shrink-0 items-center gap-2 font-semibold text-slate-900 dark:text-slate-100"
         >
           <BrandIcon />
@@ -38,19 +34,7 @@ export async function TopNav({
         <div className="min-w-0">
           <LocationCombobox selectedId={locationId} selectedName={locationName} />
         </div>
-        {/* The control cluster is wider than a 320px phone, so it has to be
-            allowed to wrap rather than push the page sideways. */}
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <RefreshButton />
-          <WindUnitsToggle />
-          <Suspense fallback={null}>
-            <LanguageSwitcher />
-          </Suspense>
-          <ThemeSegmentedToggle />
-          <Suspense fallback={null}>
-            <ShareButton />
-          </Suspense>
-        </div>
+        <NavControls />
       </div>
     </header>
   );

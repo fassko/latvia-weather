@@ -431,7 +431,7 @@ export function ForecastChart({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           {t("title")}
         </h2>
         <div

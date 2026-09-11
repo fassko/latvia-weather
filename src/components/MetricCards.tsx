@@ -125,7 +125,7 @@ export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps
     <section aria-labelledby="metrics-heading" className="space-y-3">
       <h2
         id="metrics-heading"
-        className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+        className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
       >
         {t("title")}
       </h2>
