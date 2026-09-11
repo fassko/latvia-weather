@@ -75,7 +75,7 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
             </Suspense>
             <ThemeToggle />
             <Suspense fallback={null}>
-              <ShareButton />
+              <ShareButton locationId={data.location.id} locationName={data.location.name} />
             </Suspense>
           </div>
         </div>

@@ -4,8 +4,8 @@ export const routing = defineRouting({
   locales: ["en", "lv"],
   defaultLocale: "en",
   localePrefix: "always",
-  // The middleware `Link` header drops the `?punkts=` location, which would
-  // contradict the hreflang tags rendered from page metadata.
+  // Location pages supply their own hreflang metadata, including the active
+  // forecast point, so middleware-generated alternates stay disabled.
   alternateLinks: false,
 });
 

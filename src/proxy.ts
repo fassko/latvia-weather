@@ -7,6 +7,7 @@ const handleLocaleRouting = createMiddleware(routing);
 
 export default function proxy(request: NextRequest) {
   const punkts = request.nextUrl.searchParams.get("punkts");
+  const locale = request.nextUrl.pathname.split("/")[1];
 
   // Unknown location ids would otherwise render the default forecast under a
   // URL that crawlers treat as a separate page.
@@ -14,6 +15,15 @@ export default function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.searchParams.delete("punkts");
     return NextResponse.redirect(url, 307);
+  }
+
+  // Preserve existing shared links while consolidating their SEO signals on
+  // the location's permanent, crawlable path.
+  if (punkts !== null && routing.locales.includes(locale as (typeof routing.locales)[number])) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/punkts/${encodeURIComponent(punkts)}`;
+    url.searchParams.delete("punkts");
+    return NextResponse.redirect(url, 308);
   }
 
   return handleLocaleRouting(request);

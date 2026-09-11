@@ -11,6 +11,7 @@ import {
 } from "@/lib/weather/location-search";
 import { setLocationCookie } from "@/lib/weather/location-cookie";
 import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
+import { locationSlug } from "@/lib/site";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
 
@@ -151,7 +152,8 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     });
   }
 
-  function selectLocation(nextId: string) {
+  function selectLocation(nextLocation: Pick<WeatherLocationPoint, "id" | "name">) {
+    const { id: nextId, name: nextName } = nextLocation;
     rememberRecentLocation(nextId);
 
     if (nextId === selectedId) {
@@ -161,7 +163,10 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     }
 
     setLocationCookie(nextId);
-    const url = nextId === DEFAULT_LOCATION_ID ? "/" : `/?punkts=${nextId}`;
+    const url =
+      nextId === DEFAULT_LOCATION_ID
+        ? "/"
+        : `/punkts/${encodeURIComponent(locationSlug(nextName))}`;
     router.push(url);
     setOpen(false);
     setQuery("");
@@ -189,7 +194,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
       if (!nearest) throw new Error("No locations available");
 
       setGeoStatus("idle");
-      selectLocation(nearest.id);
+      selectLocation(nearest);
     } catch {
       setGeoStatus("error");
     }
@@ -274,7 +279,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
 
     if (event.key === "Enter" && optionLocations[highlightIndex]) {
       event.preventDefault();
-      selectLocation(optionLocations[highlightIndex].id);
+      selectLocation(optionLocations[highlightIndex]);
     }
   }
 
@@ -312,7 +317,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
           </button>
           <button
             type="button"
-            onClick={() => selectLocation(location.id)}
+            onClick={() => selectLocation(location)}
             onMouseEnter={() => setHighlightIndex(index)}
             className="flex min-w-0 flex-1 items-center justify-between gap-3 py-2.5 pr-4 text-left text-sm"
           >

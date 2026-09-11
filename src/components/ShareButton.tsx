@@ -1,22 +1,27 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
+import { localizedPath } from "@/lib/site";
 
-export function ShareButton() {
+interface ShareButtonProps {
+  locationId?: string;
+  locationName?: string;
+}
+
+export function ShareButton({ locationId, locationName }: ShareButtonProps) {
   const t = useTranslations("share");
   const locale = useLocale();
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
   const copied = status === "copied";
 
   async function handleShare() {
-    const punkts = searchParams.get("punkts");
-    const query =
-      punkts && punkts !== DEFAULT_LOCATION_ID ? `?punkts=${encodeURIComponent(punkts)}` : "";
-    const url = `${window.location.origin}/${locale}${query}`;
+    const url = `${window.location.origin}${localizedPath(
+      locale,
+      locationId === DEFAULT_LOCATION_ID ? undefined : locationId,
+      locationName,
+    )}`;
 
     if (navigator.share) {
       try {

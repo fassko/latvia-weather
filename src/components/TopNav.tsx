@@ -34,7 +34,7 @@ export async function TopNav({
         <div className="min-w-0">
           <LocationCombobox selectedId={locationId} selectedName={locationName} />
         </div>
-        <NavControls />
+        <NavControls locationId={locationId} locationName={locationName} />
       </div>
     </header>
   );

@@ -9,7 +9,12 @@ import { ThemeSegmentedToggle } from "@/components/ThemeSegmentedToggle";
 import { WindUnitsToggle } from "@/components/WindUnitsToggle";
 
 /** Desktop: inline controls. Mobile: overflow menu so the sticky header stays one row. */
-export function NavControls() {
+interface NavControlsProps {
+  locationId: string;
+  locationName: string;
+}
+
+export function NavControls({ locationId, locationName }: NavControlsProps) {
   return (
     <>
       <div className="ml-auto hidden items-center justify-end gap-2 sm:flex">
@@ -20,17 +25,17 @@ export function NavControls() {
         </Suspense>
         <ThemeSegmentedToggle />
         <Suspense fallback={null}>
-          <ShareButton />
+          <ShareButton locationId={locationId} locationName={locationName} />
         </Suspense>
       </div>
       <div className="ml-auto sm:hidden">
-        <NavOverflowMenu />
+        <NavOverflowMenu locationId={locationId} locationName={locationName} />
       </div>
     </>
   );
 }
 
-function NavOverflowMenu() {
+function NavOverflowMenu({ locationId, locationName }: NavControlsProps) {
   const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -79,7 +84,7 @@ function NavOverflowMenu() {
             <RefreshButton />
             <WindUnitsToggle />
             <Suspense fallback={null}>
-              <ShareButton />
+              <ShareButton locationId={locationId} locationName={locationName} />
             </Suspense>
           </div>
           <Suspense fallback={null}>

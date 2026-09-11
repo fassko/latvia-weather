@@ -1,13 +1,15 @@
 import type { MetadataRoute } from "next";
 import { routing } from "@/i18n/routing";
 import { DEFAULT_LOCATION_ID, LOCATION_POINT_IDS } from "@/lib/weather/locations";
-import { REVALIDATE_SECONDS } from "@/lib/weather/fetch";
-import { getSiteUrl } from "@/lib/site";
+import { getLocationPoints, REVALIDATE_SECONDS } from "@/lib/weather/fetch";
+import { getSiteUrl, locationSlug } from "@/lib/site";
 
-function buildLocationQuery(locationId: string): string {
+function buildLocationPath(locationId: string, locationName?: string): string {
   return locationId === DEFAULT_LOCATION_ID
     ? ""
-    : `?punkts=${encodeURIComponent(locationId)}`;
+    : `/punkts/${encodeURIComponent(
+        locationName ? locationSlug(locationName) : locationId,
+      )}`;
 }
 
 function buildAlternates(baseUrl: string, path: string) {
@@ -21,7 +23,7 @@ function buildAlternates(baseUrl: string, path: string) {
   };
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteUrl();
   // Snap to the forecast revalidation window so `lastmod` reflects real data
   // freshness instead of changing on every crawl.
@@ -38,16 +40,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     alternates: buildAlternates(baseUrl, "/map"),
   }));
 
+  const locations = await getLocationPoints();
+  const namesById = new Map(locations.map((location) => [location.id, location.name]));
+
   const locationEntries = routing.locales.flatMap((locale) =>
     LOCATION_POINT_IDS.map((locationId) => {
-      const query = buildLocationQuery(locationId);
+      const path = buildLocationPath(locationId, namesById.get(locationId));
 
       return {
-        url: `${baseUrl}/${locale}${query}`,
+        url: `${baseUrl}/${locale}${path}`,
         lastModified,
         changeFrequency: "hourly" as const,
         priority: locationId === DEFAULT_LOCATION_ID ? 1 : 0.6,
-        alternates: buildAlternates(baseUrl, query),
+        alternates: buildAlternates(baseUrl, path),
       };
     }),
   );

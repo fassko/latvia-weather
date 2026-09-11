@@ -19,7 +19,30 @@ export function getSiteUrl(): string {
   return DEFAULT_SITE_URL;
 }
 
-export function localizedPath(locale: string, locationId?: string): string {
+export function locationSlug(name: string): string {
+  const readableName = name
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("lv")
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return readableName || "location";
+}
+
+export function locationIdFromSlug(value: string): string | undefined {
+  const match = /(?:^|-)(P\d+)$/i.exec(value);
+  return match ? `P${match[1].slice(1)}` : undefined;
+}
+
+export function localizedPath(
+  locale: string,
+  locationId?: string,
+  locationName?: string,
+): string {
   const path = `/${locale}`;
-  return locationId ? `${path}?punkts=${encodeURIComponent(locationId)}` : path;
+  if (!locationId) return path;
+
+  const segment = locationName ? locationSlug(locationName) : locationId;
+  return `${path}/punkts/${encodeURIComponent(segment)}`;
 }

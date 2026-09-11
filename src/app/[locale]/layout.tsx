@@ -51,7 +51,10 @@ export default async function LocaleLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className="min-h-full bg-slate-100 font-sans text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+      <body
+        suppressHydrationWarning
+        className="min-h-full bg-slate-100 font-sans text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100"
+      >
         <ThemeSync />
         <PullToRefresh />
         <NextIntlClientProvider messages={messages}>
