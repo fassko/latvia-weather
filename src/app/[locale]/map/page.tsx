@@ -41,15 +41,17 @@ export async function generateMetadata({
     "x-default": `${baseUrl}/${routing.defaultLocale}/map`,
   };
 
+  const title = `${t("title")} — ${tMetadata("siteTitle")}`;
+
   return {
-    title: t("title"),
+    title,
     description: t("description"),
     alternates: {
       canonical: pageUrl,
       languages,
     },
     openGraph: {
-      title: t("title"),
+      title,
       description: t("description"),
       url: pageUrl,
       siteName: tMetadata("siteTitle"),
@@ -60,7 +62,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: t("title"),
+      title,
       description: t("description"),
       images: [imageUrl],
     },
@@ -111,10 +113,11 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   const maxTemp = Math.round(Math.max(...temps));
 
   const baseUrl = getSiteUrl();
+  const pageName = `${t("title")} — ${tMetadata("siteTitle")}`;
   const jsonLd = buildPageStructuredData({
     locale,
     pageUrl: `${baseUrl}/${locale}/map`,
-    name: t("title"),
+    name: pageName,
     description: t("description"),
     breadcrumb: [
       { name: tMetadata("siteTitle"), url: `${baseUrl}/${locale}` },
