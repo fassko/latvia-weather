@@ -14,6 +14,7 @@ import { WeatherHero } from "@/components/WeatherHero";
 import { WeatherHighlights } from "@/components/WeatherHighlights";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
 import { routing, type Locale } from "@/i18n/routing";
+import { PopularPlaces } from "@/components/PopularPlaces";
 import { buildPageStructuredData } from "@/lib/seo/structured-data";
 import {
   getHourlyForecast,
@@ -45,12 +46,13 @@ function buildPagePath(locale: string, punkts?: string): string {
   return `/${locale}${query}`;
 }
 
+/** `/og` can read query params; file-based opengraph-image cannot. */
 function buildOgImagePath(locale: string, punkts?: string): string {
-  const query =
-    punkts && punkts !== DEFAULT_LOCATION_ID
-      ? `?punkts=${encodeURIComponent(punkts)}`
-      : "";
-  return `/${locale}/opengraph-image${query}`;
+  const params = new URLSearchParams({ locale });
+  if (punkts && punkts !== DEFAULT_LOCATION_ID) {
+    params.set("punkts", punkts);
+  }
+  return `/og?${params.toString()}`;
 }
 
 function getLocaleName(locale: string): "lv_LV" | "en_US" {
@@ -244,6 +246,10 @@ export default async function Home({ params, searchParams }: HomeProps) {
           }}
         />
         <DailyForecastList forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
+        <PopularPlaces
+          locations={locations}
+          currentLocationId={data.location.id}
+        />
         <footer className="flex flex-col gap-2 pt-4 pb-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:text-slate-400">
           <p>
             {tFooter("dataFrom")}{" "}
