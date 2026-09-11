@@ -72,8 +72,8 @@ export function ThemeSegmentedToggle() {
             onClick={() => selectTheme(option.value)}
             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 ${
               active
-                ? "bg-sky-500 text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-sky-700 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             {option.value === "system" ? (

@@ -35,7 +35,7 @@ export function LanguageSwitcher() {
           onClick={() => switchLocale(loc)}
           className={`rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
             locale === loc
-              ? "bg-sky-500 text-white"
+              ? "bg-sky-700 text-white"
               : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
           }`}
         >

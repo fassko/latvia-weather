@@ -1,9 +1,9 @@
 {
   "metadata": {
     "siteTitle": "Laika prognoze Latvijā",
-    "siteDescription": "Laika prognoze Latvijai pa stundām un 10 dienām: temperatūra, nokrišņi, vējš un brīdinājumi no LVĢMC.",
+    "siteDescription": "Stundu un 10 dienu laiks Latvijai — temperatūra, nokrišņi, vējš un LVĢMC brīdinājumi.",
     "locationTitle": "{name} — Laika prognoze Latvijā",
-    "locationDescription": "Laika prognoze pa stundām un 10 dienām: {name}, Latvija — temperatūra, nokrišņi, vējš un brīdinājumi no LVĢMC, atjaunināts ik 15 minūtes."
+    "locationDescription": "Stundu un 10 dienu laiks: {name}, Latvija — temperatūra, nokrišņi, vējš un LVĢMC brīdinājumi."
   },
   "popularPlaces": {
     "title": "Populāras vietas",
@@ -25,10 +25,11 @@
   "cookies": {
     "title": "Jūsu privātuma izvēles",
     "description": "Lai Latvia Weather darbotos, izmantojam nepieciešamo krātuvi. Ar jūsu atļauju izmantojam arī anonīmu analītiku un veiktspējas mērījumus.",
-    "privacyLink": "Lasīt privātuma un sīkdatņu paziņojumu",
+    "bannerShort": "Nepieciešamā krātuve vienmēr ir ieslēgta. Izvēles analītikai vajag jūsu piekrišanu.",
+    "privacyLink": "Privātums",
     "acceptAll": "Atļaut analītiku",
-    "rejectOptional": "Noraidīt izvēles sīkdatnes",
-    "manage": "Pārvaldīt izvēles",
+    "rejectOptional": "Noraidīt izvēles",
+    "manage": "Pārvaldīt",
     "settingsTitle": "Sīkdatņu iestatījumi",
     "necessaryTitle": "Stingri nepieciešamās",
     "necessaryDescription": "Vienmēr ieslēgtas. Tās atceras prognozes izvēles, paslēptos brīdinājumus un piekrišanu, kā arī palīdz aizsargāt laikapstākļu asistentu pret ļaunprātīgu izmantošanu.",
@@ -295,7 +296,9 @@
     "brand": "Laika prognoze",
     "home": "Sākums",
     "map": "Karte",
-    "skipToContent": "Pāriet uz saturu"
+    "skipToContent": "Pāriet uz saturu",
+    "moreControls": "Vairāk vadīklu",
+    "closeControls": "Aizvērt vadīklas"
   },
   "map": {
     "title": "Laika karte",

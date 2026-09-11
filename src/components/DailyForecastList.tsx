@@ -1,22 +1,21 @@
 import { format, isWeekend } from "date-fns";
 import { getLocale, getTranslations } from "next-intl/server";
+import {
+  DailyForecastAccordion,
+  type DailyForecastDayRow,
+} from "@/components/DailyForecastAccordion";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import {
   buildUpcomingDailyGroups,
   groupForecastsByDay,
 } from "@/lib/weather/daily";
-import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
-import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
-import type { SunTimes, SunTimesByDay } from "@/lib/weather/sun";
-import { getSunEventsByForecastTime, type SunEvent } from "@/lib/weather/sun-events";
+import type { SunTimesByDay } from "@/lib/weather/sun";
 import {
   formatLatviaTime,
   getLatviaDayKey,
   getLatviaStartOfHour,
-  getLatviaWallClock,
 } from "@/lib/weather/timezone";
-import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import type { HourlyForecast } from "@/lib/weather/types";
 
@@ -25,25 +24,19 @@ interface DailyForecastListProps {
   sunTimesByDay: SunTimesByDay;
 }
 
+/** Server: build summary rows; client accordion mounts hourly tables on expand. */
 export async function DailyForecastList({
   forecasts,
   sunTimesByDay,
 }: DailyForecastListProps) {
   const locale = await getLocale();
   const t = await getTranslations("dailyList");
-  const tTable = await getTranslations("table");
-  const tHourly = await getTranslations("hourly");
-  const tWind = await getTranslations("wind");
   const dateLocale = getDateFnsLocale(locale);
   const windUnit = await getWindUnitsCookie();
   const now = new Date();
   const todayKey = getLatviaDayKey(now);
   const currentHour = getLatviaStartOfHour(now);
 
-  // Drop hours that have already passed so yesterday does not linger as the
-  // first day after midnight (e.g. Fri 22:00–23:00 still listed on Saturday).
-  // Summaries still use every available hour for that calendar day so late
-  // evening does not collapse today's high/low to a single remaining temp.
   const rows = buildUpcomingDailyGroups(forecasts, getUpcomingHourlyForecasts(forecasts));
   const forecastsByDay = new Map(
     groupForecastsByDay(forecasts).map((group) => [group.dayKey, group.forecasts]),
@@ -55,355 +48,50 @@ export async function DailyForecastList({
   const overallMax = Math.max(...rows.map((row) => row.summary.maxTemperature));
   const span = Math.max(overallMax - overallMin, 1);
 
-  return (
-    <section
-      aria-labelledby="daily-heading"
-      className="rounded-2xl border border-slate-200/70 bg-white p-2 shadow-sm sm:p-3 dark:border-slate-800 dark:bg-slate-900"
-    >
-      <h2
-        id="daily-heading"
-        className="px-3 pt-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-      >
-        {t("title")}
-      </h2>
-      <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-        {rows.map((row) => {
-          const { summary } = row;
-          const low = Math.round(summary.minTemperature);
-          const high = Math.round(summary.maxTemperature);
-          const left = ((summary.minTemperature - overallMin) / span) * 100;
-          const width = Math.max(
-            ((summary.maxTemperature - summary.minTemperature) / span) * 100,
-            6,
-          );
-          const isToday = row.dayKey === todayKey;
-          const weekday = isToday
-            ? t("today")
-            : format(row.date, getDatePattern(locale, "dailyWeekday"), {
-                locale: dateLocale,
-              });
-          const dateLabel = format(row.date, getDatePattern(locale, "dailyDate"), {
-            locale: dateLocale,
-          });
-          const weekend = isWeekend(row.date);
-          const breakdownForecasts =
-            isToday ? (forecastsByDay.get(row.dayKey) ?? row.forecasts) : row.forecasts;
-          const sunTimes = sunTimesByDay[row.dayKey] ?? null;
+  const days: DailyForecastDayRow[] = rows.map((row) => {
+    const { summary } = row;
+    const isToday = row.dayKey === todayKey;
+    const weekday = isToday
+      ? t("today")
+      : format(row.date, getDatePattern(locale, "dailyWeekday"), {
+          locale: dateLocale,
+        });
+    const dateLabel = format(row.date, getDatePattern(locale, "dailyDate"), {
+      locale: dateLocale,
+    });
+    const sunTimes = sunTimesByDay[row.dayKey] ?? null;
+    const breakdownForecasts =
+      isToday ? (forecastsByDay.get(row.dayKey) ?? row.forecasts) : row.forecasts;
 
-          return (
-            <li key={row.dayKey}>
-              <details className="group">
-                <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 sm:gap-4 dark:hover:bg-slate-800/60">
-                  <ChevronIcon />
-                  <div className="w-14 shrink-0 sm:w-16">
-                    <p
-                      className={`text-sm font-semibold ${
-                        weekend
-                          ? "text-red-600 dark:text-red-400"
-                          : "text-slate-900 dark:text-slate-100"
-                      }`}
-                    >
-                      {weekday}
-                    </p>
-                    <p
-                      className={`text-xs ${
-                        weekend
-                          ? "text-red-500/80 dark:text-red-400/70"
-                          : "text-slate-400 dark:text-slate-500"
-                      }`}
-                    >
-                      {dateLabel}
-                    </p>
-                  </div>
-
-                  <span className="w-7 shrink-0 text-center text-xl" aria-hidden="true">
-                    {getConditionEmoji(summary.representativeIconCode)}
-                  </span>
-
-                  <div className="hidden w-16 shrink-0 items-center gap-1 text-sm text-sky-600 tabular-nums sm:flex dark:text-sky-400">
-                    <DropletIcon />
-                    {summary.totalPrecipitation.toFixed(1)}
-                  </div>
-
-                  <div className="flex flex-1 items-center gap-2 sm:gap-3">
-                    <span className="w-8 shrink-0 text-right text-sm text-slate-400 tabular-nums dark:text-slate-500">
-                      {low}°C
-                    </span>
-                    <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                      <div
-                        className="absolute inset-y-0 rounded-full bg-gradient-to-r from-lime-400 to-green-500"
-                        style={{ left: `${left}%`, width: `${width}%` }}
-                      />
-                    </div>
-                    <span className="w-8 shrink-0 text-left text-sm font-semibold text-slate-900 tabular-nums dark:text-slate-100">
-                      {high}°C
-                    </span>
-                  </div>
-
-                  <span
-                    className="flex w-12 shrink-0 items-center justify-end gap-0.5 text-xs text-sky-600 tabular-nums dark:text-sky-400"
-                    aria-label={t("rainChance", {
-                      value: Math.round(summary.maxPrecipitationProbability),
-                    })}
-                  >
-                    <RainChanceIcon />
-                    <span aria-hidden="true">
-                      {Math.round(summary.maxPrecipitationProbability)}%
-                    </span>
-                  </span>
-                  {sunTimes ? (
-                    <span className="hidden shrink-0 items-center gap-1.5 text-[11px] font-medium tabular-nums text-amber-700 sm:flex dark:text-amber-300">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-1 dark:bg-amber-950/50">
-                        <span aria-hidden="true">☀️</span>
-                        {formatLatviaTime(sunTimes.sunrise, "HH:mm")}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-1.5 py-1 dark:bg-amber-950/50">
-                        <span aria-hidden="true">🌙</span>
-                        {formatLatviaTime(sunTimes.sunset, "HH:mm")}
-                      </span>
-                    </span>
-                  ) : null}
-                </summary>
-
-                <DayBreakdown
-                  forecasts={breakdownForecasts}
-                  sunTimes={sunTimes}
-                  fadedBefore={isToday ? currentHour : undefined}
-                  windUnit={windUnit}
-                  formatWindDirection={(degrees) =>
-                    tWind(`directions.${getWindDirection(degrees)}`)
-                  }
-                  labels={{
-                    caption: `${weekday} ${dateLabel} — ${tTable("title")}`,
-                    condition: tHourly("condition"),
-                    time: tTable("time"),
-                    temp: tTable("temp"),
-                    feels: tTable("feels"),
-                    precip: tTable("precip"),
-                    rainPercent: tTable("rainPercent"),
-                    wind: tTable("wind"),
-                    humidity: tTable("humidity"),
-                    cloudCover: tTable("cloudCover"),
-                    pressure: tTable("pressure"),
-                    sunrise: tTable("sunrise"),
-                    sunset: tTable("sunset"),
-                  }}
-                />
-              </details>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-interface DayBreakdownProps {
-  forecasts: HourlyForecast[];
-  sunTimes: SunTimes | null;
-  fadedBefore?: Date;
-  windUnit: WindUnit;
-  formatWindDirection: (degrees: number) => string;
-  labels: {
-    caption: string;
-    condition: string;
-    time: string;
-    temp: string;
-    feels: string;
-    precip: string;
-    rainPercent: string;
-    wind: string;
-    humidity: string;
-    cloudCover: string;
-    pressure: string;
-    sunrise: string;
-    sunset: string;
-  };
-}
-
-function DayBreakdown({
-  forecasts,
-  sunTimes,
-  fadedBefore,
-  windUnit,
-  formatWindDirection,
-  labels,
-}: DayBreakdownProps) {
-  const dayKey = forecasts[0] ? getLatviaDayKey(forecasts[0].time) : null;
-  const sunEventsByForecastTime =
-    sunTimes && dayKey
-      ? getSunEventsByForecastTime(forecasts, { [dayKey]: sunTimes })
-      : new Map<string, SunEvent[]>();
+    return {
+      dayKey: row.dayKey,
+      weekday,
+      dateLabel,
+      weekend: isWeekend(row.date),
+      isToday,
+      low: Math.round(summary.minTemperature),
+      high: Math.round(summary.maxTemperature),
+      barLeft: ((summary.minTemperature - overallMin) / span) * 100,
+      barWidth: Math.max(
+        ((summary.maxTemperature - summary.minTemperature) / span) * 100,
+        6,
+      ),
+      iconCode: summary.representativeIconCode,
+      precipMm: summary.totalPrecipitation,
+      rainChance: Math.round(summary.maxPrecipitationProbability),
+      sunriseLabel: sunTimes ? formatLatviaTime(sunTimes.sunrise, "HH:mm") : null,
+      sunsetLabel: sunTimes ? formatLatviaTime(sunTimes.sunset, "HH:mm") : null,
+      forecasts: breakdownForecasts,
+      sunTimes,
+    };
+  });
 
   return (
-    <div className="overflow-x-auto px-3 pt-1 pb-3">
-      <table className="relative min-w-full text-left text-sm">
-        <caption className="sr-only">{labels.caption}</caption>
-        <thead>
-          <tr className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <th scope="col" className="py-2 pr-3 pl-3 font-medium">
-              {labels.time}
-            </th>
-            <th scope="col" className="py-2 pr-3 font-medium">
-              <span className="sr-only">{labels.condition}</span>
-            </th>
-            <th scope="col" className="py-2 pr-3 font-medium">{labels.temp}</th>
-            <th scope="col" className="py-2 pr-3 font-medium">{labels.feels}</th>
-            <th scope="col" className="py-2 pr-3 font-medium">{labels.precip}</th>
-            <th scope="col" className="py-2 pr-3 font-medium">
-              {labels.rainPercent}
-            </th>
-            <th scope="col" className="py-2 pr-3 font-medium">{labels.wind}</th>
-            <th scope="col" className="py-2 pr-3 font-medium">
-              {labels.humidity}
-            </th>
-            <th scope="col" className="py-2 pr-3 font-medium">
-              {labels.cloudCover}
-            </th>
-            <th scope="col" className="py-2 font-medium">{labels.pressure}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {forecasts.map((forecast, index) => {
-            const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
-            const isPast =
-              fadedBefore != null &&
-              getLatviaWallClock(forecast.time) < fadedBefore;
-
-            return (
-              <tr
-                key={forecast.time.toISOString()}
-                className={`transition-colors duration-150 motion-reduce:transition-none hover:bg-sky-200 dark:hover:bg-slate-700 ${
-                  index % 2 === 0
-                    ? "bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-300"
-                    : "bg-sky-50 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300"
-                } ${isPast ? "opacity-45" : ""}`}
-              >
-                <td className="py-1.5 pr-3 pl-3 tabular-nums">
-                  <time dateTime={forecast.time.toISOString()}>
-                    {formatLatviaTime(forecast.time, "HH:mm")}
-                  </time>
-                  {sunEvents.length > 0 ? (
-                    <span className="mt-1 flex flex-col gap-1 text-[11px] leading-none text-amber-700 dark:text-amber-300">
-                      {sunEvents.map((sunEvent) => (
-                        <span
-                          key={sunEvent.event}
-                          className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-1.5 py-1 font-medium tabular-nums dark:bg-amber-950/50"
-                        >
-                          <span aria-hidden="true">
-                            {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
-                          </span>
-                          <time dateTime={sunEvent.time.toISOString()}>
-                            {formatLatviaTime(sunEvent.time, "HH:mm")}
-                          </time>
-                          <span>{labels[sunEvent.event]}</span>
-                        </span>
-                      ))}
-                    </span>
-                  ) : null}
-                </td>
-                <td className="py-1.5 pr-3 text-base" aria-hidden="true">
-                  {getConditionEmoji(forecast.iconCode)}
-                </td>
-                <td
-                  className={`py-1.5 pr-3 font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
-                >
-                  {Math.round(forecast.temperature)}°C
-                </td>
-                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.feelsLike)}°C</td>
-                <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                  {forecast.precipitation > 0 ? `${forecast.precipitation.toFixed(1)} mm` : "—"}
-                </td>
-                <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                  {Math.round(forecast.precipitationProbability)}%
-                </td>
-                <td
-                  className={`py-1.5 pr-3 whitespace-nowrap tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
-                >
-                  {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
-                  <WindArrow degrees={forecast.windDirection} />{" "}
-                  {formatWindDirection(forecast.windDirection)}
-                </td>
-                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.humidity)}%</td>
-                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.cloudCover)}%</td>
-                <td className="py-1.5 tabular-nums">{forecast.pressure.toFixed(0)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none dark:text-slate-500"
-      aria-hidden="true"
-    >
-      <path
-        fillRule="evenodd"
-        d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-
-function DropletIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-3.5 w-3.5"
-      aria-hidden="true"
-    >
-      <path d="M12 2.5S5.5 9.5 5.5 14a6.5 6.5 0 0 0 13 0c0-4.5-6.5-11.5-6.5-11.5Z" />
-    </svg>
-  );
-}
-
-function RainChanceIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-3.5 w-3.5 shrink-0"
-      aria-hidden="true"
-    >
-      <path d="M7 15a4.5 4.5 0 0 1-.5-8.97A6 6 0 0 1 18 7a3.5 3.5 0 0 1 0 7" />
-      <path d="M8 18.5 7 20M12 18.5 11 20M16 18.5 15 20" />
-    </svg>
-  );
-}
-
-function WindArrow({ degrees }: { degrees: number }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className="inline h-3 w-3"
-      style={{ transform: `rotate(${degrees + 180}deg)` }}
-      viewBox="0 0 16 16"
-      fill="none"
-    >
-      <path
-        d="M8 2v10M8 2L5 7M8 2l3 5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <DailyForecastAccordion
+      title={t("title")}
+      days={days}
+      windUnit={windUnit}
+      fadedBeforeIso={currentHour.toISOString()}
+    />
   );
 }

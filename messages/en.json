@@ -1,9 +1,9 @@
 {
   "metadata": {
     "siteTitle": "Latvia Weather",
-    "siteDescription": "Hourly and 10-day weather forecast for Latvia: temperature, rain, wind and warnings from LVĢMC.",
+    "siteDescription": "Hourly and 10-day weather for Latvia — temperature, rain, wind and LVĢMC warnings.",
     "locationTitle": "{name} weather — Latvia Weather",
-    "locationDescription": "Hourly and 10-day weather forecast for {name}, Latvia: temperature, rain, wind and warnings from LVĢMC, updated every 15 minutes."
+    "locationDescription": "Hourly and 10-day weather for {name}, Latvia — temperature, rain, wind and LVĢMC warnings."
   },
   "popularPlaces": {
     "title": "Popular places",
@@ -25,10 +25,11 @@
   "cookies": {
     "title": "Your privacy choices",
     "description": "We use essential storage to make Latvia Weather work. With your permission, we also use anonymous analytics and performance measurement.",
-    "privacyLink": "Read our Privacy & Cookie Notice",
+    "bannerShort": "Essential storage is always on. Optional analytics need your OK.",
+    "privacyLink": "Privacy notice",
     "acceptAll": "Accept analytics",
     "rejectOptional": "Reject optional",
-    "manage": "Manage choices",
+    "manage": "Manage",
     "settingsTitle": "Cookie settings",
     "necessaryTitle": "Strictly necessary",
     "necessaryDescription": "Always on. These remember your forecast preferences, dismissed warnings and consent choice, and help protect the weather assistant from abuse.",
@@ -295,7 +296,9 @@
     "brand": "Latvia Weather",
     "home": "Home",
     "map": "Map",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "moreControls": "More controls",
+    "closeControls": "Close controls"
   },
   "map": {
     "title": "Weather map",
