@@ -52,7 +52,9 @@ export function DailyForecastAccordion({
   fadedBeforeIso,
 }: DailyForecastAccordionProps) {
   const t = useTranslations("dailyList");
-  const [openDayKey, setOpenDayKey] = useState<string | null>(null);
+  const [mountedDayKeys, setMountedDayKeys] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   const fadedBefore = fadedBeforeIso ? new Date(fadedBeforeIso) : undefined;
 
   return (
@@ -68,16 +70,20 @@ export function DailyForecastAccordion({
       </h2>
       <ul className="divide-y divide-slate-100 dark:divide-slate-800">
         {days.map((day) => {
-          const isOpen = openDayKey === day.dayKey;
+          const isMounted = mountedDayKeys.has(day.dayKey);
 
           return (
             <li key={day.dayKey}>
               <details
                 className="group"
-                open={isOpen}
                 onToggle={(event) => {
-                  const nextOpen = event.currentTarget.open;
-                  setOpenDayKey(nextOpen ? day.dayKey : null);
+                  const open = event.currentTarget.open;
+                  setMountedDayKeys((prev) => {
+                    const next = new Set(prev);
+                    if (open) next.add(day.dayKey);
+                    else next.delete(day.dayKey);
+                    return next;
+                  });
                 }}
               >
                 <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 sm:gap-4 dark:hover:bg-slate-800/60">
@@ -148,7 +154,7 @@ export function DailyForecastAccordion({
                   ) : null}
                 </summary>
 
-                {isOpen ? (
+                {isMounted ? (
                   <DayBreakdown
                     forecasts={day.forecasts}
                     sunTimes={day.sunTimes}
