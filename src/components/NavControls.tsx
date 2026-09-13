@@ -88,9 +88,9 @@ function NavOverflowMenu({ locationId, locationName }: NavControlsProps) {
             </Suspense>
           </div>
           <Suspense fallback={null}>
-            <LanguageSwitcher />
+            <LanguageSwitcher fullWidth />
           </Suspense>
-          <ThemeSegmentedToggle />
+          <ThemeSegmentedToggle fullWidth />
         </div>
       ) : null}
     </div>
