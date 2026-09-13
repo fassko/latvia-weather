@@ -17,7 +17,7 @@ interface NavControlsProps {
 export function NavControls({ locationId, locationName }: NavControlsProps) {
   return (
     <>
-      <div className="ml-auto hidden items-center justify-end gap-2 sm:flex">
+      <div className="ml-auto hidden shrink-0 items-center justify-end gap-2 sm:flex">
         <RefreshButton />
         <WindUnitsToggle />
         <Suspense fallback={null}>
@@ -28,7 +28,7 @@ export function NavControls({ locationId, locationName }: NavControlsProps) {
           <ShareButton locationId={locationId} locationName={locationName} />
         </Suspense>
       </div>
-      <div className="ml-auto sm:hidden">
+      <div className="ml-auto shrink-0 sm:hidden">
         <NavOverflowMenu locationId={locationId} locationName={locationName} />
       </div>
     </>

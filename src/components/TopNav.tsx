@@ -18,7 +18,7 @@ export async function TopNav({
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/70 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/70">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-x-3 sm:px-6">
         <Link
           href="/"
           aria-label={t("brand")}
@@ -31,7 +31,7 @@ export async function TopNav({
           <NavLink href="/" label={t("home")} isActive={active === "home"} />
           <NavLink href="/map" label={t("map")} isActive={active === "map"} />
         </nav>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <LocationCombobox selectedId={locationId} selectedName={locationName} />
         </div>
         <NavControls locationId={locationId} locationName={locationName} />
@@ -60,7 +60,7 @@ function NavLink({
       aria-current={isActive ? "page" : undefined}
     >
       {href === "/" ? <HomeIcon /> : <MapIcon />}
-      <span>{label}</span>
+      <span className="hidden min-[380px]:inline">{label}</span>
     </Link>
   );
 }
