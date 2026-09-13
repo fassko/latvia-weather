@@ -5,7 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  /** Stretch evenly across the parent (e.g. mobile overflow menu). */
+  fullWidth?: boolean;
+}
+
+export function LanguageSwitcher({ fullWidth = false }: LanguageSwitcherProps) {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
@@ -22,7 +27,9 @@ export function LanguageSwitcher() {
 
   return (
     <div
-      className="flex shrink-0 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+      className={`flex shrink-0 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800 ${
+        fullWidth ? "w-full" : "w-fit"
+      }`}
       role="group"
       aria-label={t("groupLabel")}
     >
@@ -34,6 +41,8 @@ export function LanguageSwitcher() {
           aria-label={t("switchTo", { locale: t(loc) })}
           onClick={() => switchLocale(loc)}
           className={`rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            fullWidth ? "flex-1" : ""
+          } ${
             locale === loc
               ? "bg-sky-700 text-white"
               : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"

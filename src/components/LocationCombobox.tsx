@@ -337,20 +337,20 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   }
 
   return (
-    <div ref={containerRef} className="relative inline-block max-w-full">
+    <div ref={containerRef} className="relative w-fit max-w-full min-w-0">
       <button
         ref={triggerRef}
         type="button"
         onClick={handleOpen}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-1.5 pr-1.5 pl-2.5 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
+        className="flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-1.5 pr-1.5 pl-2.5 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
       >
         <PinIcon />
-        <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <span className="min-w-0 truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
           {selectedName}
         </span>
-        <span className="hidden text-sm text-slate-400 dark:text-slate-500 sm:inline">
+        <span className="hidden shrink-0 text-sm text-slate-400 dark:text-slate-500 sm:inline">
           {t("country")}
         </span>
         <ChevronIcon />

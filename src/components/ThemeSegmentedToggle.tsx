@@ -36,7 +36,14 @@ const options: {
   { value: "dark", labelKey: "dark" },
 ];
 
-export function ThemeSegmentedToggle() {
+interface ThemeSegmentedToggleProps {
+  /** Stretch evenly across the parent (e.g. mobile overflow menu). */
+  fullWidth?: boolean;
+}
+
+export function ThemeSegmentedToggle({
+  fullWidth = false,
+}: ThemeSegmentedToggleProps) {
   const t = useTranslations("theme");
   const preference = useSyncExternalStore(
     subscribe,
@@ -51,7 +58,9 @@ export function ThemeSegmentedToggle() {
 
   return (
     <div
-      className="flex shrink-0 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+      className={`flex shrink-0 rounded-full border border-slate-200 bg-white p-0.5 shadow-sm dark:border-slate-700 dark:bg-slate-800 ${
+        fullWidth ? "w-full" : "w-fit"
+      }`}
       role="group"
       aria-label={t("groupLabel")}
     >
@@ -70,7 +79,9 @@ export function ThemeSegmentedToggle() {
                   : t("switchToDark")
             }
             onClick={() => selectTheme(option.value)}
-            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 ${
+            className={`flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 ${
+              fullWidth ? "flex-1" : ""
+            } ${
               active
                 ? "bg-sky-700 text-white shadow-sm"
                 : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
