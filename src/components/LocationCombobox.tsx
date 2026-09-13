@@ -350,7 +350,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
           {selectedName}
         </span>
-        <span className="hidden text-sm text-slate-400 dark:text-slate-500 sm:inline">
+        <span className="hidden shrink-0 text-sm text-slate-400 dark:text-slate-500 sm:inline">
           {t("country")}
         </span>
         <ChevronIcon />

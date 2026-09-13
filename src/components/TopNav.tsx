@@ -52,6 +52,7 @@ function NavLink({
   return (
     <Link
       href={href}
+      aria-label={label}
       className={
         isActive
           ? "inline-flex items-center gap-1.5 rounded-md bg-sky-100 px-2.5 py-1.5 font-medium text-sky-800 dark:bg-sky-950/80 dark:text-sky-200"
