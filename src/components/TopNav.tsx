@@ -61,7 +61,7 @@ function NavLink({
       aria-current={isActive ? "page" : undefined}
     >
       {href === "/" ? <HomeIcon /> : <MapIcon />}
-      <span className="hidden min-[380px]:inline">{label}</span>
+      <span className="hidden sm:inline">{label}</span>
     </Link>
   );
 }
