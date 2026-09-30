@@ -1,9 +1,9 @@
+import { createResourceCache, REVALIDATE_SECONDS } from "./cache";
 import type { WeatherAlarmPolygon, WeatherWarningLevel } from "./types";
 
 const DATASTORE_API =
   "https://data.gov.lv/dati/api/3/action/datastore_search";
 const PAGE_SIZE = 5000;
-const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
 
 const RESOURCE_IDS = {
   metadata: "59c111fb-8c9a-4a63-8284-0a64a2920681",
@@ -11,11 +11,6 @@ const RESOURCE_IDS = {
   municipalitiesByWarning: "995139f7-ec05-489a-b2bb-732d5cf7ca7b",
   municipalities: "50aba289-6571-4ba7-9331-a7c1f5f9e19e",
 } as const;
-
-interface CachedValue<T> {
-  value: T;
-  storedAt: number;
-}
 
 interface DatastoreResponse<T> {
   success: boolean;
@@ -61,42 +56,14 @@ interface MunicipalityRecord {
   NOSAUKUMS_EN: string;
 }
 
-const weatherAlarmPolygonsCache: CachedValue<WeatherAlarmPolygon[]> = {
-  value: [],
-  storedAt: 0,
-};
-const weatherAlarmRegionLabelsCache: CachedValue<
-  Map<string, { lv: string[]; en: string[] }>
-> = {
-  value: new Map(),
-  storedAt: 0,
-};
+type RegionLabelsByText = Map<string, { lv: string[]; en: string[] }>;
 
-function rememberWeatherAlarmPolygons(value: WeatherAlarmPolygon[]) {
-  weatherAlarmPolygonsCache.value = value;
-  weatherAlarmPolygonsCache.storedAt = Date.now();
-}
-
-function rememberWeatherAlarmRegionLabels(
-  value: Map<string, { lv: string[]; en: string[] }>,
-) {
-  weatherAlarmRegionLabelsCache.value = value;
-  weatherAlarmRegionLabelsCache.storedAt = Date.now();
-}
-
-function hasUsableStaleAlarms(): boolean {
-  return (
-    weatherAlarmPolygonsCache.value.length > 0 &&
-    Date.now() - weatherAlarmPolygonsCache.storedAt <= STALE_FALLBACK_MS
-  );
-}
-
-function hasUsableStaleRegionLabels(): boolean {
-  return (
-    weatherAlarmRegionLabelsCache.value.size > 0 &&
-    Date.now() - weatherAlarmRegionLabelsCache.storedAt <= STALE_FALLBACK_MS
-  );
-}
+const weatherAlarmPolygonsCache = createResourceCache<WeatherAlarmPolygon[]>({
+  isEmpty: (value) => value.length === 0,
+});
+const weatherAlarmRegionLabelsCache = createResourceCache<RegionLabelsByText>({
+  isEmpty: (value) => value.size === 0,
+});
 
 function getWarningLevel(intensity: string): WeatherWarningLevel {
   const normalized = intensity.toLocaleLowerCase("lv");
@@ -144,7 +111,7 @@ async function fetchDatastorePage<T>(
   url.searchParams.set("offset", String(offset));
 
   const response = await fetch(url, {
-    next: { revalidate: 900 },
+    next: { revalidate: REVALIDATE_SECONDS },
   });
 
   if (!response.ok) {
@@ -314,8 +281,8 @@ export function buildWeatherAlarmPolygons(
 
 export function buildWeatherAlarmRegionLabelsByText(
   metadataRecords: AlarmMetadataRecord[],
-): Map<string, { lv: string[]; en: string[] }> {
-  const labelsByText = new Map<string, { lv: string[]; en: string[] }>();
+): RegionLabelsByText {
+  const labelsByText: RegionLabelsByText = new Map();
 
   for (const record of metadataRecords) {
     const labels = {
@@ -332,33 +299,30 @@ export function buildWeatherAlarmRegionLabelsByText(
   return labelsByText;
 }
 
-export async function getWeatherAlarmRegionLabelsByText(): Promise<
-  Map<string, { lv: string[]; en: string[] }>
-> {
-  try {
-    const metadataRecords = await fetchDatastoreRecords<AlarmMetadataRecord>(
-      RESOURCE_IDS.metadata,
-    );
-    const labelsByText = buildWeatherAlarmRegionLabelsByText(metadataRecords);
-    rememberWeatherAlarmRegionLabels(labelsByText);
-    return labelsByText;
-  } catch {
-    if (hasUsableStaleRegionLabels()) {
-      return weatherAlarmRegionLabelsCache.value;
-    }
+async function fetchWeatherAlarmRegionLabelsByText(): Promise<RegionLabelsByText> {
+  const metadataRecords = await fetchDatastoreRecords<AlarmMetadataRecord>(
+    RESOURCE_IDS.metadata,
+  );
 
+  return buildWeatherAlarmRegionLabelsByText(metadataRecords);
+}
+
+export async function getWeatherAlarmRegionLabelsByText(): Promise<RegionLabelsByText> {
+  try {
+    const { value } = await weatherAlarmRegionLabelsCache.read(
+      "region-labels",
+      fetchWeatherAlarmRegionLabelsByText,
+    );
+
+    return value;
+  } catch {
     return new Map();
   }
 }
 
-export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> {
-  try {
-    const [
-      metadataRecords,
-      polygonRecords,
-      warningMunicipalities,
-      municipalities,
-    ] = await Promise.all([
+async function fetchWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> {
+  const [metadataRecords, polygonRecords, warningMunicipalities, municipalities] =
+    await Promise.all([
       fetchDatastoreRecords<AlarmMetadataRecord>(RESOURCE_IDS.metadata),
       fetchDatastoreRecords<AlarmPolygonRecord>(RESOURCE_IDS.polygons),
       fetchDatastoreRecords<WarningMunicipalityRecord>(
@@ -367,22 +331,23 @@ export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> 
       fetchDatastoreRecords<MunicipalityRecord>(RESOURCE_IDS.municipalities),
     ]);
 
-    const alarms = buildWeatherAlarmPolygons(
-      metadataRecords,
-      polygonRecords,
-      warningMunicipalities,
-      municipalities,
-    );
-    rememberWeatherAlarmPolygons(alarms);
-    return alarms;
-  } catch {
-    if (hasUsableStaleAlarms()) {
-      return weatherAlarmPolygonsCache.value.map((alarm) => ({
-        ...alarm,
-        isStale: true,
-      }));
-    }
+  return buildWeatherAlarmPolygons(
+    metadataRecords,
+    polygonRecords,
+    warningMunicipalities,
+    municipalities,
+  );
+}
 
+export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> {
+  try {
+    const { value, isStale } = await weatherAlarmPolygonsCache.read(
+      "polygons",
+      fetchWeatherAlarmPolygons,
+    );
+
+    return isStale ? value.map((alarm) => ({ ...alarm, isStale: true })) : value;
+  } catch {
     return [];
   }
 }
