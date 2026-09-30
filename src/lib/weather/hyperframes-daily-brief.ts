@@ -12,7 +12,7 @@ import type {
   SocialBriefSlotId,
   SocialPlatform,
 } from "./social-brief-schedule";
-import { SOCIAL_BRIEF_SLOTS } from "./social-brief-schedule";
+import { resolveSocialBriefSlot } from "./social-brief-schedule";
 import { getWeatherSummaryParts } from "./summary";
 import {
   formatLatviaDateTime,
@@ -88,7 +88,7 @@ export const HYPERFRAMES_DAILY_BRIEF_COMPOSITION_ID = "latvia-weather-daily-brie
 export const HYPERFRAMES_DAILY_BRIEF_VARIABLE_SCHEMA = [
   { id: "brandName", type: "string", label: "Brand name", default: "Latvia Weather" },
   { id: "cityName", type: "string", label: "City name", default: "Rīga" },
-  { id: "headline", type: "string", label: "Headline", default: "Rīga, 07:00" },
+  { id: "headline", type: "string", label: "Headline", default: "Rīga, 18:30" },
   { id: "dateLabel", type: "string", label: "Date label", default: "Wed, Sep 30" },
   { id: "temperature", type: "string", label: "Current temperature", default: "12°C" },
   { id: "tempHigh", type: "string", label: "Today high", default: "15°" },
@@ -334,23 +334,25 @@ function buildHook(options: {
       : `${options.cityName} — weekend weather`;
   }
 
-  if (options.slot.angle === "weekend_day") {
+  if (options.slot.angle === "weekend_evening") {
     if (wet) {
       return options.locale === "lv"
-        ? `${options.cityName} šodien — lietus risks`
-        : `${options.cityName} today — rain risk`;
+        ? `${options.cityName} rīt — lietus risks`
+        : `${options.cityName} tomorrow — rain risk`;
     }
     return options.locale === "lv"
-      ? `${options.cityName} — labs laiks pastaigai`
-      : `${options.cityName} — good day to get out`;
+      ? `${options.cityName} — rītdienas laiks`
+      : `${options.cityName} — tomorrow's weather`;
   }
 
   if (wet) {
     return options.locale === "lv"
-      ? `${options.cityName} — ņem lietussargu`
-      : `${options.cityName} — take an umbrella`;
+      ? `${options.cityName} rīt — ņem lietussargu`
+      : `${options.cityName} tomorrow — take an umbrella`;
   }
-  return `${options.cityName} — ${options.temperature}`;
+  return options.locale === "lv"
+    ? `${options.cityName} šovakar — ${options.temperature}`
+    : `${options.cityName} tonight — ${options.temperature}`;
 }
 
 function buildCaptions(options: {
@@ -374,16 +376,16 @@ function buildCaptions(options: {
       options.locale === "lv"
         ? `${options.cityName} brīvdienās: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
         : `${options.cityName} this weekend: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
-  } else if (options.slot.angle === "weekend_day") {
+  } else if (options.slot.angle === "weekend_evening") {
     body =
       options.locale === "lv"
-        ? `${options.cityName} šodien: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
-        : `${options.cityName} today: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+        ? `${options.cityName} šovakar / rīt: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
+        : `${options.cityName} tonight / tomorrow: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
   } else {
     body =
       options.locale === "lv"
-        ? `${options.cityName} šorīt: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
-        : `${options.cityName} this morning: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+        ? `${options.cityName} šovakar: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
+        : `${options.cityName} tonight: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
   }
 
   const hashtags =
@@ -462,9 +464,9 @@ export function buildHyperframesDailyBrief(
   const now = options.now ?? new Date();
   const platform = options.platform ?? "instagram";
   const slot: SocialBriefSlot =
-    typeof options.slot === "string"
-      ? SOCIAL_BRIEF_SLOTS[options.slot]
-      : (options.slot ?? SOCIAL_BRIEF_SLOTS.weekday_morning);
+    typeof options.slot === "string" || options.slot == null
+      ? resolveSocialBriefSlot(options.slot)
+      : options.slot;
   const { data } = options;
 
   if (data.forecasts.length === 0) {

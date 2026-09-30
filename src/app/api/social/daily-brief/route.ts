@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { isSocialBriefAuthorized } from "@/lib/weather/social-brief-auth";
 import {
   inferSocialBriefSlot,
-  isSocialBriefSlotId,
   listSocialBriefSchedule,
+  normalizeSocialBriefSlotId,
   resolveSocialBriefSlot,
   type SocialBriefSlot,
 } from "@/lib/weather/social-brief-schedule";
@@ -81,8 +81,9 @@ function slotResponse(
  * GET /api/social/daily-brief
  *
  * Query:
- * - slot: weekday_morning | friday_weekend_outlook | weekend_morning
- *         (default: inferred from Europe/Riga clock, else weekday_morning)
+ * - slot: weekday_evening | friday_weekend_outlook | weekend_evening
+ *         (default: inferred from Europe/Riga clock, else weekday_evening)
+ *         legacy aliases: weekday_morning → weekday_evening, weekend_morning → weekend_evening
  * - punkts: single location id (ignored when batch/slot cities are used unless single=1)
  * - single=1: only one city (`punkts` or first slot city)
  * - locale: en | lv (default from slot)
@@ -115,7 +116,7 @@ export async function GET(request: Request) {
   }
 
   const slotParam = searchParams.get("slot");
-  if (slotParam && !isSocialBriefSlotId(slotParam)) {
+  if (slotParam && !normalizeSocialBriefSlotId(slotParam)) {
     return NextResponse.json(
       {
         error: `Unknown slot: ${slotParam}`,

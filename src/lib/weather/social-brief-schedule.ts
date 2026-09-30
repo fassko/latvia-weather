@@ -6,9 +6,9 @@ export const SOCIAL_BRIEF_TIMEZONE = "Europe/Riga";
 
 /** Named posting slots for social automation. */
 export type SocialBriefSlotId =
-  | "weekday_morning"
+  | "weekday_evening"
   | "friday_weekend_outlook"
-  | "weekend_morning";
+  | "weekend_evening";
 
 export type SocialPlatform = "instagram" | "tiktok" | "facebook" | "x";
 
@@ -31,40 +31,46 @@ export interface SocialBriefSlot {
   /** Rain-chance % that unlocks conditional platforms. */
   interestingRainChance: number;
   /** Caption / hook framing. */
-  angle: "commute" | "weekend_plan" | "weekend_day";
+  angle: "evening" | "weekend_plan" | "weekend_evening";
   /** UTM campaign suffix. */
   campaign: string;
   description: string;
 }
 
+/** Old morning slot ids still accepted on the API. */
+const SLOT_ALIASES: Record<string, SocialBriefSlotId> = {
+  weekday_morning: "weekday_evening",
+  weekend_morning: "weekend_evening",
+};
+
 const RIGA = DEFAULT_LOCATION_ID;
 const LIEPAJA = "P770";
 const JURMALA = "P768";
 
-/** Primary automation slots (weekday vs weekend timing). */
+/** Primary automation slots (weekday vs weekend evening timing). */
 export const SOCIAL_BRIEF_SLOTS: Record<SocialBriefSlotId, SocialBriefSlot> = {
-  weekday_morning: {
-    id: "weekday_morning",
-    label: "Weekday morning brief",
+  weekday_evening: {
+    id: "weekday_evening",
+    label: "Weekday evening brief",
     timezone: SOCIAL_BRIEF_TIMEZONE,
-    daysOfWeek: [1, 2, 3, 4, 5],
-    publishLocalTime: "07:00",
+    daysOfWeek: [1, 2, 3, 4],
+    publishLocalTime: "18:30",
     localeDefault: "lv",
     locationIds: [RIGA, LIEPAJA],
     platforms: ["instagram", "tiktok"],
     conditionalPlatforms: ["facebook", "x"],
     interestingRainChance: 50,
-    angle: "commute",
-    campaign: "weekday_morning",
+    angle: "evening",
+    campaign: "weekday_evening",
     description:
-      "Mon–Fri ~07:00 Europe/Riga. Commute brief for Rīga + Liepāja. IG/TikTok always; FB/X when wet or windy.",
+      "Mon–Thu ~18:30 Europe/Riga. Evening brief for tonight/tomorrow in Rīga + Liepāja. IG/TikTok always; FB/X when wet or windy.",
   },
   friday_weekend_outlook: {
     id: "friday_weekend_outlook",
     label: "Friday weekend outlook",
     timezone: SOCIAL_BRIEF_TIMEZONE,
     daysOfWeek: [5],
-    publishLocalTime: "16:00",
+    publishLocalTime: "18:30",
     localeDefault: "lv",
     locationIds: [RIGA, LIEPAJA, JURMALA],
     platforms: ["instagram", "tiktok", "facebook"],
@@ -73,23 +79,23 @@ export const SOCIAL_BRIEF_SLOTS: Record<SocialBriefSlotId, SocialBriefSlot> = {
     angle: "weekend_plan",
     campaign: "weekend_outlook",
     description:
-      "Friday 16:00 Europe/Riga. Weekend planning clip for Rīga, Liepāja, Jūrmala. Prefer compare / outing hooks.",
+      "Friday 18:30 Europe/Riga. Weekend planning clip for Rīga, Liepāja, Jūrmala. Prefer compare / outing hooks.",
   },
-  weekend_morning: {
-    id: "weekend_morning",
-    label: "Weekend morning brief",
+  weekend_evening: {
+    id: "weekend_evening",
+    label: "Weekend evening brief",
     timezone: SOCIAL_BRIEF_TIMEZONE,
     daysOfWeek: [0, 6],
-    publishLocalTime: "09:00",
+    publishLocalTime: "18:30",
     localeDefault: "lv",
     locationIds: [RIGA, JURMALA, LIEPAJA],
     platforms: ["instagram", "tiktok"],
     conditionalPlatforms: ["facebook", "x"],
     interestingRainChance: 50,
-    angle: "weekend_day",
-    campaign: "weekend_morning",
+    angle: "weekend_evening",
+    campaign: "weekend_evening",
     description:
-      "Sat–Sun 09:00 Europe/Riga. Later morning brief with activity-oriented captions.",
+      "Sat–Sun 18:30 Europe/Riga. Evening brief with tomorrow/outing-oriented captions.",
   },
 };
 
@@ -101,28 +107,36 @@ export function isSocialBriefSlotId(value: string): value is SocialBriefSlotId {
   return value in SOCIAL_BRIEF_SLOTS;
 }
 
+/** Accepts current slot ids and legacy morning aliases. */
+export function normalizeSocialBriefSlotId(
+  value: string,
+): SocialBriefSlotId | undefined {
+  const canonical = SLOT_ALIASES[value] ?? value;
+  return isSocialBriefSlotId(canonical) ? canonical : undefined;
+}
+
 export function resolveSocialBriefSlot(
   value: string | null | undefined,
 ): SocialBriefSlot {
-  if (value && isSocialBriefSlotId(value)) {
-    return SOCIAL_BRIEF_SLOTS[value];
+  if (value) {
+    const resolved = normalizeSocialBriefSlotId(value);
+    if (resolved) return SOCIAL_BRIEF_SLOTS[resolved];
   }
-  return SOCIAL_BRIEF_SLOTS.weekday_morning;
+  return SOCIAL_BRIEF_SLOTS.weekday_evening;
 }
 
-/** Pick the slot that matches Latvia's current weekday, else weekday_morning. */
+/** Pick the slot that matches Latvia's current weekday, else weekday_evening. */
 export function inferSocialBriefSlot(now = new Date()): SocialBriefSlot {
   const local = getLatviaWallClock(now);
   const day = local.getDay();
-  const hour = local.getHours();
 
-  if (day === 5 && hour >= 14) {
+  if (day === 5) {
     return SOCIAL_BRIEF_SLOTS.friday_weekend_outlook;
   }
   if (day === 0 || day === 6) {
-    return SOCIAL_BRIEF_SLOTS.weekend_morning;
+    return SOCIAL_BRIEF_SLOTS.weekend_evening;
   }
-  return SOCIAL_BRIEF_SLOTS.weekday_morning;
+  return SOCIAL_BRIEF_SLOTS.weekday_evening;
 }
 
 export function listSocialBriefSchedule() {

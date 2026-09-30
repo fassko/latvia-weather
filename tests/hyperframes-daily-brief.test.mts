@@ -71,22 +71,23 @@ describe("buildHyperframesDailyBrief", () => {
     assert.equal(payload.compositionId, "latvia-weather-daily-brief");
     assert.equal(payload.punkts, "P269");
     assert.equal(payload.citySlug, "riga");
-    assert.equal(payload.slotId, "weekday_morning");
+    assert.equal(payload.slotId, "weekday_evening");
     assert.equal(payload.variables.cityName, "Rīga");
     assert.equal(payload.variables.locale, "lv");
     assert.equal(payload.variables.tempHigh, "16°");
     assert.equal(payload.variables.tempLow, "8°");
     assert.equal(payload.variables.rainChance, "70%");
     assert.match(payload.variables.headline, /^Rīga, /);
-    assert.match(payload.variables.deepLink, /utm_campaign=weekday_morning/);
+    assert.match(payload.variables.deepLink, /utm_campaign=weekday_evening/);
     assert.match(payload.variables.deepLink, /utm_source=instagram/);
     assert.equal(payload.render.width, 1080);
     assert.equal(payload.render.height, 1920);
     assert.equal(payload.render.aspectRatio, "9:16");
     assert.match(
       payload.render.outputKey,
-      /renders\/.+\/weekday_morning\/riga-lv\.mp4$/,
+      /renders\/.+\/weekday_evening\/riga-lv\.mp4$/,
     );
+    assert.match(payload.captions.instagram, /šovakar/);
     assert.ok(payload.hourly.length >= 3);
     assert.match(payload.captions.instagram, /Rīga/);
     assert.ok(payload.captions.hashtags.includes("#Latvija"));
@@ -109,7 +110,7 @@ describe("buildHyperframesDailyBrief", () => {
       now,
     });
 
-    assert.equal(payload.variables.hook, "Rīga — take an umbrella");
+    assert.equal(payload.variables.hook, "Rīga tomorrow — take an umbrella");
     assert.equal(payload.variables.brandName, "Latvia Weather");
   });
 

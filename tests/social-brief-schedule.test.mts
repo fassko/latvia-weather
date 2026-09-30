@@ -4,6 +4,7 @@ import {
   inferSocialBriefSlot,
   isSocialBriefSlotId,
   listSocialBriefSchedule,
+  normalizeSocialBriefSlotId,
   resolveSocialBriefSlot,
   SOCIAL_BRIEF_SLOTS,
 } from "../src/lib/weather/social-brief-schedule.ts";
@@ -12,35 +13,37 @@ import { getUpcomingWeekendDayKeys } from "../src/lib/weather/hyperframes-daily-
 import { parseLaiks } from "../src/lib/weather/timezone.ts";
 
 describe("social brief schedule", () => {
-  it("exposes three Europe/Riga slots with publish times", () => {
+  it("exposes three Europe/Riga evening slots", () => {
     const schedule = listSocialBriefSchedule();
     assert.equal(schedule.timezone, "Europe/Riga");
     assert.equal(schedule.slots.length, 3);
-    assert.equal(SOCIAL_BRIEF_SLOTS.weekday_morning.publishLocalTime, "07:00");
-    assert.equal(SOCIAL_BRIEF_SLOTS.friday_weekend_outlook.publishLocalTime, "16:00");
-    assert.equal(SOCIAL_BRIEF_SLOTS.weekend_morning.publishLocalTime, "09:00");
-    assert.ok(!("cron" in SOCIAL_BRIEF_SLOTS.weekday_morning));
+    assert.equal(SOCIAL_BRIEF_SLOTS.weekday_evening.publishLocalTime, "18:30");
+    assert.equal(SOCIAL_BRIEF_SLOTS.friday_weekend_outlook.publishLocalTime, "18:30");
+    assert.equal(SOCIAL_BRIEF_SLOTS.weekend_evening.publishLocalTime, "18:30");
+    assert.ok(!("cron" in SOCIAL_BRIEF_SLOTS.weekday_evening));
   });
 
-  it("resolves and validates slot ids", () => {
-    assert.equal(isSocialBriefSlotId("weekday_morning"), true);
+  it("resolves slot ids and legacy morning aliases", () => {
+    assert.equal(isSocialBriefSlotId("weekday_evening"), true);
+    assert.equal(isSocialBriefSlotId("weekday_morning"), false);
+    assert.equal(normalizeSocialBriefSlotId("weekday_morning"), "weekday_evening");
     assert.equal(isSocialBriefSlotId("nope"), false);
     assert.equal(
       resolveSocialBriefSlot("weekend_morning").id,
-      "weekend_morning",
+      "weekend_evening",
     );
-    assert.equal(resolveSocialBriefSlot("missing").id, "weekday_morning");
+    assert.equal(resolveSocialBriefSlot("missing").id, "weekday_evening");
   });
 
-  it("infers Friday afternoon as weekend outlook", () => {
+  it("infers Friday as weekend outlook", () => {
     // 2026-10-02 is a Friday; 14:00 Europe/Riga = 11:00Z in summer (EEST UTC+3)
     const fridayAfternoon = new Date("2026-10-02T11:00:00.000Z");
     assert.equal(inferSocialBriefSlot(fridayAfternoon).id, "friday_weekend_outlook");
   });
 
-  it("infers Saturday as weekend morning", () => {
+  it("infers Saturday as weekend evening", () => {
     const saturday = new Date("2026-10-03T07:00:00.000Z");
-    assert.equal(inferSocialBriefSlot(saturday).id, "weekend_morning");
+    assert.equal(inferSocialBriefSlot(saturday).id, "weekend_evening");
   });
 });
 
