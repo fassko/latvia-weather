@@ -10,6 +10,7 @@ import { getWeatherAlarmPolygons } from "@/lib/weather/alarms";
 import { getLocationPoints } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { DEFAULT_LOCATION_ID, isValidLocationId, resolveLocationId } from "@/lib/weather/locations";
+import { pickLocationQueryValue } from "@/lib/weather/location-query";
 import {
   TEMPERATURE_LEGEND_BANDS,
   type TemperatureLegendBandId,
@@ -19,7 +20,7 @@ import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ alarms?: string; punkts?: string }>;
+  searchParams: Promise<{ alarms?: string; punkts?: string; location?: string }>;
 }
 
 export async function generateMetadata({
@@ -71,7 +72,7 @@ export async function generateMetadata({
 
 export default async function MapPage({ params, searchParams }: MapPageProps) {
   const { locale } = await params;
-  const { alarms: alarmsParam, punkts } = await searchParams;
+  const { alarms: alarmsParam, punkts, location } = await searchParams;
 
   if (!routing.locales.includes(locale as Locale)) {
     return null;
@@ -80,9 +81,12 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
   setRequestLocale(locale);
 
   const savedPunkts = await getLocationCookie();
-  const locationId = resolveLocationId(punkts, savedPunkts);
+  const queryLocationId = pickLocationQueryValue(punkts, location);
+  const locationId = resolveLocationId(queryLocationId, savedPunkts);
   const focusLocationId =
-    punkts && isValidLocationId(punkts) ? punkts : undefined;
+    queryLocationId && isValidLocationId(queryLocationId)
+      ? queryLocationId
+      : undefined;
   const initialShowAlarms = alarmsParam !== "0";
   const t = await getTranslations({ locale, namespace: "map" });
   const tErrors = await getTranslations({ locale, namespace: "errors" });

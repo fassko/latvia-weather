@@ -43,6 +43,8 @@ export function localizedPath(
   const path = `/${locale}`;
   if (!locationId) return path;
 
+  // Canonical forecast path segment is `punkts` (LVĢMC). Query aliases
+  // `?punkts=` and `?location=` permanently redirect here via `src/proxy.ts`.
   const segment = locationName ? locationSlug(locationName) : locationId;
   return `${path}/punkts/${encodeURIComponent(segment)}`;
 }

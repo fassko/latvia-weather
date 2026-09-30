@@ -7,12 +7,20 @@ import {
 } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { resolveLocationId } from "@/lib/weather/locations";
+import {
+  LOCATION_QUERY_PARAM,
+  pickLocationQueryValue,
+  PUNKTS_QUERY_PARAM,
+} from "@/lib/weather/location-query";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const savedPunkts = await getLocationCookie();
   const locationId = resolveLocationId(
-    searchParams.get("punkts") ?? undefined,
+    pickLocationQueryValue(
+      searchParams.get(PUNKTS_QUERY_PARAM),
+      searchParams.get(LOCATION_QUERY_PARAM),
+    ),
     savedPunkts,
   );
 
