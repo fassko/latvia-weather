@@ -71,22 +71,28 @@ describe("buildHyperframesDailyBrief", () => {
     assert.equal(payload.compositionId, "latvia-weather-daily-brief");
     assert.equal(payload.punkts, "P269");
     assert.equal(payload.citySlug, "riga");
+    assert.equal(payload.slotId, "weekday_morning");
     assert.equal(payload.variables.cityName, "Rīga");
     assert.equal(payload.variables.locale, "lv");
     assert.equal(payload.variables.tempHigh, "16°");
     assert.equal(payload.variables.tempLow, "8°");
     assert.equal(payload.variables.rainChance, "70%");
     assert.match(payload.variables.headline, /^Rīga, /);
-    assert.match(payload.variables.deepLink, /utm_campaign=daily_brief/);
+    assert.match(payload.variables.deepLink, /utm_campaign=weekday_morning/);
     assert.match(payload.variables.deepLink, /utm_source=instagram/);
     assert.equal(payload.render.width, 1080);
     assert.equal(payload.render.height, 1920);
     assert.equal(payload.render.aspectRatio, "9:16");
-    assert.match(payload.render.outputKey, /renders\/.+\/riga-lv\.mp4$/);
+    assert.match(
+      payload.render.outputKey,
+      /renders\/.+\/weekday_morning\/riga-lv\.mp4$/,
+    );
     assert.ok(payload.hourly.length >= 3);
     assert.match(payload.captions.instagram, /Rīga/);
     assert.ok(payload.captions.hashtags.includes("#Latvija"));
     assert.equal(payload.batchRow.outputKey, payload.render.outputKey);
+    assert.equal(payload.publish.interesting, true);
+    assert.ok(payload.publish.selected.includes("facebook"));
   });
 
   it("uses umbrella hook when rain chance is high", () => {
@@ -105,6 +111,23 @@ describe("buildHyperframesDailyBrief", () => {
 
     assert.equal(payload.variables.hook, "Rīga — take an umbrella");
     assert.equal(payload.variables.brandName, "Latvia Weather");
+  });
+
+  it("uses weekend-plan copy for friday outlook slot", () => {
+    const now = todayHour(16).time;
+    const payload = buildHyperframesDailyBrief({
+      data: sampleData([
+        todayHour(12, { temperature: 14, precipitationProbability: 10 }),
+      ]),
+      locale: "lv",
+      now,
+      slot: "friday_weekend_outlook",
+    });
+
+    assert.equal(payload.slotId, "friday_weekend_outlook");
+    assert.equal(payload.variables.hook, "Rīga — brīvdienu laiks");
+    assert.match(payload.captions.instagram, /brīvdienās/);
+    assert.match(payload.variables.deepLink, /utm_campaign=weekend_outlook/);
   });
 
   it("serializes variables and batch JSONL for HyperFrames CLI", () => {

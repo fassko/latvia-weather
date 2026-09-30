@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
+import { getN8nDailyBriefWorkflowPrompt } from "@/lib/weather/n8n-daily-brief-prompt";
+import { isSocialBriefAuthorized } from "@/lib/weather/social-brief-auth";
+import {
+  inferSocialBriefSlot,
+  isSocialBriefSlotId,
+  listSocialBriefSchedule,
+  resolveSocialBriefSlot,
+  type SocialBriefSlot,
+} from "@/lib/weather/social-brief-schedule";
 import {
   buildHyperframesDailyBrief,
-  DAILY_BRIEF_SEED_LOCATION_IDS,
+  HYPERFRAMES_DAILY_BRIEF_COMPOSITION_ID,
   HYPERFRAMES_DAILY_BRIEF_VARIABLE_SCHEMA,
   toHyperframesBatchJsonl,
   type HyperframesDailyBriefPayload,
@@ -17,16 +26,33 @@ import {
   isValidLocationId,
   resolveLocationId,
 } from "@/lib/weather/locations";
+import { getSiteUrl } from "@/lib/site";
 
 export const runtime = "nodejs";
 
-function parseLocale(value: string | null): "en" | "lv" {
-  return value === "lv" ? "lv" : "en";
+const CACHE_HEADERS = {
+  "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
+};
+
+function parseLocale(value: string | null, slot: SocialBriefSlot): "en" | "lv" {
+  if (value === "en" || value === "lv") return value;
+  return slot.localeDefault;
+}
+
+function unauthorized() {
+  return NextResponse.json(
+    {
+      error: "Unauthorized",
+      hint: "Send Authorization: Bearer $SOCIAL_BRIEF_SECRET or x-social-brief-secret",
+    },
+    { status: 401 },
+  );
 }
 
 async function buildPayloadForPunkts(
   punkts: string,
   locale: "en" | "lv",
+  slot: SocialBriefSlot,
 ): Promise<HyperframesDailyBriefPayload> {
   const [data, locations] = await Promise.all([
     getHourlyForecast(punkts),
@@ -36,18 +62,49 @@ async function buildPayloadForPunkts(
   return buildHyperframesDailyBrief({
     data: mergeForecastLocation(data, locations),
     locale,
+    slot,
   });
+}
+
+function n8nHints(slot: SocialBriefSlot) {
+  return {
+    timezone: slot.timezone,
+    templateCompositionId: HYPERFRAMES_DAILY_BRIEF_COMPOSITION_ID,
+    renderRoot: "~/renders",
+    variablesFileName: "variables.json",
+    cron: slot.cron,
+    publishLocalTime: slot.publishLocalTime,
+  };
+}
+
+function slotResponse(
+  slot: SocialBriefSlot,
+  locale: "en" | "lv",
+  payloads: HyperframesDailyBriefPayload[],
+) {
+  return {
+    slot,
+    locale,
+    count: payloads.length,
+    payloads,
+    n8n: n8nHints(slot),
+  };
 }
 
 /**
  * GET /api/social/daily-brief
  *
  * Query:
- * - punkts: location id (default Rīga)
- * - locale: en | lv (default lv for social)
- * - batch: 1 → seed cities (Rīga + major towns)
+ * - slot: weekday_morning | friday_weekend_outlook | weekend_morning
+ *         (default: inferred from Europe/Riga clock, else weekday_morning)
+ * - punkts: single location id (ignored when batch/slot cities are used unless single=1)
+ * - single=1: only one city (`punkts` or first slot city)
+ * - locale: en | lv (default from slot)
+ * - batch=1: force all seed cities (overrides slot location list)
  * - format: json (default) | jsonl | variables
- * - schema: 1 → return HyperFrames variable declarations only
+ * - schedule=1: return slot catalog
+ * - schema=1: HyperFrames variable declarations
+ * - prompt=1: n8n workflow builder prompt (markdown)
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -55,84 +112,116 @@ export async function GET(request: Request) {
   if (searchParams.get("schema") === "1") {
     return NextResponse.json(
       {
-        compositionId: "latvia-weather-daily-brief",
+        compositionId: HYPERFRAMES_DAILY_BRIEF_COMPOSITION_ID,
         variables: HYPERFRAMES_DAILY_BRIEF_VARIABLE_SCHEMA,
       },
-      {
-        headers: {
-          "Cache-Control": "public, max-age=86400",
-        },
-      },
+      { headers: { "Cache-Control": "public, max-age=86400" } },
     );
   }
 
-  const locale = parseLocale(searchParams.get("locale") ?? "lv");
+  if (searchParams.get("schedule") === "1") {
+    return NextResponse.json(listSocialBriefSchedule(), {
+      headers: { "Cache-Control": "public, max-age=3600" },
+    });
+  }
+
+  if (searchParams.get("prompt") === "1") {
+    const prompt = getN8nDailyBriefWorkflowPrompt({ baseUrl: getSiteUrl() });
+    return new NextResponse(prompt, {
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  }
+
+  if (!isSocialBriefAuthorized(request)) {
+    return unauthorized();
+  }
+
+  const slotParam = searchParams.get("slot");
+  if (slotParam && !isSocialBriefSlotId(slotParam)) {
+    return NextResponse.json(
+      {
+        error: `Unknown slot: ${slotParam}`,
+        slots: listSocialBriefSchedule().slots.map((slot) => slot.id),
+      },
+      { status: 400 },
+    );
+  }
+
+  const slot = slotParam
+    ? resolveSocialBriefSlot(slotParam)
+    : inferSocialBriefSlot();
+  const locale = parseLocale(searchParams.get("locale"), slot);
   const format = searchParams.get("format") ?? "json";
-  const batch = searchParams.get("batch") === "1";
+  const forceBatch = searchParams.get("batch") === "1";
+  const single = searchParams.get("single") === "1";
 
   try {
-    if (batch) {
-      const payloads = await Promise.all(
-        DAILY_BRIEF_SEED_LOCATION_IDS.map((punkts) =>
-          buildPayloadForPunkts(punkts, locale),
-        ),
-      );
+    let locationIds: string[];
 
-      if (format === "jsonl") {
-        return new NextResponse(toHyperframesBatchJsonl(payloads), {
-          headers: {
-            "Content-Type": "application/x-ndjson; charset=utf-8",
-            "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
-          },
-        });
+    if (forceBatch) {
+      locationIds = [...listSocialBriefSchedule().seedLocationIds];
+    } else if (single) {
+      const requested = searchParams.get("punkts") ?? undefined;
+      if (requested && !isValidLocationId(requested)) {
+        return NextResponse.json(
+          { error: `Unknown location id: ${requested}` },
+          { status: 400 },
+        );
       }
-
-      return NextResponse.json(
-        {
-          locale,
-          count: payloads.length,
-          payloads,
-        },
-        {
-          headers: {
-            "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
-          },
-        },
-      );
+      locationIds = [
+        resolveLocationId(requested, slot.locationIds[0] ?? DEFAULT_LOCATION_ID),
+      ];
+    } else if (searchParams.has("punkts") && !searchParams.get("slot")) {
+      // Backward compatible: ?punkts=P269 without slot → one city
+      const requested = searchParams.get("punkts") ?? undefined;
+      if (requested && !isValidLocationId(requested)) {
+        return NextResponse.json(
+          { error: `Unknown location id: ${requested}` },
+          { status: 400 },
+        );
+      }
+      locationIds = [resolveLocationId(requested, DEFAULT_LOCATION_ID)];
+    } else {
+      locationIds = [...slot.locationIds];
     }
 
-    const requested = searchParams.get("punkts") ?? undefined;
-    if (requested && !isValidLocationId(requested)) {
-      return NextResponse.json(
-        { error: `Unknown location id: ${requested}` },
-        { status: 400 },
-      );
-    }
-
-    const locationId = resolveLocationId(requested, DEFAULT_LOCATION_ID);
-    const payload = await buildPayloadForPunkts(locationId, locale);
+    const payloads = await Promise.all(
+      locationIds.map((punkts) => buildPayloadForPunkts(punkts, locale, slot)),
+    );
 
     if (format === "variables") {
-      return NextResponse.json(payload.variables, {
-        headers: {
-          "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
-        },
-      });
+      if (payloads.length === 1) {
+        return NextResponse.json(payloads[0].variables, { headers: CACHE_HEADERS });
+      }
+      return NextResponse.json(
+        payloads.map((payload) => ({
+          punkts: payload.punkts,
+          citySlug: payload.citySlug,
+          variables: payload.variables,
+        })),
+        { headers: CACHE_HEADERS },
+      );
     }
 
     if (format === "jsonl") {
-      return new NextResponse(toHyperframesBatchJsonl([payload]), {
+      return new NextResponse(toHyperframesBatchJsonl(payloads), {
         headers: {
           "Content-Type": "application/x-ndjson; charset=utf-8",
-          "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
+          ...CACHE_HEADERS,
         },
       });
     }
 
-    return NextResponse.json(payload, {
-      headers: {
-        "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
-      },
+    if (payloads.length === 1 && searchParams.has("punkts") && !searchParams.get("slot")) {
+      // Legacy single-city shape for earlier clients/tests
+      return NextResponse.json(payloads[0], { headers: CACHE_HEADERS });
+    }
+
+    return NextResponse.json(slotResponse(slot, locale, payloads), {
+      headers: CACHE_HEADERS,
     });
   } catch (error) {
     const message =

@@ -3,15 +3,22 @@ import { getSiteUrl, localizedPath, locationSlug } from "@/lib/site";
 import type { Locale } from "@/i18n/routing";
 import { getTodayForecasts } from "./chart-data";
 import { getConditionGroup } from "./condition-group";
-import { summarizeDay } from "./daily";
+import { groupForecastsByDay, summarizeDay } from "./daily";
 import { getOgImageGradient } from "./header-theme";
 import { DEFAULT_LOCATION_ID } from "./locations";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "./parse";
+import type {
+  SocialBriefSlot,
+  SocialBriefSlotId,
+  SocialPlatform,
+} from "./social-brief-schedule";
+import { SOCIAL_BRIEF_SLOTS } from "./social-brief-schedule";
 import { getWeatherSummaryParts } from "./summary";
 import {
   formatLatviaDateTime,
   formatLatviaTime,
   getLatviaDayKey,
+  getLatviaWallClock,
 } from "./timezone";
 import type { HourlyForecast, WeatherData, WeatherLocation } from "./types";
 
@@ -155,11 +162,20 @@ export interface HyperframesDailyBriefPayload {
   punkts: string;
   citySlug: string;
   dayKey: string;
+  slotId: SocialBriefSlotId;
   variables: HyperframesDailyBriefVariables;
   /** Parsed hourly curve for clients that prefer structured JSON. */
   hourly: HyperframesHourlyPoint[];
   render: HyperframesRenderHints;
   captions: SocialCaptions;
+  /** Platforms recommended for this payload given rain chance. */
+  publish: {
+    always: SocialPlatform[];
+    conditional: SocialPlatform[];
+    selected: SocialPlatform[];
+    interesting: boolean;
+    rainChance: number;
+  };
   /** One JSONL-ready row for `hyperframes lambda render-batch`. */
   batchRow: {
     outputKey: string;
@@ -279,6 +295,7 @@ function buildDeepLink(options: {
   location: WeatherLocation;
   dayKey: string;
   platform: string;
+  campaign: string;
 }): string {
   const href =
     options.location.id === DEFAULT_LOCATION_ID
@@ -292,13 +309,53 @@ function buildDeepLink(options: {
   const url = new URL(`${getSiteUrl()}${href}`);
   url.searchParams.set("utm_source", options.platform);
   url.searchParams.set("utm_medium", "social");
-  url.searchParams.set("utm_campaign", "daily_brief");
+  url.searchParams.set("utm_campaign", options.campaign);
   url.searchParams.set("utm_content", `${locationSlug(options.location.name)}_${options.dayKey}`);
   return url.toString();
 }
 
+function buildHook(options: {
+  locale: Locale;
+  slot: SocialBriefSlot;
+  cityName: string;
+  temperature: string;
+  rainChance: number;
+}): string {
+  const wet = options.rainChance >= options.slot.interestingRainChance;
+
+  if (options.slot.angle === "weekend_plan") {
+    if (wet) {
+      return options.locale === "lv"
+        ? `${options.cityName} brīvdienās — ņem lietussargu`
+        : `${options.cityName} weekend — pack an umbrella`;
+    }
+    return options.locale === "lv"
+      ? `${options.cityName} — brīvdienu laiks`
+      : `${options.cityName} — weekend weather`;
+  }
+
+  if (options.slot.angle === "weekend_day") {
+    if (wet) {
+      return options.locale === "lv"
+        ? `${options.cityName} šodien — lietus risks`
+        : `${options.cityName} today — rain risk`;
+    }
+    return options.locale === "lv"
+      ? `${options.cityName} — labs laiks pastaigai`
+      : `${options.cityName} — good day to get out`;
+  }
+
+  if (wet) {
+    return options.locale === "lv"
+      ? `${options.cityName} — ņem lietussargu`
+      : `${options.cityName} — take an umbrella`;
+  }
+  return `${options.cityName} — ${options.temperature}`;
+}
+
 function buildCaptions(options: {
   locale: Locale;
+  slot: SocialBriefSlot;
   cityName: string;
   temperature: string;
   high: string;
@@ -307,14 +364,27 @@ function buildCaptions(options: {
   condition: string;
   advice: string;
   deepLink: string;
-  dayKey: string;
 }): SocialCaptions {
   const copy = COPY[options.locale];
   const highLow = copy.highLow(options.high, options.low);
-  const body =
-    options.locale === "lv"
-      ? `${options.cityName} šodien: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
-      : `${options.cityName} today: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+
+  let body: string;
+  if (options.slot.angle === "weekend_plan") {
+    body =
+      options.locale === "lv"
+        ? `${options.cityName} brīvdienās: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
+        : `${options.cityName} this weekend: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+  } else if (options.slot.angle === "weekend_day") {
+    body =
+      options.locale === "lv"
+        ? `${options.cityName} šodien: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
+        : `${options.cityName} today: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+  } else {
+    body =
+      options.locale === "lv"
+        ? `${options.cityName} šorīt: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
+        : `${options.cityName} this morning: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+  }
 
   const hashtags =
     options.locale === "lv"
@@ -332,6 +402,43 @@ function buildCaptions(options: {
   };
 }
 
+/** Next Saturday/Sunday day keys in Europe/Riga relative to `now`. */
+export function getUpcomingWeekendDayKeys(now = new Date()): {
+  saturday: string;
+  sunday: string;
+} {
+  const local = getLatviaWallClock(now);
+  const day = local.getDay(); // 0 Sun … 6 Sat
+  const daysUntilSaturday = (6 - day + 7) % 7;
+  const saturday = new Date(local);
+  saturday.setDate(local.getDate() + (day === 6 ? 0 : daysUntilSaturday));
+  const sunday = new Date(saturday);
+  sunday.setDate(saturday.getDate() + 1);
+  return {
+    saturday: getLatviaDayKey(saturday),
+    sunday: getLatviaDayKey(sunday),
+  };
+}
+
+function pickForecastHoursForSlot(
+  forecasts: HourlyForecast[],
+  slot: SocialBriefSlot,
+  now: Date,
+): HourlyForecast[] {
+  if (slot.angle !== "weekend_plan") {
+    const today = getTodayForecasts(forecasts);
+    return today.length > 0 ? today : forecasts;
+  }
+
+  const { saturday, sunday } = getUpcomingWeekendDayKeys(now);
+  const weekend = groupForecastsByDay(forecasts)
+    .filter((group) => group.dayKey === saturday || group.dayKey === sunday)
+    .flatMap((group) => group.forecasts);
+
+  if (weekend.length > 0) return weekend;
+  return getTodayForecasts(forecasts);
+}
+
 export interface BuildHyperframesDailyBriefOptions {
   data: WeatherData;
   locale?: string;
@@ -339,6 +446,8 @@ export interface BuildHyperframesDailyBriefOptions {
   now?: Date;
   /** Social platform baked into the default deep link UTM. */
   platform?: string;
+  /** Posting slot controls cities upstream; here it shapes copy + campaign. */
+  slot?: SocialBriefSlot | SocialBriefSlotId;
 }
 
 /**
@@ -352,6 +461,10 @@ export function buildHyperframesDailyBrief(
   const copy = COPY[locale];
   const now = options.now ?? new Date();
   const platform = options.platform ?? "instagram";
+  const slot: SocialBriefSlot =
+    typeof options.slot === "string"
+      ? SOCIAL_BRIEF_SLOTS[options.slot]
+      : (options.slot ?? SOCIAL_BRIEF_SLOTS.weekday_morning);
   const { data } = options;
 
   if (data.forecasts.length === 0) {
@@ -359,18 +472,19 @@ export function buildHyperframesDailyBrief(
   }
 
   const current = findCurrentForecast(data.forecasts, now);
-  const todayHours = getTodayForecasts(data.forecasts);
-  const today = summarizeDay(todayHours.length > 0 ? todayHours : data.forecasts);
+  const focusHours = pickForecastHoursForSlot(data.forecasts, slot, now);
+  const focus = summarizeDay(focusHours.length > 0 ? focusHours : data.forecasts);
   const summary = getWeatherSummaryParts(current);
   const dayKey = getLatviaDayKey(now);
   const citySlug = locationSlug(data.location.name);
   const timeLabel = formatLatviaTime(now, "HH:mm");
   const dateLabel = formatLatviaDateTime(now, locale, "shortDate");
   const temperature = formatSignedTemp(current.temperature);
-  const tempHigh = formatDegree(today.maxTemperature);
-  const tempLow = formatDegree(today.minTemperature);
-  const rainChance = `${Math.round(today.maxPrecipitationProbability)}%`;
-  const precipMm = formatPrecip(today.totalPrecipitation, copy.precipUnit);
+  const tempHigh = formatDegree(focus.maxTemperature);
+  const tempLow = formatDegree(focus.minTemperature);
+  const rainChanceValue = Math.round(focus.maxPrecipitationProbability);
+  const rainChance = `${rainChanceValue}%`;
+  const precipMm = formatPrecip(focus.totalPrecipitation, copy.precipUnit);
   const windLine = `${Math.round(current.windSpeed)} ${copy.windUnit} ${getWindDirection(current.windDirection)}`;
   const condition =
     copy.summary.cond[summary.conditionKey] ?? getConditionKey(current.iconCode);
@@ -380,9 +494,23 @@ export function buildHyperframesDailyBrief(
     location: data.location,
     dayKey,
     platform,
+    campaign: slot.campaign,
   });
-  const hourly = buildHourlyCurve(data.forecasts);
-  const outputKey = `renders/${dayKey}/${citySlug}-${locale}.mp4`;
+  const hourly =
+    slot.angle === "weekend_plan"
+      ? focusHours.map((forecast) => ({
+          hour: formatLatviaTime(forecast.time, "HH"),
+          temperature: Math.round(forecast.temperature),
+          rainChance: Math.round(forecast.precipitationProbability),
+          precipMm: Math.round(forecast.precipitation * 10) / 10,
+          iconCode: forecast.iconCode,
+        }))
+      : buildHourlyCurve(data.forecasts);
+  const outputKey = `renders/${dayKey}/${slot.id}/${citySlug}-${locale}.mp4`;
+  const interesting = rainChanceValue >= slot.interestingRainChance;
+  const selected = interesting
+    ? [...new Set([...slot.platforms, ...slot.conditionalPlatforms])]
+    : [...slot.platforms];
 
   const variables: HyperframesDailyBriefVariables = {
     brandName: copy.brandName,
@@ -397,12 +525,13 @@ export function buildHyperframesDailyBrief(
     windLine,
     condition,
     advice,
-    hook:
-      today.maxPrecipitationProbability >= 50
-        ? locale === "lv"
-          ? `${data.location.name} — ņem lietussargu`
-          : `${data.location.name} — take an umbrella`
-        : `${data.location.name} — ${temperature}`,
+    hook: buildHook({
+      locale,
+      slot,
+      cityName: data.location.name,
+      temperature,
+      rainChance: rainChanceValue,
+    }),
     cta: copy.cta,
     deepLink,
     emoji: getConditionEmoji(current.iconCode),
@@ -417,6 +546,7 @@ export function buildHyperframesDailyBrief(
     punkts: data.location.id,
     citySlug,
     dayKey,
+    slotId: slot.id,
     variables,
     hourly,
     render: {
@@ -429,6 +559,7 @@ export function buildHyperframesDailyBrief(
     },
     captions: buildCaptions({
       locale,
+      slot,
       cityName: data.location.name,
       temperature,
       high: tempHigh,
@@ -437,11 +568,17 @@ export function buildHyperframesDailyBrief(
       condition,
       advice,
       deepLink,
-      dayKey,
     }),
+    publish: {
+      always: [...slot.platforms],
+      conditional: [...slot.conditionalPlatforms],
+      selected,
+      interesting,
+      rainChance: rainChanceValue,
+    },
     batchRow: {
       outputKey,
-      executionName: `daily-brief-${citySlug}-${locale}-${dayKey}`,
+      executionName: `daily-brief-${slot.id}-${citySlug}-${locale}-${dayKey}`,
       variables,
     },
   };
