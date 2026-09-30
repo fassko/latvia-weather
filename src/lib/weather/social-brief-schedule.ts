@@ -16,8 +16,6 @@ export interface SocialBriefSlot {
   id: SocialBriefSlotId;
   /** Human label for ops. */
   label: string;
-  /** Cron expression evaluated in Europe/Riga. */
-  cron: string;
   timezone: typeof SOCIAL_BRIEF_TIMEZONE;
   /** Days this slot is intended for (0=Sun … 6=Sat, JS getDay). */
   daysOfWeek: number[];
@@ -48,7 +46,6 @@ export const SOCIAL_BRIEF_SLOTS: Record<SocialBriefSlotId, SocialBriefSlot> = {
   weekday_morning: {
     id: "weekday_morning",
     label: "Weekday morning brief",
-    cron: "45 6 * * 1-5",
     timezone: SOCIAL_BRIEF_TIMEZONE,
     daysOfWeek: [1, 2, 3, 4, 5],
     publishLocalTime: "07:00",
@@ -65,7 +62,6 @@ export const SOCIAL_BRIEF_SLOTS: Record<SocialBriefSlotId, SocialBriefSlot> = {
   friday_weekend_outlook: {
     id: "friday_weekend_outlook",
     label: "Friday weekend outlook",
-    cron: "0 16 * * 5",
     timezone: SOCIAL_BRIEF_TIMEZONE,
     daysOfWeek: [5],
     publishLocalTime: "16:00",
@@ -82,7 +78,6 @@ export const SOCIAL_BRIEF_SLOTS: Record<SocialBriefSlotId, SocialBriefSlot> = {
   weekend_morning: {
     id: "weekend_morning",
     label: "Weekend morning brief",
-    cron: "0 9 * * 6,0",
     timezone: SOCIAL_BRIEF_TIMEZONE,
     daysOfWeek: [0, 6],
     publishLocalTime: "09:00",

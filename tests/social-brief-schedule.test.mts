@@ -12,13 +12,14 @@ import { getUpcomingWeekendDayKeys } from "../src/lib/weather/hyperframes-daily-
 import { parseLaiks } from "../src/lib/weather/timezone.ts";
 
 describe("social brief schedule", () => {
-  it("exposes three Europe/Riga slots with crons", () => {
+  it("exposes three Europe/Riga slots with publish times", () => {
     const schedule = listSocialBriefSchedule();
     assert.equal(schedule.timezone, "Europe/Riga");
     assert.equal(schedule.slots.length, 3);
-    assert.equal(SOCIAL_BRIEF_SLOTS.weekday_morning.cron, "45 6 * * 1-5");
-    assert.equal(SOCIAL_BRIEF_SLOTS.friday_weekend_outlook.cron, "0 16 * * 5");
-    assert.equal(SOCIAL_BRIEF_SLOTS.weekend_morning.cron, "0 9 * * 6,0");
+    assert.equal(SOCIAL_BRIEF_SLOTS.weekday_morning.publishLocalTime, "07:00");
+    assert.equal(SOCIAL_BRIEF_SLOTS.friday_weekend_outlook.publishLocalTime, "16:00");
+    assert.equal(SOCIAL_BRIEF_SLOTS.weekend_morning.publishLocalTime, "09:00");
+    assert.ok(!("cron" in SOCIAL_BRIEF_SLOTS.weekday_morning));
   });
 
   it("resolves and validates slot ids", () => {
