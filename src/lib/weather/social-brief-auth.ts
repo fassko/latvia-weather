@@ -13,7 +13,7 @@ function secretsMatch(provided: string, expected: string): boolean {
  * or
  *   x-social-brief-secret: <secret>
  *
- * Schema / schedule / n8n prompt endpoints stay public.
+ * Schema and schedule catalog endpoints stay public.
  */
 export function isSocialBriefAuthorized(request: Request): boolean {
   const expected = process.env.SOCIAL_BRIEF_SECRET;

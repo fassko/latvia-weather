@@ -4,7 +4,7 @@ import { getLatviaWallClock } from "./timezone";
 
 export const SOCIAL_BRIEF_TIMEZONE = "Europe/Riga";
 
-/** Named posting slots for the Pi / n8n automation. */
+/** Named posting slots for social automation. */
 export type SocialBriefSlotId =
   | "weekday_morning"
   | "friday_weekend_outlook"
@@ -14,7 +14,7 @@ export type SocialPlatform = "instagram" | "tiktok" | "facebook" | "x";
 
 export interface SocialBriefSlot {
   id: SocialBriefSlotId;
-  /** Human label for n8n / ops. */
+  /** Human label for ops. */
   label: string;
   /** Cron expression evaluated in Europe/Riga. */
   cron: string;

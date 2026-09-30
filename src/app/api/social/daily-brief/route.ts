@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getN8nDailyBriefWorkflowPrompt } from "@/lib/weather/n8n-daily-brief-prompt";
 import { isSocialBriefAuthorized } from "@/lib/weather/social-brief-auth";
 import {
   inferSocialBriefSlot,
@@ -26,7 +25,6 @@ import {
   isValidLocationId,
   resolveLocationId,
 } from "@/lib/weather/locations";
-import { getSiteUrl } from "@/lib/site";
 
 export const runtime = "nodejs";
 
@@ -66,17 +64,6 @@ async function buildPayloadForPunkts(
   });
 }
 
-function n8nHints(slot: SocialBriefSlot) {
-  return {
-    timezone: slot.timezone,
-    templateCompositionId: HYPERFRAMES_DAILY_BRIEF_COMPOSITION_ID,
-    renderRoot: "~/renders",
-    variablesFileName: "variables.json",
-    cron: slot.cron,
-    publishLocalTime: slot.publishLocalTime,
-  };
-}
-
 function slotResponse(
   slot: SocialBriefSlot,
   locale: "en" | "lv",
@@ -87,7 +74,6 @@ function slotResponse(
     locale,
     count: payloads.length,
     payloads,
-    n8n: n8nHints(slot),
   };
 }
 
@@ -104,7 +90,6 @@ function slotResponse(
  * - format: json (default) | jsonl | variables
  * - schedule=1: return slot catalog
  * - schema=1: HyperFrames variable declarations
- * - prompt=1: n8n workflow builder prompt (markdown)
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -122,16 +107,6 @@ export async function GET(request: Request) {
   if (searchParams.get("schedule") === "1") {
     return NextResponse.json(listSocialBriefSchedule(), {
       headers: { "Cache-Control": "public, max-age=3600" },
-    });
-  }
-
-  if (searchParams.get("prompt") === "1") {
-    const prompt = getN8nDailyBriefWorkflowPrompt({ baseUrl: getSiteUrl() });
-    return new NextResponse(prompt, {
-      headers: {
-        "Content-Type": "text/markdown; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-      },
     });
   }
 

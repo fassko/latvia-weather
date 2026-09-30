@@ -8,7 +8,6 @@ import {
   SOCIAL_BRIEF_SLOTS,
 } from "../src/lib/weather/social-brief-schedule.ts";
 import { isSocialBriefAuthorized } from "../src/lib/weather/social-brief-auth.ts";
-import { getN8nDailyBriefWorkflowPrompt } from "../src/lib/weather/n8n-daily-brief-prompt.ts";
 import { getUpcomingWeekendDayKeys } from "../src/lib/weather/hyperframes-daily-brief.ts";
 import { parseLaiks } from "../src/lib/weather/timezone.ts";
 
@@ -85,18 +84,6 @@ describe("social brief auth", () => {
       if (previous === undefined) delete process.env.SOCIAL_BRIEF_SECRET;
       else process.env.SOCIAL_BRIEF_SECRET = previous;
     }
-  });
-});
-
-describe("n8n workflow prompt", () => {
-  it("includes slot crons and API URLs", () => {
-    const prompt = getN8nDailyBriefWorkflowPrompt({
-      baseUrl: "https://latvia-weather.com",
-    });
-    assert.match(prompt, /weekday_morning/);
-    assert.match(prompt, /45 6 \* \* 1-5/);
-    assert.match(prompt, /api\/social\/daily-brief\?slot=weekend_morning/);
-    assert.match(prompt, /HyperFrames/);
   });
 });
 
