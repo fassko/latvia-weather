@@ -31,11 +31,13 @@ import {
   isValidLocationId,
   resolveLocationId,
 } from "@/lib/weather/locations";
+import { pickLocationQueryValue } from "@/lib/weather/location-query";
 import { getSiteUrl, localizedPath } from "@/lib/site";
 
 export interface HomeProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ punkts?: string }>;
+  /** Prefer `punkts`; `location` is accepted as an equivalent alias. */
+  searchParams: Promise<{ punkts?: string; location?: string }>;
 }
 
 function buildPagePath(locale: string, punkts?: string): string {
@@ -77,14 +79,18 @@ function buildLanguageAlternates(baseUrl: string, punkts?: string, locationName?
 
 export async function generateMetadata({ params, searchParams }: HomeProps): Promise<Metadata> {
   const { locale } = await params;
-  const { punkts } = await searchParams;
+  const { punkts, location } = await searchParams;
+  const queryLocationId = pickLocationQueryValue(punkts, location);
   const savedPunkts = await getLocationCookie();
-  const locationId = resolveLocationId(punkts, savedPunkts);
+  const locationId = resolveLocationId(queryLocationId, savedPunkts);
   const t = await getTranslations({ locale, namespace: "metadata" });
   const baseUrl = getSiteUrl();
   // Canonical and hreflang describe the requested URL, never the visitor's
   // cookie: a personalised canonical would point crawlers at the wrong page.
-  const canonicalLocationId = punkts && isValidLocationId(punkts) ? punkts : undefined;
+  const canonicalLocationId =
+    queryLocationId && isValidLocationId(queryLocationId)
+      ? queryLocationId
+      : undefined;
   const imageUrl = `${baseUrl}${buildOgImagePath(locale, locationId)}`;
 
   let title = t("siteTitle");
@@ -139,7 +145,7 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
 
 export default async function Home({ params, searchParams }: HomeProps) {
   const { locale } = await params;
-  const { punkts } = await searchParams;
+  const { punkts, location } = await searchParams;
 
   if (!routing.locales.includes(locale as Locale)) {
     return null;
@@ -148,7 +154,10 @@ export default async function Home({ params, searchParams }: HomeProps) {
   setRequestLocale(locale);
 
   const savedPunkts = await getLocationCookie();
-  const locationId = resolveLocationId(punkts, savedPunkts);
+  const locationId = resolveLocationId(
+    pickLocationQueryValue(punkts, location),
+    savedPunkts,
+  );
   const t = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
   const tAssistant = await getTranslations({ locale, namespace: "assistant" });
