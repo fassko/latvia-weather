@@ -433,6 +433,7 @@
     },
     "baseline": {
       "climateNormal": "{period} klimata norma",
+      "priorYearMonth": "Tas pats mēnesis pērn",
       "stationTypical": "Tipiski šajā stacijā"
     },
     "verdict": {
@@ -446,7 +447,12 @@
         "drier": "Sausāks par parasto",
         "usual": "Aptuveni kā parasti"
       },
-      "wind": {
+      "windLastYear": {
+        "windier": "Vējaināks nekā pērn",
+        "calmer": "Klusāks nekā pērn",
+        "usual": "Aptuveni kā pērn"
+      },
+      "windTypical": {
         "windier": "Vējaināks par tipisko",
         "calmer": "Klusāks par tipisko",
         "usual": "Aptuveni tipiski"
@@ -454,7 +460,7 @@
     },
     "stationNear": "Tuvākā klimatiskā stacija: {station} ({distance} km).",
     "stationFar": "Tuvākā pieejamā klimatiskā stacija: {station} ({distance} km) — vietējie apstākļi var atšķirties.",
-    "disclaimer": "Temperatūra un nokrišņi izmantoti 1991.–2020. gadu klimata normas; vējš — stacijas daudzgadu mēneša vidējais (oficiālas vēja normas nav). Mēneša vērtības ir operatīvi LVĢMC atvērtie dati un var kavēties vai mainīties pēc kvalitātes pārbaudēm. Avots:"
+    "disclaimer": "Novērojumi no LVĢMC stundu arhīva (aptuveni pēdējās 365 dienas). Temperatūra un nokrišņi izmantoti 1991.–2020. gadu klimata normas; vējš — tas pats mēnesis pērn, ja pieejams, citādi stacijas daudzgadu mēneša vidējais (oficiālas vēja normas nav). Arhīva dati ir operatīvi un var mainīties pēc kvalitātes pārbaudēm. Avots:"
   },
   "highlights": {
     "title": "Šodienas maksimumi",

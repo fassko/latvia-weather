@@ -7,17 +7,22 @@ export const CLIMATE_RESOURCE_IDS = {
   stations: "c32c7afd-0d05-44fd-8b24-1de85b4bf11d",
   params: "38b462ac-08b9-4168-9d6e-cbaedc2e775d",
   hourlyArchive: "ecc62e27-2071-483c-bca9-5e53d979faa8",
+  /** Forecast package — not used for climate history (forward-looking only). */
+  forecastDaily: "4b8172da-9ea3-4206-81fe-d7023a6a1f78",
+  forecastLocations: "f692fae6-99cd-4bee-95ec-f158a595873a",
+  forecastParams: "9c481ead-16a1-4579-a121-2a75c62fd8f1",
 } as const;
 
 export const STATIONS_REVALIDATE_SECONDS = 86_400;
 export const NORMALS_REVALIDATE_SECONDS = 604_800;
+export const ARCHIVE_REVALIDATE_SECONDS = 21_600;
 export const MONTHLY_REVALIDATE_SECONDS = 43_200;
 
 interface DatastoreSearchResult<T> {
   success: boolean;
   result?: {
     records: T[];
-    total: number;
+    total?: number;
   };
   error?: { message?: string };
 }
@@ -50,6 +55,27 @@ export async function datastoreSearch<T extends object>(options: {
   const payload = (await response.json()) as DatastoreSearchResult<T>;
   if (!payload.success || !payload.result) {
     throw new Error(payload.error?.message ?? "CKAN datastore_search failed");
+  }
+
+  return payload.result.records;
+}
+
+export async function datastoreSearchSql<T extends object>(options: {
+  sql: string;
+  revalidate: number;
+}): Promise<T[]> {
+  const params = new URLSearchParams({ sql: options.sql });
+  const response = await fetch(`${CKAN_BASE}/datastore_search_sql?${params}`, {
+    next: { revalidate: options.revalidate },
+  });
+
+  if (!response.ok) {
+    throw new Error(`CKAN datastore_search_sql returned ${response.status}`);
+  }
+
+  const payload = (await response.json()) as DatastoreSearchResult<T>;
+  if (!payload.success || !payload.result) {
+    throw new Error(payload.error?.message ?? "CKAN datastore_search_sql failed");
   }
 
   return payload.result.records;

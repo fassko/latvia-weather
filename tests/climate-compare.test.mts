@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  aggregateArchiveMean,
+  aggregateArchiveSum,
   buildClimateMonthComparisonFromData,
   classifyPrecipitationDelta,
   classifyTemperatureDelta,
   classifyWindDelta,
-  findLatestCompleteMonth,
-  typicalMonthlyMean,
+  latestCompleteMonth,
+  monthBounds,
 } from "../src/lib/climate/compare.ts";
 import { findNearestClimateStation } from "../src/lib/climate/stations.ts";
 import { parseCsv, parseOptionalNumber } from "../src/lib/climate/ckan.ts";
@@ -38,32 +40,36 @@ test("findNearestClimateStation prefers stations with climate normals", () => {
   assert.equal(nearest.station.id, "NEAR");
 });
 
-test("findLatestCompleteMonth skips blank months and requires all series", () => {
-  const temperature = [
-    { STATION_ID: "S", ABBREVIATION: "HTDRY", FUNCTION: "AVG", YEAR: 2026, MONTH: 9, DECADE: 0, VALUE: " " },
-    { STATION_ID: "S", ABBREVIATION: "HTDRY", FUNCTION: "AVG", YEAR: 2026, MONTH: 8, DECADE: 0, VALUE: "17.2" },
-    { STATION_ID: "S", ABBREVIATION: "HTDRY", FUNCTION: "AVG", YEAR: 2026, MONTH: 7, DECADE: 0, VALUE: " " },
-  ];
-  const precipitation = [
-    { STATION_ID: "S", ABBREVIATION: "HPRAB", FUNCTION: "SUM", YEAR: 2026, MONTH: 8, DECADE: 0, VALUE: "61.3" },
-  ];
-  const wind = [
-    { STATION_ID: "S", ABBREVIATION: "HWNDS", FUNCTION: "AVG", YEAR: 2026, MONTH: 8, DECADE: 0, VALUE: "1.8" },
-  ];
-
+test("latestCompleteMonth is the previous Europe/Riga calendar month", () => {
+  const october = latestCompleteMonth(new Date("2026-10-01T12:00:00.000Z"));
   assert.deepEqual(
-    findLatestCompleteMonth({ temperature, precipitation, wind }),
-    { year: 2026, month: 8 },
+    { year: october.year, month: october.month, start: october.start, end: october.end },
+    {
+      year: 2026,
+      month: 9,
+      start: "2026-09-01T00:00:00",
+      end: "2026-10-01T00:00:00",
+    },
   );
+
+  const january = latestCompleteMonth(new Date("2026-01-05T10:00:00.000Z"));
+  assert.equal(january.year, 2025);
+  assert.equal(january.month, 12);
 });
 
-test("typicalMonthlyMean excludes the compared year", () => {
-  const records = [
-    { STATION_ID: "S", ABBREVIATION: "HWNDS", FUNCTION: "AVG", YEAR: 2024, MONTH: 8, DECADE: 0, VALUE: "2.0" },
-    { STATION_ID: "S", ABBREVIATION: "HWNDS", FUNCTION: "AVG", YEAR: 2025, MONTH: 8, DECADE: 0, VALUE: "3.0" },
-    { STATION_ID: "S", ABBREVIATION: "HWNDS", FUNCTION: "AVG", YEAR: 2026, MONTH: 8, DECADE: 0, VALUE: "9.0" },
-  ];
-  assert.equal(typicalMonthlyMean(records, 8, 2026), 2.5);
+test("monthBounds and archive aggregates", () => {
+  assert.deepEqual(monthBounds(2026, 12), {
+    year: 2026,
+    month: 12,
+    start: "2026-12-01T00:00:00",
+    end: "2027-01-01T00:00:00",
+  });
+
+  const values = Array.from({ length: 200 }, () => 2);
+  values.push(4);
+  assert.equal(aggregateArchiveMean(values)?.toFixed(4), (404 / 201).toFixed(4));
+  assert.equal(aggregateArchiveSum(values), 404);
+  assert.equal(aggregateArchiveMean([1, 2, 3]), null);
 });
 
 test("delta classifiers use honest thresholds", () => {
@@ -77,7 +83,7 @@ test("delta classifiers use honest thresholds", () => {
   assert.equal(classifyWindDelta(-0.5), "calmer");
 });
 
-test("buildClimateMonthComparisonFromData maps normals and wind typical", () => {
+test("buildClimateMonthComparisonFromData maps normals and wind baselines", () => {
   const comparison = buildClimateMonthComparisonFromData({
     nearest: {
       station: {
@@ -91,59 +97,24 @@ test("buildClimateMonthComparisonFromData maps normals and wind typical", () => 
     },
     normals: {
       byStationMonth: new Map([
-        ["RIGASLU|TDRY|8", 16.8],
-        ["RIGASLU|PRAB|8", 71.7],
+        ["RIGASLU|TDRY|9", 12.5],
+        ["RIGASLU|PRAB|9", 60],
       ]),
       stationIds: new Set(["RIGASLU"]),
       storedAt: Date.now(),
     },
-    temperature: [
-      {
-        STATION_ID: "RIGASLU",
-        ABBREVIATION: "HTDRY",
-        FUNCTION: "AVG",
-        YEAR: 2026,
-        MONTH: 8,
-        DECADE: 0,
-        VALUE: "17.2",
-      },
-    ],
-    precipitation: [
-      {
-        STATION_ID: "RIGASLU",
-        ABBREVIATION: "HPRAB",
-        FUNCTION: "SUM",
-        YEAR: 2026,
-        MONTH: 8,
-        DECADE: 0,
-        VALUE: "61.3",
-      },
-    ],
-    wind: [
-      {
-        STATION_ID: "RIGASLU",
-        ABBREVIATION: "HWNDS",
-        FUNCTION: "AVG",
-        YEAR: 2024,
-        MONTH: 8,
-        DECADE: 0,
-        VALUE: "2.0",
-      },
-      {
-        STATION_ID: "RIGASLU",
-        ABBREVIATION: "HWNDS",
-        FUNCTION: "AVG",
-        YEAR: 2026,
-        MONTH: 8,
-        DECADE: 0,
-        VALUE: "1.8",
-      },
-    ],
+    year: 2026,
+    month: 9,
+    actualTemperature: 14.7,
+    actualPrecipitation: 80.7,
+    actualWind: 3.2,
+    windBaseline: { baseline: 2.8, kind: "stationTypical" },
   });
 
   assert.ok(comparison);
+  assert.equal(comparison.source, "hourlyArchive");
   assert.equal(comparison.year, 2026);
-  assert.equal(comparison.month, 8);
+  assert.equal(comparison.month, 9);
   assert.equal(comparison.metrics.length, 3);
 
   const temp = comparison.metrics.find((metric) => metric.kind === "temperature");
@@ -152,12 +123,12 @@ test("buildClimateMonthComparisonFromData maps normals and wind typical", () => 
 
   assert.ok(temp);
   assert.equal(temp.baselineKind, "climateNormal");
-  assert.equal(Number(temp.delta.toFixed(1)), 0.4);
+  assert.equal(Number(temp.delta.toFixed(1)), 2.2);
 
   assert.ok(precip);
   assert.equal(precip.baselineKind, "climateNormal");
 
   assert.ok(wind);
   assert.equal(wind.baselineKind, "stationTypical");
-  assert.equal(wind.baseline, 2.0);
+  assert.equal(Number(wind.delta.toFixed(1)), 0.4);
 });
