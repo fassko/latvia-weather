@@ -11,10 +11,12 @@ import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { TopNav } from "@/components/TopNav";
 import { WeatherAssistantLoader } from "@/components/WeatherAssistantLoader";
 import { WeatherHero } from "@/components/WeatherHero";
+import { ClimateComparison } from "@/components/ClimateComparison";
 import { WeatherHighlights } from "@/components/WeatherHighlights";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
 import { routing, type Locale } from "@/i18n/routing";
 import { PopularPlaces } from "@/components/PopularPlaces";
+import { getClimateMonthComparison } from "@/lib/climate/compare";
 import { buildPageStructuredData } from "@/lib/seo/structured-data";
 import {
   getHourlyForecast,
@@ -180,11 +182,17 @@ export default async function Home({ params, searchParams }: HomeProps) {
   }
 
   data = mergeForecastLocation(data, locations);
-  const sunTimesByDay = await getAuthoritativeSunTimesByDay(
-    data.forecasts.map((forecast) => getLatviaDayKey(forecast.time)),
-    data.location.lat,
-    data.location.lon,
-  );
+  const [sunTimesByDay, climateComparison] = await Promise.all([
+    getAuthoritativeSunTimesByDay(
+      data.forecasts.map((forecast) => getLatviaDayKey(forecast.time)),
+      data.location.lat,
+      data.location.lon,
+    ),
+    getClimateMonthComparison({
+      lat: data.location.lat,
+      lon: data.location.lon,
+    }).catch(() => null),
+  ]);
 
   const pageUrl = `${getSiteUrl()}${localizedPath(
     locale,
@@ -229,6 +237,9 @@ export default async function Home({ params, searchParams }: HomeProps) {
         <WeatherWarnings locale={locale} warnings={warnings} />
         <MetricCards forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
         <WeatherHighlights forecasts={data.forecasts} />
+        {climateComparison ? (
+          <ClimateComparison comparison={climateComparison} locale={locale} />
+        ) : null}
         <WeatherAssistantLoader
           locale={locale}
           locationId={data.location.id}
