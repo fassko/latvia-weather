@@ -423,6 +423,39 @@
       "extreme": "Extreme"
     }
   },
+  "climate": {
+    "title": "Compared with usual",
+    "subtitle": "Observed weather for {period} at the nearest climate station.",
+    "metrics": {
+      "temperature": "Mean temperature",
+      "precipitation": "Total rain",
+      "wind": "Mean wind"
+    },
+    "baseline": {
+      "climateNormal": "{period} climate normal",
+      "stationTypical": "Typical for this station"
+    },
+    "verdict": {
+      "temperature": {
+        "warmer": "Warmer than usual",
+        "colder": "Colder than usual",
+        "usual": "About usual"
+      },
+      "precipitation": {
+        "rainier": "Rainier than usual",
+        "drier": "Drier than usual",
+        "usual": "About usual"
+      },
+      "wind": {
+        "windier": "Windier than typical",
+        "calmer": "Calmer than typical",
+        "usual": "About typical"
+      }
+    },
+    "stationNear": "Nearest climate station: {station} ({distance} km away).",
+    "stationFar": "Nearest available climate station: {station} ({distance} km away) — local conditions may differ.",
+    "disclaimer": "Temperature and rain use 1991–2020 climate normals; wind uses the station’s multi-year monthly average (no official wind normal). Monthly values are operational LVĢMC open data and can lag or change after quality checks. Source:"
+  },
   "highlights": {
     "title": "Today's peaks",
     "warmest": "Warmest",

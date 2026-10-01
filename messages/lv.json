@@ -423,6 +423,39 @@
       "extreme": "Ekstrēms"
     }
   },
+  "climate": {
+    "title": "Salīdzinājums ar parasto",
+    "subtitle": "Novērotie laikapstākļi {period} tuvākajā klimatiskajā stacijā.",
+    "metrics": {
+      "temperature": "Vidējā temperatūra",
+      "precipitation": "Nokrišņu summa",
+      "wind": "Vidējais vējš"
+    },
+    "baseline": {
+      "climateNormal": "{period} klimata norma",
+      "stationTypical": "Tipiski šajā stacijā"
+    },
+    "verdict": {
+      "temperature": {
+        "warmer": "Siltāks par parasto",
+        "colder": "Aukstāks par parasto",
+        "usual": "Aptuveni kā parasti"
+      },
+      "precipitation": {
+        "rainier": "Lietaināks par parasto",
+        "drier": "Sausāks par parasto",
+        "usual": "Aptuveni kā parasti"
+      },
+      "wind": {
+        "windier": "Vējaināks par tipisko",
+        "calmer": "Klusāks par tipisko",
+        "usual": "Aptuveni tipiski"
+      }
+    },
+    "stationNear": "Tuvākā klimatiskā stacija: {station} ({distance} km).",
+    "stationFar": "Tuvākā pieejamā klimatiskā stacija: {station} ({distance} km) — vietējie apstākļi var atšķirties.",
+    "disclaimer": "Temperatūra un nokrišņi izmantoti 1991.–2020. gadu klimata normas; vējš — stacijas daudzgadu mēneša vidējais (oficiālas vēja normas nav). Mēneša vērtības ir operatīvi LVĢMC atvērtie dati un var kavēties vai mainīties pēc kvalitātes pārbaudēm. Avots:"
+  },
   "highlights": {
     "title": "Šodienas maksimumi",
     "warmest": "Siltākais",
