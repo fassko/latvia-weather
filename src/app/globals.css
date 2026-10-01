@@ -141,6 +141,26 @@ body {
   pointer-events: none;
 }
 
+/*
+ * Dark basemap invert turns land/forest into deep greens that match the mild
+ * temperature fills — add a light halo so pins stay separable from tiles.
+ */
+.dark .weather-map-marker__pill {
+  outline: 2px solid rgb(248 250 252 / 0.96);
+  outline-offset: 1px;
+  box-shadow:
+    0 0 0 1px rgb(15 23 42 / 0.55),
+    0 2px 4px rgb(0 0 0 / 0.45),
+    0 10px 22px rgb(0 0 0 / 0.5);
+  filter: brightness(1.2) saturate(1.1);
+}
+
+.dark .weather-map-cluster__core {
+  outline: 2px solid rgb(248 250 252 / 0.96);
+  outline-offset: 1px;
+  filter: brightness(1.2) saturate(1.1);
+}
+
 .weather-map-marker__main,
 .weather-map-marker__wind {
   display: inline-flex;
