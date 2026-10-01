@@ -44,21 +44,18 @@ supported. Without Redis/KV, local development falls back to an in-memory limit.
 
 ### Weather map basemap
 
-The map uses a **neutral gray** basemap (no green forests) so temperature
-markers stay readable:
+The map defaults to **OpenStreetMap France** tiles (classic OSM colors, no API
+key, works at high zoom). Dark mode inverts the same light tiles via CSS.
 
-- **Default (no key):** Esri Light Gray / Dark Gray Canvas
-- **Optional:** CARTO Positron / Dark Matter when `NEXT_PUBLIC_CARTO_API_KEY` is set
-
-Request a free CARTO basemap key at
-[carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/) and set it for
-Preview + Production on Vercel (and in `.env.local` for local):
+Optional [CARTO Voyager](https://carto.com/basemaps/) when a free basemap key is
+set — request one at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/)
+and add it for Preview + Production on Vercel (and in `.env.local` for local):
 
 ```bash
 NEXT_PUBLIC_CARTO_API_KEY=your_carto_basemap_key
 ```
 
-Optional full override of the Leaflet tile template (applies to both themes):
+Optional full override of the Leaflet tile template:
 
 ```bash
 NEXT_PUBLIC_MAP_TILE_URL=https://example/{z}/{x}/{y}.png
