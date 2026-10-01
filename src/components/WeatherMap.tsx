@@ -52,8 +52,10 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 const LOCATE_ZOOM = 11;
 const DETAILED_MARKER_ZOOM = 11;
 
-/** Light + dark share one raster style; dark mode inverts via CSS filters. */
-const MAP_TILES = resolveMapTiles();
+/** Theme-aware gray basemap (Esri by default; CARTO when keyed). */
+function mapTilesForTheme(theme: Theme) {
+  return resolveMapTiles(theme);
+}
 
 interface WeatherMapProps {
   locations: WeatherLocationPoint[];
@@ -934,6 +936,7 @@ export function WeatherMap({
   const [showAlarms, setShowAlarms] = useState(initialShowAlarms);
   const markersByIdRef = useRef<MarkersById>(new Map());
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
+  const mapTiles = mapTilesForTheme(theme);
 
   useEffect(() => {
     const sync = () => setTheme(getActiveTheme());
@@ -956,7 +959,7 @@ export function WeatherMap({
     <MapContainer
       center={LATVIA_CENTER}
       zoom={MOBILE_DEFAULT_ZOOM}
-      className="weather-map h-full w-full"
+      className="weather-map weather-map--gray-basemap h-full w-full"
       scrollWheelZoom
       worldCopyJump={false}
       maxBounds={[
@@ -967,10 +970,17 @@ export function WeatherMap({
       attributionControl
     >
       <TileLayer
-        key={`${theme}-${MAP_TILES.provider}`}
-        attribution={MAP_TILES.attribution}
-        url={MAP_TILES.url}
+        key={`${theme}-${mapTiles.provider}-base`}
+        attribution={mapTiles.attribution}
+        url={mapTiles.url}
       />
+      {mapTiles.referenceUrl ? (
+        <TileLayer
+          key={`${theme}-${mapTiles.provider}-ref`}
+          url={mapTiles.referenceUrl}
+          opacity={0.9}
+        />
+      ) : null}
       <FitLatvia enabled={!focusLocationId} />
       <InvalidateSizeOnContainerResize />
       <MapZoomDetailClass />

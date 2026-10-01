@@ -1,41 +1,64 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  CARTO_DARK_MATTER_TILE_URL,
+  CARTO_POSITRON_TILE_URL,
   CARTO_TILE_ATTRIBUTION,
-  CARTO_VOYAGER_TILE_URL,
-  OSM_FRANCE_TILE_ATTRIBUTION,
-  OSM_FRANCE_TILE_URL,
+  ESRI_DARK_GRAY_REFERENCE_URL,
+  ESRI_DARK_GRAY_TILE_URL,
+  ESRI_LIGHT_GRAY_REFERENCE_URL,
+  ESRI_LIGHT_GRAY_TILE_URL,
+  ESRI_TILE_ATTRIBUTION,
   resolveMapTiles,
 } from "../src/lib/weather/map-tiles.ts";
 
 describe("resolveMapTiles", () => {
-  it("falls back to OSM France when no map env is set", () => {
-    const tiles = resolveMapTiles({});
-    assert.equal(tiles.provider, "osm-fr");
-    assert.equal(tiles.url, OSM_FRANCE_TILE_URL);
-    assert.equal(tiles.attribution, OSM_FRANCE_TILE_ATTRIBUTION);
+  it("defaults to Esri light gray canvas (no green forests)", () => {
+    const tiles = resolveMapTiles("light", {});
+    assert.equal(tiles.provider, "esri-gray");
+    assert.equal(tiles.url, ESRI_LIGHT_GRAY_TILE_URL);
+    assert.equal(tiles.referenceUrl, ESRI_LIGHT_GRAY_REFERENCE_URL);
+    assert.equal(tiles.attribution, ESRI_TILE_ATTRIBUTION);
   });
 
-  it("ignores blank CARTO keys and still uses the free fallback", () => {
-    const tiles = resolveMapTiles({ NEXT_PUBLIC_CARTO_API_KEY: "   " });
-    assert.equal(tiles.provider, "osm-fr");
-    assert.equal(tiles.url, OSM_FRANCE_TILE_URL);
+  it("uses Esri dark gray canvas in dark mode", () => {
+    const tiles = resolveMapTiles("dark", {});
+    assert.equal(tiles.provider, "esri-gray");
+    assert.equal(tiles.url, ESRI_DARK_GRAY_TILE_URL);
+    assert.equal(tiles.referenceUrl, ESRI_DARK_GRAY_REFERENCE_URL);
   });
 
-  it("appends the CARTO key query param for Voyager tiles", () => {
-    const tiles = resolveMapTiles({
-      NEXT_PUBLIC_CARTO_API_KEY: "test-key/with spaces",
+  it("ignores blank CARTO keys and still uses Esri gray", () => {
+    const tiles = resolveMapTiles("light", {
+      NEXT_PUBLIC_CARTO_API_KEY: "   ",
     });
-    assert.equal(tiles.provider, "carto");
-    assert.equal(
-      tiles.url,
-      `${CARTO_VOYAGER_TILE_URL}?key=${encodeURIComponent("test-key/with spaces")}`,
-    );
-    assert.equal(tiles.attribution, CARTO_TILE_ATTRIBUTION);
+    assert.equal(tiles.provider, "esri-gray");
+    assert.equal(tiles.url, ESRI_LIGHT_GRAY_TILE_URL);
   });
 
-  it("prefers a custom tile URL template over CARTO", () => {
-    const tiles = resolveMapTiles({
+  it("uses CARTO Positron / Dark Matter when a key is set", () => {
+    const key = "test-key/with spaces";
+    const light = resolveMapTiles("light", {
+      NEXT_PUBLIC_CARTO_API_KEY: key,
+    });
+    const dark = resolveMapTiles("dark", {
+      NEXT_PUBLIC_CARTO_API_KEY: key,
+    });
+    assert.equal(light.provider, "carto-gray");
+    assert.equal(
+      light.url,
+      `${CARTO_POSITRON_TILE_URL}?key=${encodeURIComponent(key)}`,
+    );
+    assert.equal(
+      dark.url,
+      `${CARTO_DARK_MATTER_TILE_URL}?key=${encodeURIComponent(key)}`,
+    );
+    assert.equal(light.attribution, CARTO_TILE_ATTRIBUTION);
+    assert.equal(light.referenceUrl, undefined);
+  });
+
+  it("prefers a custom tile URL template over CARTO/Esri", () => {
+    const tiles = resolveMapTiles("dark", {
       NEXT_PUBLIC_CARTO_API_KEY: "ignored",
       NEXT_PUBLIC_MAP_TILE_URL:
         "https://example.test/{z}/{x}/{y}.png?token=abc",
@@ -46,11 +69,11 @@ describe("resolveMapTiles", () => {
     assert.equal(tiles.attribution, "Example tiles");
   });
 
-  it("uses OSM France attribution when a custom URL has none", () => {
-    const tiles = resolveMapTiles({
+  it("uses Esri attribution when a custom URL has none", () => {
+    const tiles = resolveMapTiles("light", {
       NEXT_PUBLIC_MAP_TILE_URL: "https://example.test/{z}/{x}/{y}.png",
     });
     assert.equal(tiles.provider, "custom");
-    assert.equal(tiles.attribution, OSM_FRANCE_TILE_ATTRIBUTION);
+    assert.equal(tiles.attribution, ESRI_TILE_ATTRIBUTION);
   });
 });
