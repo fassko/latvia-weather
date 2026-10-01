@@ -59,12 +59,12 @@ body {
 }
 
 .weather-map .leaflet-tile-pane {
-  /* Voyager is intentionally pale; bring back enough contrast for map reading. */
+  /* Light raster basemap (CARTO Voyager or OSM France); bump contrast for reading. */
   filter: brightness(0.94) contrast(1.18) saturate(1.18);
 }
 
 .dark .weather-map .leaflet-tile-pane {
-  /* Invert Voyager into a dark basemap while keeping road/label contrast */
+  /* Invert the light basemap for dark mode (keeps road/label contrast). */
   filter: invert(1) hue-rotate(180deg) brightness(1.12) contrast(0.98) saturate(0.95);
 }
 
