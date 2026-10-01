@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { getHistoricalClimateForPunkts } from "@/lib/climate/historical";
 import {
   getHourlyForecast,
   getLocationPoints,
@@ -84,6 +85,35 @@ export function registerMcpTools(server: McpServer) {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to fetch weather data";
+        return textError(message);
+      }
+    },
+  );
+
+  server.tool(
+    "get_historical_climate",
+    'Compare the last complete month at a location with climate normals (temp/precip) and wind baseline. Use punkts ID (e.g. "P269" for Rīga). Values come from the LVĢMC hourly station archive nearest the forecast point.',
+    { punkts: z.string() },
+    async ({ punkts }) => {
+      if (!isValidLocationId(punkts)) {
+        return textError(
+          `Invalid location ID "${punkts}". Use list_locations or search_location to find a valid punkts ID.`,
+        );
+      }
+
+      try {
+        const data = await getHistoricalClimateForPunkts(punkts);
+        if (!data) {
+          return textError(
+            `Historical climate data is unavailable for "${punkts}".`,
+          );
+        }
+        return textResult(data);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch historical climate data";
         return textError(message);
       }
     },
