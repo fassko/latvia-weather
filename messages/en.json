@@ -433,6 +433,7 @@
     },
     "baseline": {
       "climateNormal": "{period} climate normal",
+      "priorYearMonth": "Same month last year",
       "stationTypical": "Typical for this station"
     },
     "verdict": {
@@ -446,7 +447,12 @@
         "drier": "Drier than usual",
         "usual": "About usual"
       },
-      "wind": {
+      "windLastYear": {
+        "windier": "Windier than last year",
+        "calmer": "Calmer than last year",
+        "usual": "About like last year"
+      },
+      "windTypical": {
         "windier": "Windier than typical",
         "calmer": "Calmer than typical",
         "usual": "About typical"
@@ -454,7 +460,7 @@
     },
     "stationNear": "Nearest climate station: {station} ({distance} km away).",
     "stationFar": "Nearest available climate station: {station} ({distance} km away) — local conditions may differ.",
-    "disclaimer": "Temperature and rain use 1991–2020 climate normals; wind uses the station’s multi-year monthly average (no official wind normal). Monthly values are operational LVĢMC open data and can lag or change after quality checks. Source:"
+    "disclaimer": "Observed values come from the LVĢMC hourly station archive (last ~365 days). Temperature and rain use 1991–2020 climate normals; wind uses the same month last year when available, otherwise the station’s multi-year monthly average (no official wind normal). Archive data is operational and can change after quality checks. Source:"
   },
   "highlights": {
     "title": "Today's peaks",

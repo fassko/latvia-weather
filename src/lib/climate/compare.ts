@@ -1,9 +1,11 @@
 import {
+  ARCHIVE_REVALIDATE_SECONDS,
   CLIMATE_RESOURCE_IDS,
   MONTHLY_REVALIDATE_SECONDS,
   NORMALS_REVALIDATE_SECONDS,
   datastoreDumpCsv,
   datastoreSearch,
+  datastoreSearchSql,
   parseCsv,
   parseOptionalNumber,
 } from "./ckan";
@@ -18,25 +20,18 @@ import {
 export const NORMAL_TEMP = "TDRY";
 export const NORMAL_PRECIP = "PRAB";
 
-/** Monthly / archive abbreviations (H-prefix hourly aggregates). */
-export const MONTHLY_TEMP = "HTDRY";
-export const MONTHLY_PRECIP = "HPRAB";
-export const MONTHLY_WIND = "HWNDS";
+/** Hourly archive abbreviations (AVG/SUM-style hourly aggregates). */
+export const ARCHIVE_TEMP = "HTDRY";
+export const ARCHIVE_PRECIP = "HPRAB";
+export const ARCHIVE_WIND = "HWNDS";
 
 export const NORMALS_PERIOD_LABEL = "1991–2020";
 
 /** Soften local claims beyond this distance. */
 export const DISTANCE_CAUTION_KM = 40;
 
-interface MonthlyRecord {
-  STATION_ID: string;
-  ABBREVIATION: string;
-  FUNCTION: string;
-  YEAR: number;
-  MONTH: number;
-  DECADE: number;
-  VALUE: string | number;
-}
+/** Enough hourly rows to trust a month aggregate (≈10 days). */
+const MIN_ARCHIVE_SAMPLES = 200;
 
 interface CachedNormals {
   byStationMonth: Map<string, number>;
@@ -52,7 +47,16 @@ const normalsCache: CachedNormals = {
 };
 
 export type ClimateMetricKind = "temperature" | "precipitation" | "wind";
-export type ClimateBaselineKind = "climateNormal" | "stationTypical";
+export type ClimateBaselineKind =
+  | "climateNormal"
+  | "priorYearMonth"
+  | "stationTypical";
+
+interface MonthlyWindRecord {
+  YEAR: number;
+  MONTH: number;
+  VALUE: string | number;
+}
 
 export interface ClimateMetricComparison {
   kind: ClimateMetricKind;
@@ -69,7 +73,15 @@ export interface ClimateMonthComparison {
   station: ClimateStation;
   distanceKm: number;
   hasClimateNormals: boolean;
+  source: "hourlyArchive";
   metrics: ClimateMetricComparison[];
+}
+
+export interface MonthBounds {
+  year: number;
+  month: number;
+  start: string;
+  end: string;
 }
 
 function normalKey(stationId: string, abbreviation: string, month: number): string {
@@ -144,88 +156,79 @@ function getNormal(
   return index.byStationMonth.get(normalKey(stationId, abbreviation, month)) ?? null;
 }
 
-async function fetchMonthlyRows(
+/** Previous calendar month in Europe/Riga (archive lags ~1 day; month must be complete). */
+export function latestCompleteMonth(now = new Date()): MonthBounds {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Riga",
+      year: "numeric",
+      month: "2-digit",
+    })
+      .formatToParts(now)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+
+  let year = Number(parts.year);
+  let month = Number(parts.month) - 1;
+  if (month === 0) {
+    year -= 1;
+    month = 12;
+  }
+
+  return monthBounds(year, month);
+}
+
+export function monthBounds(year: number, month: number): MonthBounds {
+  const start = `${year}-${String(month).padStart(2, "0")}-01T00:00:00`;
+  const endMonth = month === 12 ? 1 : month + 1;
+  const endYear = month === 12 ? year + 1 : year;
+  const end = `${endYear}-${String(endMonth).padStart(2, "0")}-01T00:00:00`;
+  return { year, month, start, end };
+}
+
+/** Station IDs / abbreviations are constrained constants — keep SQL literals safe. */
+function assertSafeArchiveToken(value: string): string {
+  if (!/^[A-Z0-9]+$/i.test(value)) {
+    throw new Error(`Unsafe archive token: ${value}`);
+  }
+  return value;
+}
+
+interface ArchiveValueRow {
+  VALUE: number | string | null;
+}
+
+async function fetchArchiveValues(
   stationId: string,
   abbreviation: string,
-  functionName: string,
-): Promise<MonthlyRecord[]> {
-  return datastoreSearch<MonthlyRecord>({
-    resourceId: CLIMATE_RESOURCE_IDS.monthlyStats,
-    filters: {
-      STATION_ID: stationId,
-      ABBREVIATION: abbreviation,
-      FUNCTION: functionName,
-      DECADE: 0,
-    },
-    limit: 400,
-    sort: "YEAR desc, MONTH desc",
-    revalidate: MONTHLY_REVALIDATE_SECONDS,
+  bounds: MonthBounds,
+): Promise<number[]> {
+  const safeStation = assertSafeArchiveToken(stationId);
+  const safeAbbr = assertSafeArchiveToken(abbreviation);
+  const sql = `SELECT "VALUE" FROM "${CLIMATE_RESOURCE_IDS.hourlyArchive}" WHERE "STATION_ID"='${safeStation}' AND "ABBREVIATION"='${safeAbbr}' AND "DATETIME" >= '${bounds.start}' AND "DATETIME" < '${bounds.end}'`;
+
+  const rows = await datastoreSearchSql<ArchiveValueRow>({
+    sql,
+    revalidate: ARCHIVE_REVALIDATE_SECONDS,
   });
-}
 
-function monthValue(record: MonthlyRecord): number | null {
-  return parseOptionalNumber(record.VALUE);
-}
-
-/** Latest calendar month that has a non-blank value for every required series. */
-export function findLatestCompleteMonth(series: {
-  temperature: MonthlyRecord[];
-  precipitation: MonthlyRecord[];
-  wind: MonthlyRecord[];
-}): { year: number; month: number } | null {
-  const precipByMonth = new Map<string, number>();
-  const windByMonth = new Map<string, number>();
-
-  for (const record of series.precipitation) {
-    const value = monthValue(record);
-    if (value === null) continue;
-    precipByMonth.set(`${record.YEAR}-${record.MONTH}`, value);
-  }
-  for (const record of series.wind) {
-    const value = monthValue(record);
-    if (value === null) continue;
-    windByMonth.set(`${record.YEAR}-${record.MONTH}`, value);
-  }
-
-  for (const record of series.temperature) {
-    const temp = monthValue(record);
-    if (temp === null) continue;
-    const key = `${record.YEAR}-${record.MONTH}`;
-    if (!precipByMonth.has(key) || !windByMonth.has(key)) continue;
-    return { year: Number(record.YEAR), month: Number(record.MONTH) };
-  }
-
-  return null;
-}
-
-export function typicalMonthlyMean(
-  records: MonthlyRecord[],
-  month: number,
-  excludeYear?: number,
-): number | null {
   const values: number[] = [];
-  for (const record of records) {
-    if (Number(record.MONTH) !== month) continue;
-    if (excludeYear !== undefined && Number(record.YEAR) === excludeYear) continue;
-    const value = monthValue(record);
-    if (value === null) continue;
-    values.push(value);
+  for (const row of rows) {
+    const value = parseOptionalNumber(row.VALUE);
+    if (value !== null) values.push(value);
   }
-  if (values.length === 0) return null;
+  return values;
+}
+
+export function aggregateArchiveMean(values: number[]): number | null {
+  if (values.length < MIN_ARCHIVE_SAMPLES) return null;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function getMonthActual(
-  records: MonthlyRecord[],
-  year: number,
-  month: number,
-): number | null {
-  for (const record of records) {
-    if (Number(record.YEAR) === year && Number(record.MONTH) === month) {
-      return monthValue(record);
-    }
-  }
-  return null;
+export function aggregateArchiveSum(values: number[]): number | null {
+  if (values.length < MIN_ARCHIVE_SAMPLES) return null;
+  return values.reduce((sum, value) => sum + value, 0);
 }
 
 export function classifyTemperatureDelta(delta: number): "warmer" | "colder" | "usual" {
@@ -254,6 +257,74 @@ export function classifyWindDelta(delta: number): "windier" | "calmer" | "usual"
   return "usual";
 }
 
+async function loadMonthSeries(
+  stationId: string,
+  bounds: MonthBounds,
+): Promise<{
+  temperature: number | null;
+  precipitation: number | null;
+  wind: number | null;
+}> {
+  const [tempValues, precipValues, windValues] = await Promise.all([
+    fetchArchiveValues(stationId, ARCHIVE_TEMP, bounds),
+    fetchArchiveValues(stationId, ARCHIVE_PRECIP, bounds),
+    fetchArchiveValues(stationId, ARCHIVE_WIND, bounds),
+  ]);
+
+  return {
+    temperature: aggregateArchiveMean(tempValues),
+    precipitation: aggregateArchiveSum(precipValues),
+    wind: aggregateArchiveMean(windValues),
+  };
+}
+
+/** Multi-year monthly HWNDS mean from monthly stats (archive is only ~365 days). */
+export async function fetchStationTypicalWind(
+  stationId: string,
+  month: number,
+  excludeYear: number,
+): Promise<number | null> {
+  const rows = await datastoreSearch<MonthlyWindRecord>({
+    resourceId: CLIMATE_RESOURCE_IDS.monthlyStats,
+    filters: {
+      STATION_ID: stationId,
+      ABBREVIATION: ARCHIVE_WIND,
+      FUNCTION: "AVG",
+      DECADE: 0,
+      MONTH: month,
+    },
+    limit: 40,
+    sort: "YEAR desc",
+    revalidate: MONTHLY_REVALIDATE_SECONDS,
+  });
+
+  const values: number[] = [];
+  for (const row of rows) {
+    if (Number(row.YEAR) === excludeYear) continue;
+    const value = parseOptionalNumber(row.VALUE);
+    if (value !== null) values.push(value);
+  }
+  if (values.length === 0) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+export async function resolveWindBaseline(
+  stationId: string,
+  period: MonthBounds,
+): Promise<{ baseline: number; kind: "priorYearMonth" | "stationTypical" } | null> {
+  const priorYear = monthBounds(period.year - 1, period.month);
+  const priorYearWind = aggregateArchiveMean(
+    await fetchArchiveValues(stationId, ARCHIVE_WIND, priorYear),
+  );
+  if (priorYearWind !== null) {
+    return { baseline: priorYearWind, kind: "priorYearMonth" };
+  }
+
+  const typical = await fetchStationTypicalWind(stationId, period.month, period.year);
+  if (typical === null) return null;
+  return { baseline: typical, kind: "stationTypical" };
+}
+
 export async function getClimateMonthComparison(origin: {
   lat: number;
   lon: number;
@@ -274,61 +345,55 @@ export async function getClimateMonthComparison(origin: {
   );
   if (!nearest) return null;
 
+  const period = latestCompleteMonth();
   const stationId = nearest.station.id;
-  const [temperatureRows, precipRows, windRows] = await Promise.all([
-    fetchMonthlyRows(stationId, MONTHLY_TEMP, "AVG"),
-    fetchMonthlyRows(stationId, MONTHLY_PRECIP, "SUM"),
-    fetchMonthlyRows(stationId, MONTHLY_WIND, "AVG"),
+
+  const [actual, windBaseline] = await Promise.all([
+    loadMonthSeries(stationId, period),
+    resolveWindBaseline(stationId, period),
   ]);
 
-  const latest = findLatestCompleteMonth({
-    temperature: temperatureRows,
-    precipitation: precipRows,
-    wind: windRows,
-  });
-  if (!latest) return null;
-
-  const actualTemp = getMonthActual(temperatureRows, latest.year, latest.month);
-  const actualPrecip = getMonthActual(precipRows, latest.year, latest.month);
-  const actualWind = getMonthActual(windRows, latest.year, latest.month);
-  if (actualTemp === null || actualPrecip === null || actualWind === null) {
+  if (
+    actual.temperature === null ||
+    actual.precipitation === null ||
+    actual.wind === null
+  ) {
     return null;
   }
 
   const metrics: ClimateMetricComparison[] = [];
 
-  const tempNormal = getNormal(normals, stationId, NORMAL_TEMP, latest.month);
+  const tempNormal = getNormal(normals, stationId, NORMAL_TEMP, period.month);
   if (tempNormal !== null) {
     metrics.push({
       kind: "temperature",
       baselineKind: "climateNormal",
-      actual: actualTemp,
+      actual: actual.temperature,
       baseline: tempNormal,
-      delta: actualTemp - tempNormal,
+      delta: actual.temperature - tempNormal,
       unit: "°C",
     });
   }
 
-  const precipNormal = getNormal(normals, stationId, NORMAL_PRECIP, latest.month);
+  const precipNormal = getNormal(normals, stationId, NORMAL_PRECIP, period.month);
   if (precipNormal !== null) {
     metrics.push({
       kind: "precipitation",
       baselineKind: "climateNormal",
-      actual: actualPrecip,
+      actual: actual.precipitation,
       baseline: precipNormal,
-      delta: actualPrecip - precipNormal,
+      delta: actual.precipitation - precipNormal,
       unit: "mm",
     });
   }
 
-  const windTypical = typicalMonthlyMean(windRows, latest.month, latest.year);
-  if (windTypical !== null) {
+  if (windBaseline !== null) {
     metrics.push({
       kind: "wind",
-      baselineKind: "stationTypical",
-      actual: actualWind,
-      baseline: windTypical,
-      delta: actualWind - windTypical,
+      baselineKind: windBaseline.kind,
+      actual: actual.wind,
+      baseline: windBaseline.baseline,
+      delta: actual.wind - windBaseline.baseline,
       unit: "m/s",
     });
   }
@@ -336,78 +401,74 @@ export async function getClimateMonthComparison(origin: {
   if (metrics.length === 0) return null;
 
   return {
-    year: latest.year,
-    month: latest.month,
+    year: period.year,
+    month: period.month,
     station: nearest.station,
     distanceKm: nearest.distanceKm,
     hasClimateNormals: normals.stationIds.has(stationId),
+    source: "hourlyArchive",
     metrics,
   };
 }
 
-/** Exported for tests — rebuilds a comparison from in-memory fixtures. */
+/** Exported for tests — rebuilds a comparison from pre-aggregated fixtures. */
 export function buildClimateMonthComparisonFromData(options: {
   nearest: NearestClimateStation;
   normals: CachedNormals;
-  temperature: MonthlyRecord[];
-  precipitation: MonthlyRecord[];
-  wind: MonthlyRecord[];
+  year: number;
+  month: number;
+  actualTemperature: number;
+  actualPrecipitation: number;
+  actualWind: number;
+  windBaseline: { baseline: number; kind: "priorYearMonth" | "stationTypical" } | null;
 }): ClimateMonthComparison | null {
-  const latest = findLatestCompleteMonth({
-    temperature: options.temperature,
-    precipitation: options.precipitation,
-    wind: options.wind,
-  });
-  if (!latest) return null;
-
   const stationId = options.nearest.station.id;
-  const actualTemp = getMonthActual(options.temperature, latest.year, latest.month);
-  const actualPrecip = getMonthActual(options.precipitation, latest.year, latest.month);
-  const actualWind = getMonthActual(options.wind, latest.year, latest.month);
-  if (actualTemp === null || actualPrecip === null || actualWind === null) return null;
-
   const metrics: ClimateMetricComparison[] = [];
-  const tempNormal = getNormal(options.normals, stationId, NORMAL_TEMP, latest.month);
+
+  const tempNormal = getNormal(options.normals, stationId, NORMAL_TEMP, options.month);
   if (tempNormal !== null) {
     metrics.push({
       kind: "temperature",
       baselineKind: "climateNormal",
-      actual: actualTemp,
+      actual: options.actualTemperature,
       baseline: tempNormal,
-      delta: actualTemp - tempNormal,
+      delta: options.actualTemperature - tempNormal,
       unit: "°C",
     });
   }
-  const precipNormal = getNormal(options.normals, stationId, NORMAL_PRECIP, latest.month);
+
+  const precipNormal = getNormal(options.normals, stationId, NORMAL_PRECIP, options.month);
   if (precipNormal !== null) {
     metrics.push({
       kind: "precipitation",
       baselineKind: "climateNormal",
-      actual: actualPrecip,
+      actual: options.actualPrecipitation,
       baseline: precipNormal,
-      delta: actualPrecip - precipNormal,
+      delta: options.actualPrecipitation - precipNormal,
       unit: "mm",
     });
   }
-  const windTypical = typicalMonthlyMean(options.wind, latest.month, latest.year);
-  if (windTypical !== null) {
+
+  if (options.windBaseline !== null) {
     metrics.push({
       kind: "wind",
-      baselineKind: "stationTypical",
-      actual: actualWind,
-      baseline: windTypical,
-      delta: actualWind - windTypical,
+      baselineKind: options.windBaseline.kind,
+      actual: options.actualWind,
+      baseline: options.windBaseline.baseline,
+      delta: options.actualWind - options.windBaseline.baseline,
       unit: "m/s",
     });
   }
+
   if (metrics.length === 0) return null;
 
   return {
-    year: latest.year,
-    month: latest.month,
+    year: options.year,
+    month: options.month,
     station: options.nearest.station,
     distanceKm: options.nearest.distanceKm,
     hasClimateNormals: options.normals.stationIds.has(stationId),
+    source: "hourlyArchive",
     metrics,
   };
 }

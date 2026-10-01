@@ -49,7 +49,11 @@ function metricVerdict(
       `verdict.precipitation.${classifyPrecipitationDelta(metric.actual, metric.baseline)}`,
     );
   }
-  return t(`verdict.wind.${classifyWindDelta(metric.delta)}`);
+  const windKey = classifyWindDelta(metric.delta);
+  if (metric.baselineKind === "priorYearMonth") {
+    return t(`verdict.windLastYear.${windKey}`);
+  }
+  return t(`verdict.windTypical.${windKey}`);
 }
 
 function formatMetricValue(
@@ -114,7 +118,9 @@ export async function ClimateComparison({
           const baselineLabel =
             metric.baselineKind === "climateNormal"
               ? t("baseline.climateNormal", { period: NORMALS_PERIOD_LABEL })
-              : t("baseline.stationTypical");
+              : metric.baselineKind === "priorYearMonth"
+                ? t("baseline.priorYearMonth")
+                : t("baseline.stationTypical");
 
           return (
             <div
