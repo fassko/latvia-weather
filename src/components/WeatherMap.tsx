@@ -52,7 +52,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 const LOCATE_ZOOM = 11;
 const DETAILED_MARKER_ZOOM = 11;
 
-/** Theme-aware gray basemap (Esri by default; CARTO when keyed). */
+/** Colorful OSM/Voyager tiles; dark mode uses CSS invert on the tile pane. */
 function mapTilesForTheme(theme: Theme) {
   return resolveMapTiles(theme);
 }
@@ -959,7 +959,7 @@ export function WeatherMap({
     <MapContainer
       center={LATVIA_CENTER}
       zoom={MOBILE_DEFAULT_ZOOM}
-      className="weather-map weather-map--gray-basemap h-full w-full"
+      className="weather-map h-full w-full"
       scrollWheelZoom
       worldCopyJump={false}
       maxBounds={[
@@ -970,17 +970,11 @@ export function WeatherMap({
       attributionControl
     >
       <TileLayer
-        key={`${theme}-${mapTiles.provider}-base`}
+        key={`${theme}-${mapTiles.provider}`}
         attribution={mapTiles.attribution}
         url={mapTiles.url}
+        maxZoom={19}
       />
-      {mapTiles.referenceUrl ? (
-        <TileLayer
-          key={`${theme}-${mapTiles.provider}-ref`}
-          url={mapTiles.referenceUrl}
-          opacity={0.9}
-        />
-      ) : null}
       <FitLatvia enabled={!focusLocationId} />
       <InvalidateSizeOnContainerResize />
       <MapZoomDetailClass />
