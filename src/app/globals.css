@@ -58,14 +58,13 @@ body {
   background: #dbe4ee;
 }
 
-.weather-map .leaflet-tile-pane {
-  /* Light raster basemap (CARTO Voyager or OSM France); bump contrast for reading. */
-  filter: brightness(0.94) contrast(1.18) saturate(1.18);
+/* Neutral gray basemaps — keep mild contrast; do not invert (native dark tiles). */
+.weather-map--gray-basemap .leaflet-tile-pane {
+  filter: contrast(1.06) brightness(0.98);
 }
 
-.dark .weather-map .leaflet-tile-pane {
-  /* Invert the light basemap for dark mode (keeps road/label contrast). */
-  filter: invert(1) hue-rotate(180deg) brightness(1.12) contrast(0.98) saturate(0.95);
+.dark .weather-map--gray-basemap .leaflet-tile-pane {
+  filter: contrast(1.08) brightness(1.05);
 }
 
 .dark .weather-map {

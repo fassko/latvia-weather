@@ -44,16 +44,21 @@ supported. Without Redis/KV, local development falls back to an in-memory limit.
 
 ### Weather map basemap
 
-The map defaults to **OSM France** raster tiles (no API key). To restore
-[CARTO Voyager](https://carto.com/basemaps/) (the previous look), request a free
-basemap key at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/) and
-set it for Preview + Production on Vercel (and in `.env.local` for local):
+The map uses a **neutral gray** basemap (no green forests) so temperature
+markers stay readable:
+
+- **Default (no key):** Esri Light Gray / Dark Gray Canvas
+- **Optional:** CARTO Positron / Dark Matter when `NEXT_PUBLIC_CARTO_API_KEY` is set
+
+Request a free CARTO basemap key at
+[carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/) and set it for
+Preview + Production on Vercel (and in `.env.local` for local):
 
 ```bash
 NEXT_PUBLIC_CARTO_API_KEY=your_carto_basemap_key
 ```
 
-Optional full override of the Leaflet tile template:
+Optional full override of the Leaflet tile template (applies to both themes):
 
 ```bash
 NEXT_PUBLIC_MAP_TILE_URL=https://example/{z}/{x}/{y}.png
