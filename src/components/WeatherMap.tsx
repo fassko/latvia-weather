@@ -44,6 +44,7 @@ import {
   MOBILE_DEFAULT_ZOOM,
   latviaOverviewForWidth,
 } from "@/lib/weather/map-view";
+import { resolveMapTiles } from "@/lib/weather/map-tiles";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -51,12 +52,8 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 const LOCATE_ZOOM = 11;
 const DETAILED_MARKER_ZOOM = 11;
 
-const TILE_URLS: Record<Theme, string> = {
-  // Voyager stays readable; dark mode reuses it with an invert filter in CSS
-  // because CARTO Dark Matter is too low-contrast for roads/labels.
-  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-};
+/** Light + dark share one raster style; dark mode inverts via CSS filters. */
+const MAP_TILES = resolveMapTiles();
 
 interface WeatherMapProps {
   locations: WeatherLocationPoint[];
@@ -970,9 +967,9 @@ export function WeatherMap({
       attributionControl
     >
       <TileLayer
-        key={theme}
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url={TILE_URLS[theme]}
+        key={`${theme}-${MAP_TILES.provider}`}
+        attribution={MAP_TILES.attribution}
+        url={MAP_TILES.url}
       />
       <FitLatvia enabled={!focusLocationId} />
       <InvalidateSizeOnContainerResize />
