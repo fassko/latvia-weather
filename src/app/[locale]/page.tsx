@@ -279,13 +279,13 @@ export default async function Home({ params, searchParams }: HomeProps) {
           }}
         />
         <DailyForecastList forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
+        {climateComparison ? (
+          <ClimateComparison comparison={climateComparison} locale={locale} />
+        ) : null}
         <PopularPlaces
           locations={locations}
           currentLocationId={data.location.id}
         />
-        {climateComparison ? (
-          <ClimateComparison comparison={climateComparison} locale={locale} />
-        ) : null}
         <footer className="flex flex-col gap-2 pt-4 pb-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between dark:text-slate-400">
           <p>
             {tFooter("dataFrom")}{" "}
