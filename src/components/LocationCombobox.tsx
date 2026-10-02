@@ -57,7 +57,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     top: number;
     left: number;
     width: number;
-    desktop: boolean;
+    maxHeight: number;
   } | null>(null);
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<WeatherLocationPoint[] | null>(null);
@@ -212,20 +212,31 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const margin = 16;
-    const available = window.innerWidth - margin * 2;
-    const width = Math.min(448, available);
-    const left = Math.min(
-      Math.max(rect.left, margin),
-      window.innerWidth - margin - width,
-    );
+    const margin = 12;
+    const viewport = window.visualViewport;
+    const viewportWidth = viewport?.width ?? window.innerWidth;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportOffsetTop = viewport?.offsetTop ?? 0;
+    const available = viewportWidth - margin * 2;
     const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    const width = isDesktop ? Math.min(448, available) : available;
+    const left = isDesktop
+      ? Math.min(Math.max(rect.left, margin), viewportWidth - margin - width)
+      : margin;
+    const top = Math.max(rect.bottom + 8, viewportOffsetTop + 8);
+    const maxHeight = Math.max(
+      160,
+      Math.min(
+        isDesktop ? 288 : 420,
+        viewportOffsetTop + viewportHeight - top - margin,
+      ),
+    );
 
     setPanelPosition({
-      top: rect.bottom + 8,
+      top,
       left,
       width,
-      desktop: isDesktop,
+      maxHeight,
     });
   }, []);
 
@@ -259,17 +270,14 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     updatePanelPosition();
     window.addEventListener("resize", updatePanelPosition);
     window.addEventListener("scroll", updatePanelPosition, true);
-
-    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-    const previousOverflow = document.body.style.overflow;
-    if (!isDesktop) {
-      document.body.style.overflow = "hidden";
-    }
+    window.visualViewport?.addEventListener("resize", updatePanelPosition);
+    window.visualViewport?.addEventListener("scroll", updatePanelPosition);
 
     return () => {
       window.removeEventListener("resize", updatePanelPosition);
       window.removeEventListener("scroll", updatePanelPosition, true);
-      document.body.style.overflow = previousOverflow;
+      window.visualViewport?.removeEventListener("resize", updatePanelPosition);
+      window.visualViewport?.removeEventListener("scroll", updatePanelPosition);
     };
   }, [open, updatePanelPosition]);
 
@@ -392,22 +400,14 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
           />
           <div
             ref={panelRef}
-            className={
-              panelPosition.desktop
-                ? "fixed z-[70] flex max-h-72 flex-col overflow-hidden rounded-xl border border-sky-300 bg-white shadow-2xl dark:border-sky-600 dark:bg-slate-900"
-                : "fixed inset-x-0 bottom-0 z-[70] flex max-h-[min(85dvh,85vh)] flex-col rounded-t-2xl border border-sky-300 bg-white shadow-2xl dark:border-sky-600 dark:bg-slate-900"
-            }
-            style={
-              panelPosition.desktop
-                ? {
-                    top: panelPosition.top,
-                    left: panelPosition.left,
-                    width: panelPosition.width,
-                  }
-                : undefined
-            }
+            className="fixed z-[70] flex flex-col overflow-hidden rounded-xl border border-sky-300 bg-white shadow-2xl dark:border-sky-600 dark:bg-slate-900"
+            style={{
+              top: panelPosition.top,
+              left: panelPosition.left,
+              width: panelPosition.width,
+              maxHeight: panelPosition.maxHeight,
+            }}
           >
-            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300 md:hidden dark:bg-slate-600" />
             <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-700">
               <SearchIcon />
               <input
@@ -432,7 +432,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
               id={listboxId}
               role="listbox"
               aria-label={t("select")}
-              className="max-h-[min(70vh,28rem)] overflow-y-auto py-1 md:max-h-72"
+              className="min-h-0 flex-1 overflow-y-auto py-1"
             >
             <li className="border-b border-slate-100 px-2 pb-1 dark:border-slate-800">
               <button
