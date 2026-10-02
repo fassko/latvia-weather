@@ -338,6 +338,26 @@ export default async function Home({ params, searchParams }: HomeProps) {
             >
               {tFooter("onGitHub")}
             </a>
+            {" · "}
+            <a
+              href="https://www.instagram.com/latviaweather"
+              className="underline hover:text-slate-700 dark:hover:text-slate-200"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={tFooter("instagramAria")}
+            >
+              {tFooter("onInstagram")}
+            </a>
+            {" · "}
+            <a
+              href="https://www.tiktok.com/@latviaweather.com"
+              className="underline hover:text-slate-700 dark:hover:text-slate-200"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={tFooter("tiktokAria")}
+            >
+              {tFooter("onTikTok")}
+            </a>
             {" · "}<LegalLinks />
           </p>
         </footer>
