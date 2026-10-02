@@ -14,6 +14,10 @@ import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
 import { locationSlug } from "@/lib/site";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
+import {
+  FAVORITE_LOCATION_STORAGE_KEY,
+  notifyFavoriteLocationIdsChanged,
+} from "@/lib/weather/favorite-location-ids";
 
 interface LocationComboboxProps {
   selectedId: string;
@@ -21,7 +25,6 @@ interface LocationComboboxProps {
 }
 
 const RECENT_LOCATION_STORAGE_KEY = "latvia-weather-recent-locations";
-const FAVORITE_LOCATION_STORAGE_KEY = "latvia-weather-favorite-locations";
 const MAX_RECENT_LOCATIONS = 5;
 const MAX_FAVORITE_LOCATIONS = 5;
 
@@ -149,7 +152,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         ? current.filter((id) => id !== nextId)
         : [nextId, ...current.filter((id) => id !== nextId)].slice(0, MAX_FAVORITE_LOCATIONS);
       localStorage.setItem(FAVORITE_LOCATION_STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("lw-favorites-changed"));
+      notifyFavoriteLocationIdsChanged();
       return next;
     });
   }

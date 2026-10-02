@@ -4,10 +4,13 @@ import { useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
+import {
+  getEmptyFavoriteLocationIds,
+  readFavoriteLocationIds,
+  subscribeFavoriteLocationIds,
+} from "@/lib/weather/favorite-location-ids";
 import { locationSlug } from "@/lib/site";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
-
-const FAVORITE_LOCATION_STORAGE_KEY = "latvia-weather-favorite-locations";
 
 interface FavoritesRailProps {
   currentLocationId: string;
@@ -20,43 +23,14 @@ function locationHref(location: Pick<WeatherLocationPoint, "id" | "name">): stri
     : `/punkts/${encodeURIComponent(locationSlug(location.name))}`;
 }
 
-const EMPTY_FAVORITE_IDS: string[] = [];
-
-let cachedFavoriteRaw: string | null = null;
-let cachedFavoriteIds: string[] = EMPTY_FAVORITE_IDS;
-
-function readFavoriteIds(): string[] {
-  if (typeof window === "undefined") return EMPTY_FAVORITE_IDS;
-  try {
-    const raw = localStorage.getItem(FAVORITE_LOCATION_STORAGE_KEY) ?? "[]";
-    if (raw === cachedFavoriteRaw) return cachedFavoriteIds;
-    const parsed = JSON.parse(raw);
-    const next = Array.isArray(parsed)
-      ? parsed.filter((id): id is string => typeof id === "string")
-      : EMPTY_FAVORITE_IDS;
-    cachedFavoriteRaw = raw;
-    cachedFavoriteIds = next.length === 0 ? EMPTY_FAVORITE_IDS : next;
-    return cachedFavoriteIds;
-  } catch {
-    cachedFavoriteRaw = null;
-    cachedFavoriteIds = EMPTY_FAVORITE_IDS;
-    return EMPTY_FAVORITE_IDS;
-  }
-}
-
-function subscribeFavorites(notify: () => void) {
-  window.addEventListener("storage", notify);
-  window.addEventListener("lw-favorites-changed", notify);
-  return () => {
-    window.removeEventListener("storage", notify);
-    window.removeEventListener("lw-favorites-changed", notify);
-  };
-}
-
 /** Persistent favorites chips under the hero for one-handed city switching. */
 export function FavoritesRail({ currentLocationId, locations }: FavoritesRailProps) {
   const t = useTranslations("location");
-  const favoriteIds = useSyncExternalStore(subscribeFavorites, readFavoriteIds, () => EMPTY_FAVORITE_IDS);
+  const favoriteIds = useSyncExternalStore(
+    subscribeFavoriteLocationIds,
+    readFavoriteLocationIds,
+    getEmptyFavoriteLocationIds,
+  );
 
   const favorites = favoriteIds
     .map((id) => locations.find((location) => location.id === id))

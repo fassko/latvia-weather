@@ -8,6 +8,7 @@ import {
 } from "./warning-dismiss-cookie";
 
 const dismissedIdsCache = createDismissedWarningIdsCache();
+const EMPTY_SERVER_IDS: string[] = [];
 
 function readRawDismissCookie(): string {
   if (typeof document === "undefined") return "";
@@ -35,9 +36,13 @@ export function useDismissedWarningIds(serverIds: string[]): string[] {
   // Trust document.cookie on the client. Merging with serverIds broke "Show":
   // expand clears the cookie, but serverIds from the initial render still
   // contained the dismissed key and kept the compact banner stuck closed.
+  // getServerSnapshot must return a stable reference (not a fresh [] each call).
+  const serverSnapshot =
+    serverIds.length === 0 ? EMPTY_SERVER_IDS : serverIds;
+
   return useSyncExternalStore(
     subscribeToWarningDismiss,
     readDismissedWarningIds,
-    () => serverIds,
+    () => serverSnapshot,
   );
 }

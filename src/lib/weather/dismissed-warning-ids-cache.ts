@@ -1,9 +1,11 @@
 import { parseDismissedWarningIds } from "./warning-dismiss-cookie";
 
+const EMPTY_DISMISSED_IDS: string[] = [];
+
 /** Cached parse of the raw cookie value. Invalidate with null so "" (cleared) re-reads. */
 export function createDismissedWarningIdsCache() {
   let cachedRaw: string | null = null;
-  let cachedIds: string[] = [];
+  let cachedIds: string[] = EMPTY_DISMISSED_IDS;
 
   return {
     read(raw: string): string[] {
@@ -11,11 +13,13 @@ export function createDismissedWarningIdsCache() {
 
       cachedRaw = raw;
       try {
-        cachedIds = parseDismissedWarningIds(
+        const next = parseDismissedWarningIds(
           raw ? decodeURIComponent(raw) : undefined,
         );
+        cachedIds = next.length === 0 ? EMPTY_DISMISSED_IDS : next;
       } catch {
-        cachedIds = parseDismissedWarningIds(raw || undefined);
+        const next = parseDismissedWarningIds(raw || undefined);
+        cachedIds = next.length === 0 ? EMPTY_DISMISSED_IDS : next;
       }
       return cachedIds;
     },
