@@ -20,15 +20,27 @@ function locationHref(location: Pick<WeatherLocationPoint, "id" | "name">): stri
     : `/punkts/${encodeURIComponent(locationSlug(location.name))}`;
 }
 
+const EMPTY_FAVORITE_IDS: string[] = [];
+
+let cachedFavoriteRaw: string | null = null;
+let cachedFavoriteIds: string[] = EMPTY_FAVORITE_IDS;
+
 function readFavoriteIds(): string[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return EMPTY_FAVORITE_IDS;
   try {
-    const parsed = JSON.parse(localStorage.getItem(FAVORITE_LOCATION_STORAGE_KEY) ?? "[]");
-    return Array.isArray(parsed)
+    const raw = localStorage.getItem(FAVORITE_LOCATION_STORAGE_KEY) ?? "[]";
+    if (raw === cachedFavoriteRaw) return cachedFavoriteIds;
+    const parsed = JSON.parse(raw);
+    const next = Array.isArray(parsed)
       ? parsed.filter((id): id is string => typeof id === "string")
-      : [];
+      : EMPTY_FAVORITE_IDS;
+    cachedFavoriteRaw = raw;
+    cachedFavoriteIds = next.length === 0 ? EMPTY_FAVORITE_IDS : next;
+    return cachedFavoriteIds;
   } catch {
-    return [];
+    cachedFavoriteRaw = null;
+    cachedFavoriteIds = EMPTY_FAVORITE_IDS;
+    return EMPTY_FAVORITE_IDS;
   }
 }
 
@@ -44,7 +56,7 @@ function subscribeFavorites(notify: () => void) {
 /** Persistent favorites chips under the hero for one-handed city switching. */
 export function FavoritesRail({ currentLocationId, locations }: FavoritesRailProps) {
   const t = useTranslations("location");
-  const favoriteIds = useSyncExternalStore(subscribeFavorites, readFavoriteIds, () => []);
+  const favoriteIds = useSyncExternalStore(subscribeFavorites, readFavoriteIds, () => EMPTY_FAVORITE_IDS);
 
   const favorites = favoriteIds
     .map((id) => locations.find((location) => location.id === id))
