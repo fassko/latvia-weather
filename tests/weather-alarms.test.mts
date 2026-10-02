@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  alarmCoversPoint,
   buildWeatherAlarmPolygons,
   buildWeatherAlarmRegionLabelsByText,
+  filterAlarmsByCoordinates,
+  pointInRing,
 } from "../src/lib/weather/alarms.ts";
+import {
+  buildWeatherAlarmsResponse,
+  resolveIncludeGeometry,
+  serializeWeatherAlarm,
+} from "../src/lib/weather/alarms-api.ts";
+import type { WeatherAlarmPolygon } from "../src/lib/weather/types.ts";
 
 test("buildWeatherAlarmPolygons joins metadata, ordered rings, and municipality names", () => {
   const alarms = buildWeatherAlarmPolygons(
@@ -93,4 +102,118 @@ test("buildWeatherAlarmRegionLabelsByText indexes localized region labels by war
     lv: ["Latvija"],
     en: ["Latvia"],
   });
+});
+
+const squareAlarm: WeatherAlarmPolygon = {
+  id: "1",
+  warningNo: "1/1",
+  level: "yellow",
+  intensityLv: "Dzeltens",
+  intensityEn: "Yellow",
+  regionsLv: "Rīga",
+  regionsEn: "Riga",
+  phenomenonLv: "Migla",
+  phenomenonEn: "Fog",
+  timeFrom: "2026-10-02T00:00:00",
+  timeTill: "2026-10-02T12:00:00",
+  textLv: "Migla Rīgā.",
+  textEn: "Fog in Riga.",
+  risksLv: "Esi informēts.",
+  risksEn: "Be aware.",
+  municipalityNamesLv: ["Rīga"],
+  municipalityNamesEn: ["Riga"],
+  // Rough square around central Riga: [lat, lon]
+  rings: [
+    [
+      [56.9, 24.0],
+      [56.9, 24.2],
+      [57.0, 24.2],
+      [57.0, 24.0],
+    ],
+  ],
+};
+
+test("pointInRing detects points inside and outside a closed polygon", () => {
+  assert.equal(pointInRing({ lat: 56.95, lon: 24.1 }, squareAlarm.rings[0]), true);
+  assert.equal(pointInRing({ lat: 56.5, lon: 24.1 }, squareAlarm.rings[0]), false);
+});
+
+test("filterAlarmsByCoordinates keeps only covering alarms", () => {
+  const outsideOnly: WeatherAlarmPolygon = {
+    ...squareAlarm,
+    id: "2",
+    rings: [
+      [
+        [55.0, 21.0],
+        [55.0, 21.2],
+        [55.2, 21.2],
+        [55.2, 21.0],
+      ],
+    ],
+  };
+
+  const matches = filterAlarmsByCoordinates(
+    [squareAlarm, outsideOnly],
+    { lat: 56.95, lon: 24.1 },
+  );
+
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0]?.id, "1");
+  assert.equal(alarmCoversPoint(outsideOnly, { lat: 56.95, lon: 24.1 }), false);
+});
+
+test("serializeWeatherAlarm nests LV/EN fields and can omit geometry", () => {
+  const withGeometry = serializeWeatherAlarm(squareAlarm, true);
+  assert.equal(withGeometry.intensity.en, "Yellow");
+  assert.equal(withGeometry.phenomenon.lv, "Migla");
+  assert.equal(withGeometry.text.en, "Fog in Riga.");
+  assert.ok(withGeometry.rings);
+
+  const withoutGeometry = serializeWeatherAlarm(squareAlarm, false);
+  assert.equal(withoutGeometry.rings, undefined);
+});
+
+test("buildWeatherAlarmsResponse filters and shapes the public payload", () => {
+  const payload = buildWeatherAlarmsResponse({
+    alarms: [squareAlarm],
+    filter: {
+      punkts: "P269",
+      location: {
+        id: "P269",
+        name: "Rīga",
+        region: "Rīga",
+        lat: 56.95,
+        lon: 24.1,
+      },
+      lat: 56.95,
+      lon: 24.1,
+    },
+    includeGeometry: false,
+    fetchedAt: new Date("2026-10-02T07:00:00.000Z"),
+  });
+
+  assert.equal(payload.source, "data.gov.lv / LVĢMC");
+  assert.equal(payload.dataset, "hidrometeorologiskie-bridinajumi");
+  assert.equal(payload.count, 1);
+  assert.equal(payload.filter?.punkts, "P269");
+  assert.equal(payload.alarms[0]?.rings, undefined);
+  assert.equal(payload.fetchedAt, "2026-10-02T07:00:00.000Z");
+});
+
+test("buildWeatherAlarmsResponse returns empty list when point is outside", () => {
+  const payload = buildWeatherAlarmsResponse({
+    alarms: [squareAlarm],
+    filter: { lat: 55.0, lon: 21.0 },
+    includeGeometry: true,
+  });
+
+  assert.equal(payload.count, 0);
+  assert.deepEqual(payload.alarms, []);
+});
+
+test("resolveIncludeGeometry defaults to true and accepts falsey flags", () => {
+  assert.equal(resolveIncludeGeometry(null, null), true);
+  assert.equal(resolveIncludeGeometry("0", null), false);
+  assert.equal(resolveIncludeGeometry(null, "false"), false);
+  assert.equal(resolveIncludeGeometry("1", "false"), true);
 });
