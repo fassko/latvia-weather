@@ -5,6 +5,13 @@ const DATASTORE_API =
 const PAGE_SIZE = 5000;
 const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
 
+/** Cache TTL for datastore fetches (matches LVĢMC weather revalidate). */
+export const ALARMS_REVALIDATE_SECONDS = 900;
+
+/** Official open-data package already used by the map alarm layer. */
+export const ALARMS_SOURCE_LABEL = "data.gov.lv / LVĢMC";
+export const ALARMS_DATASET_SLUG = "hidrometeorologiskie-bridinajumi";
+
 const RESOURCE_IDS = {
   metadata: "59c111fb-8c9a-4a63-8284-0a64a2920681",
   polygons: "01dc7d3c-34e5-4cc3-8f1a-aaf022872a02",
@@ -385,4 +392,47 @@ export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> 
 
     return [];
   }
+}
+
+/**
+ * Ray-casting point-in-polygon test.
+ * Rings are `[lat, lon][]` (same order as Leaflet) — treat lat as Y, lon as X.
+ */
+export function pointInRing(
+  point: { lat: number; lon: number },
+  ring: readonly [number, number][],
+): boolean {
+  if (ring.length < 3) return false;
+
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [latI, lonI] = ring[i];
+    const [latJ, lonJ] = ring[j];
+    const crosses =
+      latI > point.lat !== latJ > point.lat &&
+      point.lon <
+        ((lonJ - lonI) * (point.lat - latI)) / (latJ - latI) + lonI;
+    if (crosses) inside = !inside;
+  }
+
+  return inside;
+}
+
+/** True when the point falls inside any ring of the alarm polygon. */
+export function alarmCoversPoint(
+  alarm: Pick<WeatherAlarmPolygon, "rings">,
+  point: { lat: number; lon: number },
+): boolean {
+  if (!Number.isFinite(point.lat) || !Number.isFinite(point.lon)) {
+    return false;
+  }
+
+  return alarm.rings.some((ring) => pointInRing(point, ring));
+}
+
+export function filterAlarmsByCoordinates(
+  alarms: readonly WeatherAlarmPolygon[],
+  point: { lat: number; lon: number },
+): WeatherAlarmPolygon[] {
+  return alarms.filter((alarm) => alarmCoversPoint(alarm, point));
 }

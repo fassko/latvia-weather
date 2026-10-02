@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getHistoricalClimateForPunkts } from "@/lib/climate/historical";
+import { getWeatherAlarmsPayload } from "@/lib/weather/alarms-api";
 import {
   getHourlyForecast,
   getLocationPoints,
@@ -114,6 +115,41 @@ export function registerMcpTools(server: McpServer) {
           error instanceof Error
             ? error.message
             : "Failed to fetch historical climate data";
+        return textError(message);
+      }
+    },
+  );
+
+  server.tool(
+    "get_weather_alarms",
+    "List active LVĢMC weather alarms/warnings. Optionally filter by punkts ID so only alarms whose polygon covers that forecast point are returned. Responses include Latvian and English text.",
+    {
+      punkts: z.string().optional(),
+      includeGeometry: z.boolean().optional(),
+    },
+    async ({ punkts, includeGeometry }) => {
+      const locationId =
+        typeof punkts === "string" && punkts.trim() !== ""
+          ? punkts.trim()
+          : undefined;
+
+      if (locationId != null && !isValidLocationId(locationId)) {
+        return textError(
+          `Invalid location ID "${locationId}". Use list_locations or search_location to find a valid punkts ID.`,
+        );
+      }
+
+      try {
+        const data = await getWeatherAlarmsPayload({
+          punkts: locationId,
+          includeGeometry: includeGeometry ?? false,
+        });
+        return textResult(data);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch weather alarms";
         return textError(message);
       }
     },

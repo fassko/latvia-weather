@@ -69,6 +69,31 @@ redeploy after changing them.
 
 Deployed on [Vercel](https://vercel.com). Production URL: [latvia-weather.com](https://latvia-weather.com/)
 
+## Public HTTP APIs
+
+| Endpoint | Description |
+| --- | --- |
+| `GET /api/weather` | Hourly forecast for a `punkts` / `location` id |
+| `GET /api/locations` | All forecast locations with current conditions |
+| `GET /api/historical` | Last complete month vs climate normals for a point |
+| `GET /api/alarms` | Active LVĢMC weather alarms/warnings |
+
+### Weather alarms
+
+`GET /api/alarms` returns currently active hydrometeorological warnings from the
+[data.gov.lv LVĢMC open dataset](https://data.gov.lv/dati/dataset/hidrometeorologiskie-bridinajumi)
+(the same source the map alarm polygons use). Each alarm includes Latvian and
+English text.
+
+| Query | Meaning |
+| --- | --- |
+| _(none)_ | All active alarms |
+| `punkts` / `location` | Only alarms whose polygon covers that forecast point (e.g. `P269`) |
+| `lat` + `lon` | Only alarms covering those coordinates |
+| `geometry=0` | Omit polygon rings for a lighter payload |
+
+Example: `/api/alarms?punkts=P269&geometry=0`
+
 ## MCP
 
 This app exposes a public [Model Context Protocol](https://modelcontextprotocol.io/) server for AI clients.
@@ -82,6 +107,8 @@ This app exposes a public [Model Context Protocol](https://modelcontextprotocol.
 | `list_locations` | All forecast locations with current temperature | _(none)_ |
 | `search_location` | Find locations by city or region name | `{ "query": "Rīga" }` |
 | `get_forecast` | Hourly forecast for a location (`punkts` ID) | `{ "punkts": "P269" }` |
+| `get_historical_climate` | Last complete month vs climate normals | `{ "punkts": "P269" }` |
+| `get_weather_alarms` | Active weather alarms (optional punkts filter) | `{ "punkts": "P269" }` |
 
 Forecast responses use ISO 8601 date strings for `fetchedAt` and each hourly `time`.
 
