@@ -518,20 +518,6 @@
     "regionTitle": "Vēl {region}",
     "distanceKm": "{value} km"
   },
-  "locationIntro": {
-    "sectionLabel": "Par šo prognozi",
-    "climateLink": "Salīdzinājumā ar ierastu →",
-    "temperature": {
-      "warmer": "{month} bija siltāks par ierastu (+{delta}°C).",
-      "colder": "{month} bija aukstāks par ierastu (−{delta}°C).",
-      "usual": "{month} temperatūra bija aptuveni ierasta."
-    },
-    "precipitation": {
-      "rainier": "Nokrišņi virs normas.",
-      "drier": "Nokrišņi zem normas.",
-      "usual": "Nokrišņi aptuveni normā."
-    }
-  },
   "about": {
     "title": "Par laikapstākļu datiem",
     "intro": "Kā Latvia Weather ņem prognozes, brīdinājumus un klimata kontekstu no LVĢMC — un kā tos lasīt.",

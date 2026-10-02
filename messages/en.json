@@ -16,20 +16,6 @@
     "regionTitle": "More in {region}",
     "distanceKm": "{value} km"
   },
-  "locationIntro": {
-    "sectionLabel": "About this forecast",
-    "climateLink": "Compared with usual →",
-    "temperature": {
-      "warmer": "{month} was warmer than usual (+{delta}°C).",
-      "colder": "{month} was colder than usual (−{delta}°C).",
-      "usual": "{month} was about usual for temperature."
-    },
-    "precipitation": {
-      "rainier": "Rain was above normal.",
-      "drier": "Rain was below normal.",
-      "usual": "Rain was about normal."
-    }
-  },
   "footer": {
     "dataFrom": "Data from",
     "updatedEvery": "Updated every 15 minutes.",

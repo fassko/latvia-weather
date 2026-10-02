@@ -7,7 +7,6 @@ import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { LegalLinks } from "@/components/LegalLinks";
 import { FooterAppSocials } from "@/components/FooterAppSocials";
 import { HourlyStripCard } from "@/components/HourlyStripCard";
-import { LocationIntro } from "@/components/LocationIntro";
 import { MetricCards } from "@/components/MetricCards";
 import { NearbyPlaces } from "@/components/NearbyPlaces";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
@@ -291,10 +290,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
         ) : null}
         <FavoritesRail currentLocationId={data.location.id} locations={locations} />
         <WeatherWarnings locale={locale} warnings={warnings} />
-        <LocationIntro
-          locale={locale}
-          climateComparison={climateComparison}
-        />
         <HourlyStripCard
           forecasts={data.forecasts}
           sunTimesByDay={sunTimesByDay}
