@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 const CONSENT_COOKIE = "lw_cookie_consent";
 const CONSENT_MAX_AGE = 60 * 60 * 24 * 180;
 const OPEN_SETTINGS_EVENT = "lw-open-cookie-settings";
+export const COOKIE_BANNER_VISIBILITY_EVENT = "lw-cookie-banner-visibility";
 /** Wait past typical LCP so the weather hero paints first, not this sheet. */
 const BANNER_DELAY_MS = 3500;
 
@@ -28,6 +29,21 @@ function parseConsent(cookie: string): Consent | null {
 function saveConsent(consent: Consent) {
   document.cookie = `${CONSENT_COOKIE}=${encodeURIComponent(JSON.stringify(consent))};path=/;max-age=${CONSENT_MAX_AGE};SameSite=Lax;Secure`;
   window.dispatchEvent(new Event("lw-cookie-consent-changed"));
+}
+
+let bannerVisible = false;
+const bannerListeners = new Set<() => void>();
+
+function dispatchBannerVisibility(visible: boolean) {
+  bannerVisible = visible;
+  document.documentElement.style.setProperty(
+    "--lw-cookie-banner-visible",
+    visible ? "1" : "0",
+  );
+  window.dispatchEvent(
+    new CustomEvent(COOKIE_BANNER_VISIBILITY_EVENT, { detail: { visible } }),
+  );
+  for (const listener of bannerListeners) listener();
 }
 
 /** True only after client hydration so we do not flash the banner before cookies are readable. */
@@ -92,17 +108,22 @@ export function CookieConsent() {
   const showCompactBanner =
     hasHydrated && bannerDelayElapsed && consent === null && !settingsOpen;
 
+  useEffect(() => {
+    dispatchBannerVisibility(showCompactBanner);
+    return () => dispatchBannerVisibility(false);
+  }, [showCompactBanner]);
+
   return (
     <>
       {Analytics ? <Analytics /> : null}
       {SpeedInsights ? <SpeedInsights /> : null}
       {showCompactBanner ? (
         <section
-          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-lg rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
+          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-lg rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/95"
           aria-label={t("title")}
           role="region"
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex items-center gap-2">
             <p className="min-w-0 flex-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
               {t("bannerShort")}{" "}
               <Link
@@ -111,8 +132,19 @@ export function CookieConsent() {
               >
                 {t("privacyLink")}
               </Link>
+              {" · "}
+              <button
+                type="button"
+                onClick={() => {
+                  setAnalytics(false);
+                  setSettingsOpen(true);
+                }}
+                className="font-medium text-slate-800 underline underline-offset-2 dark:text-slate-100"
+              >
+                {t("manage")}
+              </button>
             </p>
-            <div className="flex shrink-0 flex-wrap gap-1.5">
+            <div className="flex shrink-0 gap-1.5">
               <button
                 type="button"
                 onClick={() => choose({ analytics: true })}
@@ -126,16 +158,6 @@ export function CookieConsent() {
                 className="min-h-10 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
               >
                 {t("rejectOptional")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAnalytics(false);
-                  setSettingsOpen(true);
-                }}
-                className="min-h-10 rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 underline hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
-              >
-                {t("manage")}
               </button>
             </div>
           </div>
@@ -202,4 +224,21 @@ export function CookieConsent() {
 
 export function openCookieSettings() {
   window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));
+}
+
+/** Subscribe to consent banner visibility for FAB / chrome collision avoidance. */
+export function useCookieBannerVisible(): boolean {
+  return useSyncExternalStore(
+    (notify) => {
+      bannerListeners.add(notify);
+      const onEvent = () => notify();
+      window.addEventListener(COOKIE_BANNER_VISIBILITY_EVENT, onEvent);
+      return () => {
+        bannerListeners.delete(notify);
+        window.removeEventListener(COOKIE_BANNER_VISIBILITY_EVENT, onEvent);
+      };
+    },
+    () => bannerVisible,
+    () => false,
+  );
 }

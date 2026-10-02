@@ -16,6 +16,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { useCookieBannerVisible } from "@/components/CookieConsent";
 import {
   ASSISTANT_HISTORY_CHAT_ID,
   loadAssistantHistory,
@@ -243,6 +244,7 @@ export function WeatherAssistant({
 }: WeatherAssistantProps) {
   const [input, setInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const bannerVisible = useCookieBannerVisible();
   const [initialMessages] = useState<UIMessage[]>(() => loadAssistantHistory());
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const openButtonRef = useRef<HTMLButtonElement>(null);
@@ -350,20 +352,24 @@ export function WeatherAssistant({
         />
       ) : null}
 
+      {!bannerVisible || isOpen ? (
       <button
         ref={openButtonRef}
         type="button"
         onClick={() => setIsOpen(true)}
         // Keeps the visible text at the start of the accessible name so voice
         // control users can say what they see.
-        aria-label={`${labels.send} · ${labels.title}`}
+        aria-label={`${labels.open} · ${labels.title}`}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="fixed right-4 bottom-5 z-30 flex h-14 items-center gap-2 rounded-full bg-[#477dd8] px-5 text-base font-semibold text-white shadow-[0_18px_40px_rgba(71,125,216,0.35)] transition hover:bg-[#3d72cb] focus-visible:ring-4 focus-visible:ring-[#477dd8]/25 focus-visible:outline-none sm:right-8 sm:bottom-7 sm:h-16 sm:px-7 sm:text-lg dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
+        className={`fixed right-4 bottom-5 z-30 flex h-14 items-center gap-2 rounded-full bg-[#477dd8] px-5 text-base font-semibold text-white shadow-[0_18px_40px_rgba(71,125,216,0.35)] transition hover:bg-[#3d72cb] focus-visible:ring-4 focus-visible:ring-[#477dd8]/25 focus-visible:outline-none sm:right-8 sm:bottom-7 sm:h-16 sm:px-7 sm:text-lg dark:shadow-[0_18px_40px_rgba(0,0,0,0.45)] ${
+          bannerVisible && !isOpen ? "hidden" : ""
+        }`}
       >
         <AppWeatherIcon className="h-7 w-7 bg-none shadow-none" />
-        {labels.send}
+        {labels.open}
       </button>
+      ) : null}
 
       {/* The closed panel is parked a full viewport width off-canvas so it can
           slide in. iOS Safari counts that off-screen fixed box as scrollable

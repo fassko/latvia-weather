@@ -25,7 +25,9 @@ interface ForecastChartsSectionProps {
   };
 }
 
-/** Mount Recharts only when the section nears the viewport (or after idle). */
+const MD_UP_QUERY = "(min-width: 768px)";
+
+/** Mount Recharts only when expanded and near the viewport (or after idle). */
 export function ForecastChartsSection({
   forecasts,
   sunTimesByDay,
@@ -33,10 +35,22 @@ export function ForecastChartsSection({
 }: ForecastChartsSectionProps) {
   const t = useTranslations("chart");
   const sectionRef = useRef<HTMLElement>(null);
+  const [mdUp, setMdUp] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
 
+  const expanded = mdUp || mobileExpanded;
+
   useEffect(() => {
-    if (shouldLoad) return;
+    const media = window.matchMedia(MD_UP_QUERY);
+    const sync = () => setMdUp(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (!expanded || shouldLoad) return;
 
     const node = sectionRef.current;
     let idleId: number | undefined;
@@ -68,7 +82,7 @@ export function ForecastChartsSection({
       if (idleId !== undefined) window.cancelIdleCallback(idleId);
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [shouldLoad]);
+  }, [expanded, shouldLoad]);
 
   return (
     <section
@@ -76,15 +90,28 @@ export function ForecastChartsSection({
       aria-label={t("title")}
       className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900"
     >
-      {shouldLoad ? (
-        <ForecastChart
-          forecasts={forecasts}
-          sunTimesByDay={sunTimesByDay}
-          sunLabels={sunLabels}
-        />
-      ) : (
-        <div className="h-80 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800 md:h-[400px]" />
-      )}
+      <div className="mb-3 md:hidden">
+        <button
+          type="button"
+          className="min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-sky-800 transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-sky-300 dark:hover:border-sky-600"
+          aria-expanded={mobileExpanded}
+          onClick={() => setMobileExpanded((value) => !value)}
+        >
+          {mobileExpanded ? t("hideChart") : t("showChart")}
+        </button>
+      </div>
+
+      {expanded ? (
+        shouldLoad ? (
+          <ForecastChart
+            forecasts={forecasts}
+            sunTimesByDay={sunTimesByDay}
+            sunLabels={sunLabels}
+          />
+        ) : (
+          <div className="h-80 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800 md:h-[400px]" />
+        )
+      ) : null}
     </section>
   );
 }

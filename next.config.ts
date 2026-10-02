@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // HTML caching for anonymous/bot navigations is applied in src/proxy.ts
+      // when personalization cookies are absent (bfcache / CDN friendly).
     ];
   },
 };

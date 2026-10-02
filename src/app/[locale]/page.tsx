@@ -7,12 +7,15 @@ import { MAIN_CONTENT_ID } from "@/components/SkipToContent";
 import { LegalLinks } from "@/components/LegalLinks";
 import { FooterAppSocials } from "@/components/FooterAppSocials";
 import { HourlyStripCard } from "@/components/HourlyStripCard";
+import { LocationIntro } from "@/components/LocationIntro";
 import { MetricCards } from "@/components/MetricCards";
+import { NearbyPlaces } from "@/components/NearbyPlaces";
 import { StalePageRefresh } from "@/components/StalePageRefresh";
 import { TopNav } from "@/components/TopNav";
 import { WeatherAssistantLoader } from "@/components/WeatherAssistantLoader";
 import { WeatherHero } from "@/components/WeatherHero";
 import { ClimateComparison } from "@/components/ClimateComparison";
+import { FavoritesRail } from "@/components/FavoritesRail";
 import { WeatherHighlights } from "@/components/WeatherHighlights";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
 import { routing, type Locale } from "@/i18n/routing";
@@ -80,11 +83,43 @@ function buildLanguageAlternates(baseUrl: string, punkts?: string, locationName?
   };
 }
 
+function climateSnippetLine(
+  locale: string,
+  locationName: string,
+  comparison: Awaited<ReturnType<typeof getClimateMonthComparison>>,
+): string | null {
+  if (!comparison) return null;
+  const temperature = comparison.metrics.find((metric) => metric.kind === "temperature");
+  if (!temperature) return null;
+
+  const monthLabel = new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-GB", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(comparison.year, comparison.month - 1, 1)));
+
+  if (temperature.delta >= 0.5) {
+    return locale === "lv"
+      ? `${monthLabel} ${locationName} bija siltāks par ierastu (${temperature.delta.toFixed(1)}°C).`
+      : `${monthLabel} was warmer than usual in ${locationName} (+${temperature.delta.toFixed(1)}°C).`;
+  }
+  if (temperature.delta <= -0.5) {
+    return locale === "lv"
+      ? `${monthLabel} ${locationName} bija aukstāks par ierastu (${Math.abs(temperature.delta).toFixed(1)}°C).`
+      : `${monthLabel} was colder than usual in ${locationName} (${temperature.delta.toFixed(1)}°C).`;
+  }
+  return null;
+}
+
 export async function generateMetadata({ params, searchParams }: HomeProps): Promise<Metadata> {
   const { locale } = await params;
   const { punkts, location } = await searchParams;
   const queryLocationId = pickLocationQueryValue(punkts, location);
-  const savedPunkts = await getLocationCookie();
+  // Skip location cookie when the URL already names a place — keeps HTML more
+  // cacheable for explicit /punkts/... and ?punkts= routes.
+  const savedPunkts =
+    queryLocationId && isValidLocationId(queryLocationId)
+      ? undefined
+      : await getLocationCookie();
   const locationId = resolveLocationId(queryLocationId, savedPunkts);
   const t = await getTranslations({ locale, namespace: "metadata" });
   const baseUrl = getSiteUrl();
@@ -108,6 +143,15 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
     if (canonicalLocationId) {
       canonicalLocationName = data.location.name;
       canonicalPath = localizedPath(locale, canonicalLocationId, data.location.name);
+    }
+
+    const climate = await getClimateMonthComparison({
+      lat: data.location.lat,
+      lon: data.location.lon,
+    }).catch(() => null);
+    const climateLine = climateSnippetLine(locale, data.location.name, climate);
+    if (climateLine) {
+      description = climateLine;
     }
   } catch {
     // Fall back to generic site metadata when the forecast is unavailable.
@@ -156,11 +200,12 @@ export default async function Home({ params, searchParams }: HomeProps) {
 
   setRequestLocale(locale);
 
-  const savedPunkts = await getLocationCookie();
-  const locationId = resolveLocationId(
-    pickLocationQueryValue(punkts, location),
-    savedPunkts,
-  );
+  const queryLocationId = pickLocationQueryValue(punkts, location);
+  const savedPunkts =
+    queryLocationId && isValidLocationId(queryLocationId)
+      ? undefined
+      : await getLocationCookie();
+  const locationId = resolveLocationId(queryLocationId, savedPunkts);
   const t = await getTranslations({ locale, namespace: "errors" });
   const tFooter = await getTranslations({ locale, namespace: "footer" });
   const tAssistant = await getTranslations({ locale, namespace: "assistant" });
@@ -217,6 +262,15 @@ export default async function Home({ params, searchParams }: HomeProps) {
     },
   });
 
+  const currentPoint =
+    locations.find((point) => point.id === data.location.id) ?? {
+      ...data.location,
+      temperature: 0,
+      windSpeed: 0,
+      windDirection: 0,
+      iconCode: "1101",
+    };
+
   return (
     <>
       <script
@@ -235,9 +289,33 @@ export default async function Home({ params, searchParams }: HomeProps) {
             {tFooter("staleData")}
           </p>
         ) : null}
+        <FavoritesRail currentLocationId={data.location.id} locations={locations} />
         <WeatherWarnings locale={locale} warnings={warnings} />
+        <LocationIntro
+          locationName={data.location.name}
+          region={data.location.region}
+          locale={locale}
+          climateComparison={climateComparison}
+        />
+        <HourlyStripCard
+          forecasts={data.forecasts}
+          sunTimesByDay={sunTimesByDay}
+          sunLabels={{
+            sunrise: tTable("sunrise"),
+            sunset: tTable("sunset"),
+          }}
+        />
+        <DailyForecastList forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
         <MetricCards forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
         <WeatherHighlights forecasts={data.forecasts} />
+        <ForecastChartsSection
+          forecasts={data.forecasts}
+          sunTimesByDay={sunTimesByDay}
+          sunLabels={{
+            sunrise: tTable("sunrise"),
+            sunset: tTable("sunset"),
+          }}
+        />
         <WeatherAssistantLoader
           locale={locale}
           locationId={data.location.id}
@@ -263,26 +341,12 @@ export default async function Home({ params, searchParams }: HomeProps) {
             ],
           }}
         />
-        <HourlyStripCard
-          forecasts={data.forecasts}
-          sunTimesByDay={sunTimesByDay}
-          sunLabels={{
-            sunrise: tTable("sunrise"),
-            sunset: tTable("sunset"),
-          }}
-        />
-        <ForecastChartsSection
-          forecasts={data.forecasts}
-          sunTimesByDay={sunTimesByDay}
-          sunLabels={{
-            sunrise: tTable("sunrise"),
-            sunset: tTable("sunset"),
-          }}
-        />
-        <DailyForecastList forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
         {climateComparison ? (
-          <ClimateComparison comparison={climateComparison} locale={locale} />
+          <div id="climate">
+            <ClimateComparison comparison={climateComparison} locale={locale} />
+          </div>
         ) : null}
+        <NearbyPlaces current={currentPoint} locations={locations} />
         <PopularPlaces
           locations={locations}
           currentLocationId={data.location.id}

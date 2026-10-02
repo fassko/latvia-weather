@@ -211,12 +211,17 @@ function getInitialChartPreferences(): ChartPreferences {
     return { period: 1, hiddenSeries: [] };
   }
 
-  return (
+  const stored =
     parseChartPreferences(localStorage.getItem(CHART_PREFS_STORAGE_KEY)) ?? {
-      period: 1,
-      hiddenSeries: [],
-    }
-  );
+      period: 1 as ForecastPeriod,
+      // Mobile-first default: temperature sparkline only until the user opts in.
+      hiddenSeries:
+        window.matchMedia("(max-width: 639px)").matches
+          ? (["precipitation", "windSpeed"] as ChartSeriesKey[])
+          : [],
+    };
+
+  return stored;
 }
 
 export function ForecastChart({
@@ -462,7 +467,7 @@ export function ForecastChart({
         onPointerDown={allowTooltipInteraction}
       >
           <div
-            className={`min-w-[700px] sm:min-w-0 ${
+            className={`w-full min-w-0 sm:min-w-0 ${
               isMultiDay ? "h-80 md:h-[400px]" : "h-72"
             }`}
           >
@@ -470,7 +475,7 @@ export function ForecastChart({
               width="100%"
               height="100%"
               minWidth={0}
-              initialDimension={{ width: 700, height: isMultiDay ? 320 : 256 }}
+              initialDimension={{ width: 360, height: isMultiDay ? 320 : 256 }}
             >
             <ComposedChart data={data} margin={CHART_MARGIN}>
               <CartesianGrid

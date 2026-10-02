@@ -6,5 +6,36 @@ import { openCookieSettings } from "@/components/CookieConsent";
 
 export function LegalLinks() {
   const t = useTranslations("footer");
-  return <span className="whitespace-nowrap"><Link href="/terms" className="underline hover:text-slate-700 dark:hover:text-slate-200">{t("terms")}</Link>{" · "}<Link href="/privacy" className="underline hover:text-slate-700 dark:hover:text-slate-200">{t("privacy")}</Link>{" · "}<button type="button" onClick={openCookieSettings} className="underline hover:text-slate-700 dark:hover:text-slate-200">{t("cookieSettings")}</button></span>;
+  return (
+    <span className="whitespace-nowrap">
+      <Link
+        href="/about"
+        className="underline hover:text-slate-700 dark:hover:text-slate-200"
+      >
+        {t("about")}
+      </Link>
+      {" · "}
+      <Link
+        href="/terms"
+        className="underline hover:text-slate-700 dark:hover:text-slate-200"
+      >
+        {t("terms")}
+      </Link>
+      {" · "}
+      <Link
+        href="/privacy"
+        className="underline hover:text-slate-700 dark:hover:text-slate-200"
+      >
+        {t("privacy")}
+      </Link>
+      {" · "}
+      <button
+        type="button"
+        onClick={openCookieSettings}
+        className="underline hover:text-slate-700 dark:hover:text-slate-200"
+      >
+        {t("cookieSettings")}
+      </button>
+    </span>
+  );
 }

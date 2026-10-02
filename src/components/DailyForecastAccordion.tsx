@@ -197,7 +197,60 @@ function DayBreakdown({
 
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
-      <table className="relative min-w-full text-left text-sm">
+      <div className="space-y-0 divide-y divide-slate-100 md:hidden dark:divide-slate-800">
+        {forecasts.map((forecast) => {
+          const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
+          const isPast =
+            fadedBefore != null && getLatviaWallClock(forecast.time) < fadedBefore;
+
+          return (
+            <article
+              key={`mobile-${forecast.time.toISOString()}`}
+              className={`flex items-center gap-3 py-2.5 ${isPast ? "opacity-45" : ""}`}
+            >
+              <time
+                dateTime={forecast.time.toISOString()}
+                className="w-12 shrink-0 text-sm font-medium tabular-nums text-slate-700 dark:text-slate-200"
+              >
+                {formatLatviaTime(forecast.time, "HH:mm")}
+              </time>
+              <span className="w-7 shrink-0 text-center text-xl" aria-hidden="true">
+                {getConditionEmoji(forecast.iconCode)}
+              </span>
+              <span
+                className={`w-14 shrink-0 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
+              >
+                {Math.round(forecast.temperature)}°C
+              </span>
+              <span
+                className={`flex min-w-0 flex-1 items-center gap-1 text-xs tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}
+              >
+                {Math.round(forecast.precipitationProbability)}%
+                {forecast.precipitation > 0
+                  ? ` · ${forecast.precipitation.toFixed(1)} mm`
+                  : null}
+              </span>
+              <span
+                className={`shrink-0 text-xs whitespace-nowrap tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
+              >
+                {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
+                <WindArrow degrees={forecast.windDirection} />
+              </span>
+              {sunEvents.length > 0 ? (
+                <span className="sr-only">
+                  {sunEvents
+                    .map(
+                      (sunEvent) =>
+                        `${tTable(sunEvent.event)} ${formatLatviaTime(sunEvent.time, "HH:mm")}`,
+                    )
+                    .join(", ")}
+                </span>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+      <table className="relative hidden min-w-full text-left text-sm md:table">
         <caption className="sr-only">
           {caption} — {tTable("title")}
         </caption>

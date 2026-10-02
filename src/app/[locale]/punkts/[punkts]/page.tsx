@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import Home, { generateMetadata as generateHomeMetadata, type HomeProps } from "../../page";
 import { isValidLocationId } from "@/lib/weather/locations";
 import { getHourlyForecast, getLocationPoints } from "@/lib/weather/fetch";
+import {
+  canonicalPunktsPath,
+  isNonCanonicalPunktsSegment,
+} from "@/lib/seo/location-canonical";
 import { localizedPath, locationIdFromSlug, locationSlug } from "@/lib/site";
 import { notFound, permanentRedirect } from "next/navigation";
+
+/** Location URLs are cookie-independent; allow ISR-style revalidation. */
+export const revalidate = 900;
 
 interface LocationPageProps {
   params: Promise<{ locale: string; punkts: string }>;
@@ -45,6 +52,17 @@ export default async function LocationPage(props: LocationPageProps) {
     getLocationId(props.params),
   ]);
   if (!locationId) notFound();
+
+  // Prefer the location directory for redirects so we do not depend on the
+  // hourly payload's name field (which permanentlyRedirect previously missed
+  // in production soft-duplicate cases).
+  if (isNonCanonicalPunktsSegment(punkts)) {
+    const locations = await getLocationPoints();
+    const canonical = canonicalPunktsPath(locale, punkts, locations);
+    if (canonical) {
+      permanentRedirect(canonical);
+    }
+  }
 
   const data = await getHourlyForecast(locationId);
   const canonicalPath = localizedPath(

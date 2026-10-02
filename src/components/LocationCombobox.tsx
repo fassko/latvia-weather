@@ -52,6 +52,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     top: number;
     left: number;
     width: number;
+    desktop: boolean;
   } | null>(null);
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<WeatherLocationPoint[] | null>(null);
@@ -148,6 +149,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         ? current.filter((id) => id !== nextId)
         : [nextId, ...current.filter((id) => id !== nextId)].slice(0, MAX_FAVORITE_LOCATIONS);
       localStorage.setItem(FAVORITE_LOCATION_STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("lw-favorites-changed"));
       return next;
     });
   }
@@ -212,8 +214,14 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
       Math.max(rect.left, margin),
       window.innerWidth - margin - width,
     );
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
 
-    setPanelPosition({ top: rect.bottom + 8, left, width });
+    setPanelPosition({
+      top: rect.bottom + 8,
+      left,
+      width,
+      desktop: isDesktop,
+    });
   }, []);
 
   function handleOpen() {
@@ -344,7 +352,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         onClick={handleOpen}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-1.5 pr-1.5 pl-2.5 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
+        className="flex min-h-11 max-w-full min-w-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-2 pr-2 pl-3 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
       >
         <PinIcon />
         <span className="min-w-0 truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -356,40 +364,55 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         <ChevronIcon />
       </button>
       {open && panelPosition ? (
-        <div
-          className="fixed z-50 rounded-xl border border-sky-300 bg-white shadow-lg dark:border-sky-600 dark:bg-slate-900"
-          style={{
-            top: panelPosition.top,
-            left: panelPosition.left,
-            width: panelPosition.width,
-          }}
-        >
-          <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-700">
-            <SearchIcon />
-            <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setHighlightIndex(0);
-              }}
-              onKeyDown={onInputKeyDown}
-              placeholder={t("searchPlaceholder")}
-              aria-controls={listboxId}
-              aria-expanded={open}
-              aria-autocomplete="list"
-              role="combobox"
-              className="w-full bg-transparent text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
-            />
-          </div>
-          <ul
-            ref={listboxRef}
-            id={listboxId}
-            role="listbox"
+        <>
+          <button
+            type="button"
             aria-label={t("select")}
-            className="max-h-72 overflow-y-auto py-1"
+            className="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
+            onClick={() => {
+              setOpen(false);
+              setQuery("");
+            }}
+          />
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl border border-sky-300 bg-white shadow-2xl md:inset-auto md:max-h-none md:rounded-xl dark:border-sky-600 dark:bg-slate-900"
+            style={
+              panelPosition.desktop
+                ? {
+                    top: panelPosition.top,
+                    left: panelPosition.left,
+                    width: panelPosition.width,
+                  }
+                : undefined
+            }
           >
+            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300 md:hidden dark:bg-slate-600" />
+            <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-700">
+              <SearchIcon />
+              <input
+                ref={inputRef}
+                type="search"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setHighlightIndex(0);
+                }}
+                onKeyDown={onInputKeyDown}
+                placeholder={t("searchPlaceholder")}
+                aria-controls={listboxId}
+                aria-expanded={open}
+                aria-autocomplete="list"
+                role="combobox"
+                className="w-full bg-transparent text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <ul
+              ref={listboxRef}
+              id={listboxId}
+              role="listbox"
+              aria-label={t("select")}
+              className="max-h-[min(70vh,28rem)] overflow-y-auto py-1 md:max-h-72"
+            >
             <li className="border-b border-slate-100 px-2 pb-1 dark:border-slate-800">
               <button
                 type="button"
@@ -454,7 +477,8 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
               renderLocationOption(location, index + favoriteLocations.length + recentLocations.length),
             )}
           </ul>
-        </div>
+          </div>
+        </>
       ) : null}
     </div>
   );
