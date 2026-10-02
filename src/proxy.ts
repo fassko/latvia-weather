@@ -4,6 +4,7 @@ import { routing } from "./i18n/routing";
 import {
   isNonCanonicalPunktsSegment,
 } from "./lib/seo/location-canonical";
+import { LOCATION_COOKIE_NAME } from "./lib/weather/location-cookie";
 import { DEFAULT_LOCATION_ID, isValidLocationId } from "./lib/weather/locations";
 import {
   hasLocationQueryParam,
@@ -11,10 +12,22 @@ import {
   pickLocationQueryValue,
   PUNKTS_QUERY_PARAM,
 } from "./lib/weather/location-query";
+import { WARNING_DISMISS_COOKIE_NAME } from "./lib/weather/warning-dismiss-cookie";
+import { WIND_UNITS_COOKIE_NAME } from "./lib/weather/wind-units";
 import { localizedPath, locationIdFromSlug } from "./lib/site";
 
 const handleLocaleRouting = createMiddleware(routing);
 const WEATHER_API_BASE = "https://videscentrs.lvgmc.lv/data";
+
+/** Cookies that personalize HTML — block anonymous CDN caching when present. */
+const PERSONALIZATION_COOKIES = [
+  LOCATION_COOKIE_NAME,
+  WIND_UNITS_COOKIE_NAME,
+  WARNING_DISMISS_COOKIE_NAME,
+] as const;
+
+const BOT_UA_RE =
+  /googlebot|bingbot|slurp|duckduckbot|baiduspider|yandex(?:bot|images)|facebookexternalhit|twitterbot|linkedinbot|applebot|semrushbot|ahrefsbot|dotbot|mj12bot|bytespider|petalbot|gptbot|claudebot|ccbot|ia_archiver/i;
 
 function isLocaleRootPath(pathname: string, locale: string): boolean {
   return pathname === `/${locale}` || pathname === `/${locale}/`;
@@ -25,12 +38,9 @@ function clearLocationQueryParams(url: URL): void {
   url.searchParams.delete(LOCATION_QUERY_PARAM);
 }
 
-/** Preference cookies that personalize HTML — skip shared cache when present. */
-const PERSONALIZATION_COOKIES = [
-  "weather-punkts",
-  "weather-wind-units",
-  "weather-warnings-dismissed",
-];
+function isBotUserAgent(ua: string | null): boolean {
+  return Boolean(ua && BOT_UA_RE.test(ua));
+}
 
 function hasPersonalizationCookies(request: NextRequest): boolean {
   return PERSONALIZATION_COOKIES.some((name) => request.cookies.has(name));
@@ -39,24 +49,32 @@ function hasPersonalizationCookies(request: NextRequest): boolean {
 function isHtmlNavigation(request: NextRequest): boolean {
   if (request.method !== "GET") return false;
   const accept = request.headers.get("accept") ?? "";
-  return accept.includes("text/html");
+  return (
+    accept.includes("text/html") ||
+    accept.includes("application/xhtml+xml") ||
+    accept.includes("*/*") ||
+    accept === ""
+  );
 }
 
 /**
- * Best-effort anonymous/bot HTML caching. Next.js still marks many pages
- * dynamic (cookies in the React tree), so this mainly helps when the platform
- * honors the header and avoids `no-store` for cookie-free navigations.
- * Residual: personalized visits remain private/no-store.
+ * Best-effort CDN cache for anonymous bot HTML.
+ * Residual limitation: Next.js often overrides Cache-Control on dynamic App
+ * Router pages (RSC / cookies()), so this may not stick for personalized or
+ * fully dynamic renders — crawlers without location/wind cookies benefit most.
  */
-function withAnonymousHtmlCacheHeaders(
+function withAnonymousBotHtmlCache(
   request: NextRequest,
   response: NextResponse,
 ): NextResponse {
-  if (!isHtmlNavigation(request) || hasPersonalizationCookies(request)) {
+  if (
+    !isHtmlNavigation(request) ||
+    !isBotUserAgent(request.headers.get("user-agent")) ||
+    hasPersonalizationCookies(request)
+  ) {
     return response;
   }
 
-  // Prefer bfcache-friendly directives over no-store for anonymous HTML.
   response.headers.set(
     "Cache-Control",
     "public, s-maxage=300, stale-while-revalidate=600",
@@ -123,8 +141,7 @@ export default async function proxy(request: NextRequest) {
     !hasLocationQuery ||
     !routing.locales.includes(locale as (typeof routing.locales)[number])
   ) {
-    const response = handleLocaleRouting(request);
-    return withAnonymousHtmlCacheHeaders(request, response);
+    return withAnonymousBotHtmlCache(request, handleLocaleRouting(request));
   }
 
   const selectedId = pickLocationQueryValue(punkts, location);
@@ -188,7 +205,7 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  return withAnonymousHtmlCacheHeaders(request, handleLocaleRouting(request));
+  return withAnonymousBotHtmlCache(request, handleLocaleRouting(request));
 }
 
 export const config = {

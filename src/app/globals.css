@@ -748,7 +748,7 @@ body {
 .weather-map-time-control__timeline {
   position: relative;
   min-width: 0;
-  padding: 1.55rem 0 0.95rem;
+  padding: 3rem 0 0.95rem;
 }
 
 .weather-map-time-control__status {
@@ -902,7 +902,7 @@ body {
 
   .weather-map-time-control__timeline {
     grid-area: timeline;
-    padding: 1.7rem 0 1.15rem;
+    padding: 3.1rem 0 1.15rem;
   }
 
   .weather-map-time-control__day {
