@@ -5,7 +5,9 @@ import {
   resolveIncludeGeometry,
   WeatherAlarmsRequestError,
 } from "@/lib/weather/alarms-api";
+import { isValidLocationId } from "@/lib/weather/locations";
 import {
+  hasLocationQueryParam,
   LOCATION_QUERY_PARAM,
   pickLocationQueryValue,
   PUNKTS_QUERY_PARAM,
@@ -33,14 +35,26 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = parseCoordinate(searchParams.get("lat"));
   const lon = parseCoordinate(searchParams.get("lon"));
-  const punkts = pickLocationQueryValue(
-    searchParams.get(PUNKTS_QUERY_PARAM),
-    searchParams.get(LOCATION_QUERY_PARAM),
-  );
+  const rawPunkts = searchParams.get(PUNKTS_QUERY_PARAM);
+  const rawLocation = searchParams.get(LOCATION_QUERY_PARAM);
+  const punkts = pickLocationQueryValue(rawPunkts, rawLocation);
   const includeGeometry = resolveIncludeGeometry(
     searchParams.get("geometry"),
     searchParams.get("includeGeometry"),
   );
+
+  if (hasLocationQueryParam(rawPunkts, rawLocation) && !punkts) {
+    const provided =
+      rawPunkts != null && rawPunkts !== ""
+        ? rawPunkts
+        : (rawLocation ?? "");
+    if (provided !== "" && !isValidLocationId(provided)) {
+      return NextResponse.json(
+        { error: `Invalid location ID "${provided}".` },
+        { status: 400 },
+      );
+    }
+  }
 
   try {
     const payload = await getWeatherAlarmsPayload({
