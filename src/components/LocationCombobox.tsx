@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "@/i18n/navigation";
 import { findNearestLocation } from "@/lib/weather/coordinates";
 import { getBrowserPosition } from "@/lib/weather/geolocation";
@@ -49,6 +50,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
   const [panelPosition, setPanelPosition] = useState<{
@@ -239,10 +241,12 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     if (!open) return;
 
     function onPointerDown(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-        setQuery("");
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target) || panelRef.current?.contains(target)) {
+        return;
       }
+      setOpen(false);
+      setQuery("");
     }
 
     document.addEventListener("mousedown", onPointerDown);
@@ -255,9 +259,17 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     updatePanelPosition();
     window.addEventListener("resize", updatePanelPosition);
     window.addEventListener("scroll", updatePanelPosition, true);
+
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    const previousOverflow = document.body.style.overflow;
+    if (!isDesktop) {
+      document.body.style.overflow = "hidden";
+    }
+
     return () => {
       window.removeEventListener("resize", updatePanelPosition);
       window.removeEventListener("scroll", updatePanelPosition, true);
+      document.body.style.overflow = previousOverflow;
     };
   }, [open, updatePanelPosition]);
 
@@ -366,19 +378,25 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         </span>
         <ChevronIcon />
       </button>
-      {open && panelPosition ? (
-        <>
+      {open && panelPosition
+        ? createPortal(
+            <>
           <button
             type="button"
             aria-label={t("select")}
-            className="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
+            className="fixed inset-0 z-[60] bg-slate-950/40 md:bg-transparent"
             onClick={() => {
               setOpen(false);
               setQuery("");
             }}
           />
           <div
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl border border-sky-300 bg-white shadow-2xl md:inset-auto md:max-h-none md:rounded-xl dark:border-sky-600 dark:bg-slate-900"
+            ref={panelRef}
+            className={
+              panelPosition.desktop
+                ? "fixed z-[70] flex max-h-72 flex-col overflow-hidden rounded-xl border border-sky-300 bg-white shadow-2xl dark:border-sky-600 dark:bg-slate-900"
+                : "fixed inset-x-0 bottom-0 z-[70] flex max-h-[min(85dvh,85vh)] flex-col rounded-t-2xl border border-sky-300 bg-white shadow-2xl dark:border-sky-600 dark:bg-slate-900"
+            }
             style={
               panelPosition.desktop
                 ? {
@@ -481,8 +499,10 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
             )}
           </ul>
           </div>
-        </>
-      ) : null}
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
