@@ -7,8 +7,7 @@
   },
   "popularPlaces": {
     "title": "Popular places",
-    "subtitle": "Hourly and 10-day forecasts for major cities and towns across Latvia.",
-    "aboutData": "About the data"
+    "subtitle": "Hourly and 10-day forecasts for major cities and towns across Latvia."
   },
   "nearbyPlaces": {
     "nearbyTitle": "Nearby places",
@@ -28,7 +27,7 @@
     "instagramAria": "Latvia Weather on Instagram",
     "tiktokAria": "Latvia Weather on TikTok",
     "sunTimesFrom": "Sunrise and sunset times from",
-    "about": "About data",
+    "about": "About the data",
     "terms": "Terms",
     "privacy": "Privacy",
     "cookieSettings": "Cookie settings"

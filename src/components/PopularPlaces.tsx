@@ -25,22 +25,14 @@ export async function PopularPlaces({
 
   return (
     <section aria-labelledby="popular-places-heading" className="space-y-2">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="space-y-1">
-          <h2
-            id="popular-places-heading"
-            className="text-lg font-semibold text-slate-900 dark:text-slate-100"
-          >
-            {t("title")}
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{t("subtitle")}</p>
-        </div>
-        <Link
-          href="/about"
-          className="text-sm font-medium text-sky-700 underline-offset-2 hover:underline dark:text-sky-400"
+      <div className="space-y-1">
+        <h2
+          id="popular-places-heading"
+          className="text-lg font-semibold text-slate-900 dark:text-slate-100"
         >
-          {t("aboutData")}
-        </Link>
+          {t("title")}
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">{t("subtitle")}</p>
       </div>
       <ul className="flex flex-wrap gap-2">
         {popular.map((location) => {

@@ -345,29 +345,34 @@ export default async function Home({ params, searchParams }: HomeProps) {
           currentLocationId={data.location.id}
         />
         <footer className="flex flex-col gap-3 pt-4 pb-4 text-xs text-slate-500 sm:flex-row sm:items-end sm:justify-between dark:text-slate-400">
-          <p>
-            {tFooter("dataFrom")}{" "}
-            <a
-              href="https://videscentrs.lvgmc.lv/"
-              className="underline hover:text-slate-700 dark:hover:text-slate-200"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LVĢMC
-            </a>
-            . {tFooter("updatedEvery")}
-            {" "}
-            {tFooter("sunTimesFrom")}{" "}
-            <a
-              href="https://sunrisesunset.io/"
-              className="underline hover:text-slate-700 dark:hover:text-slate-200"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              SunriseSunset.io
-            </a>
-            .
-          </p>
+          <div className="space-y-2">
+            <p>
+              {tFooter("dataFrom")}{" "}
+              <a
+                href="https://videscentrs.lvgmc.lv/"
+                className="underline hover:text-slate-700 dark:hover:text-slate-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                LVĢMC
+              </a>
+              . {tFooter("updatedEvery")}
+              {" "}
+              {tFooter("sunTimesFrom")}{" "}
+              <a
+                href="https://sunrisesunset.io/"
+                className="underline hover:text-slate-700 dark:hover:text-slate-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                SunriseSunset.io
+              </a>
+              .
+            </p>
+            <p>
+              <LegalLinks />
+            </p>
+          </div>
           <div className="flex flex-col gap-2 sm:items-end">
             <FooterAppSocials
               navLabel={tFooter("socialNav")}
@@ -402,8 +407,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
               >
                 {tFooter("onGitHub")}
               </a>
-              {" · "}
-              <LegalLinks />
             </p>
           </div>
         </footer>
