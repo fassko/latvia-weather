@@ -467,7 +467,7 @@ export function ForecastChart({
         onPointerDown={allowTooltipInteraction}
       >
           <div
-            className={`w-full min-w-0 sm:min-w-0 ${
+            className={`min-w-[700px] sm:min-w-0 ${
               isMultiDay ? "h-80 md:h-[400px]" : "h-72"
             }`}
           >
@@ -475,7 +475,7 @@ export function ForecastChart({
               width="100%"
               height="100%"
               minWidth={0}
-              initialDimension={{ width: 360, height: isMultiDay ? 320 : 256 }}
+              initialDimension={{ width: 700, height: isMultiDay ? 320 : 256 }}
             >
             <ComposedChart data={data} margin={CHART_MARGIN}>
               <CartesianGrid
