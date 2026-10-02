@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getLocationPoints, REVALIDATE_SECONDS } from "@/lib/weather/fetch";
+import { REVALIDATE_SECONDS } from "@/lib/weather/cache";
+import { getLocationPoints } from "@/lib/weather/fetch";
 
 export async function GET() {
   try {

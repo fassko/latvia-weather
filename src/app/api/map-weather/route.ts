@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  getLocationPoints,
-  REVALIDATE_SECONDS,
-} from "@/lib/weather/fetch";
+import { REVALIDATE_SECONDS } from "@/lib/weather/cache";
+import { getLocationPoints } from "@/lib/weather/fetch";
 
 const MAX_OFFSET_HOURS = 72;
 

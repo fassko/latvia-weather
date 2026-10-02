@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { REVALIDATE_SECONDS } from "@/lib/weather/cache";
 import {
   getHourlyForecast,
   getLocationPoints,
   mergeForecastLocation,
-  REVALIDATE_SECONDS,
 } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { resolveLocationId } from "@/lib/weather/locations";
