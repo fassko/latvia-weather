@@ -18,7 +18,6 @@
   },
   "locationIntro": {
     "sectionLabel": "About this forecast",
-    "base": "Hourly and 10-day LVĢMC forecast for {place}.",
     "climateLink": "Compared with usual →",
     "temperature": {
       "warmer": "{month} was warmer than usual (+{delta}°C).",

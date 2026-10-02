@@ -36,7 +36,7 @@ export function ForecastChartsSection({
   const t = useTranslations("chart");
   const sectionRef = useRef<HTMLElement>(null);
   const [mdUp, setMdUp] = useState(false);
-  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(true);
   const [shouldLoad, setShouldLoad] = useState(false);
 
   const expanded = mdUp || mobileExpanded;

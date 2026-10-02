@@ -292,8 +292,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
         <FavoritesRail currentLocationId={data.location.id} locations={locations} />
         <WeatherWarnings locale={locale} warnings={warnings} />
         <LocationIntro
-          locationName={data.location.name}
-          region={data.location.region}
           locale={locale}
           climateComparison={climateComparison}
         />

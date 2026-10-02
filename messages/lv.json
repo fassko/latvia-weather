@@ -520,7 +520,6 @@
   },
   "locationIntro": {
     "sectionLabel": "Par šo prognozi",
-    "base": "LVĢMC stundu un 10 dienu prognoze: {place}.",
     "climateLink": "Salīdzinājumā ar ierastu →",
     "temperature": {
       "warmer": "{month} bija siltāks par ierastu (+{delta}°C).",
