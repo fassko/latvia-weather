@@ -144,15 +144,12 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         id={MAIN_CONTENT_ID}
         className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 pt-5 pb-[max(2rem,calc(1rem+env(safe-area-inset-bottom)))] sm:px-6"
       >
-        <header className="flex flex-col gap-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <header className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-100">
             {t("title")}
           </h1>
           <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-            {t("subtitle", { count: locations.length })}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-500">
-            {t("range", { min: minTemp, max: maxTemp })}
+            {t("subtitle", { count: locations.length, min: minTemp, max: maxTemp })}
           </p>
         </header>
 

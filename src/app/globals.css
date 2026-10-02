@@ -522,9 +522,9 @@ body {
 }
 
 .leaflet-touch .weather-map-locate__button {
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
 }
 
 .weather-map-locate__button svg {
@@ -534,6 +534,7 @@ body {
 
 .weather-map-layer-toggle__button[data-active="true"] {
   color: #92400e;
+  background: #fef3c7;
 }
 
 .weather-map-layer-toggle__button[data-active="true"]:hover {
@@ -747,7 +748,7 @@ body {
 .weather-map-time-control__timeline {
   position: relative;
   min-width: 0;
-  padding: 1.55rem 0 0.95rem;
+  padding: 3rem 0 0.95rem;
 }
 
 .weather-map-time-control__status {
@@ -788,22 +789,23 @@ body {
 
 .weather-map-time-control__days {
   top: 0;
-  height: 1.35rem;
+  height: 2.75rem;
 }
 
 .weather-map-time-control__day {
   position: absolute;
   left: var(--tick-position);
   min-width: 0;
+  min-height: 2.75rem;
   border: 1px solid rgb(186 230 253);
   border-radius: 0.35rem;
-  padding: 0.22rem 0.38rem;
+  padding: 0.45rem 0.55rem;
   background: #f0f9ff;
   color: #075985;
   cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 800;
-  line-height: 1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.1;
   pointer-events: auto;
   text-align: center;
   transform: translateX(-50%);
@@ -900,12 +902,14 @@ body {
 
   .weather-map-time-control__timeline {
     grid-area: timeline;
-    padding: 1.7rem 0 1.15rem;
+    padding: 3.1rem 0 1.15rem;
   }
 
   .weather-map-time-control__day {
-    padding: 0.28rem 0.42rem;
-    font-size: 0.68rem;
+    min-height: 2.75rem;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
   }
 
   .weather-map-time-control__hours {

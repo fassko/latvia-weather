@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
+import { MetricCardsExpand } from "@/components/MetricCardsExpand";
 import {
   getCloudBandKey,
   getFeelsBandKey,
@@ -24,6 +25,8 @@ interface MetricCardsProps {
   forecasts: HourlyForecast[];
   sunTimesByDay: SunTimesByDay;
 }
+
+const MOBILE_PRIMARY_ORDER = ["feels", "wind", "rain", "uv", "humidity"] as const;
 
 export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps) {
   const t = await getTranslations("metrics");
@@ -121,6 +124,37 @@ export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps
     sub: t("hpa"),
   });
 
+  const primaryKeys = new Set<string>();
+  for (const key of MOBILE_PRIMARY_ORDER) {
+    if (primaryKeys.size >= 4) break;
+    if (cards.some((card) => card.key === key)) primaryKeys.add(key);
+  }
+
+  const primaryCards = cards.filter((card) => primaryKeys.has(card.key));
+  const secondaryCards = cards.filter((card) => !primaryKeys.has(card.key));
+
+  function renderCard(card: (typeof cards)[number]) {
+    return (
+      <div
+        key={card.key}
+        className="min-w-0 rounded-2xl border border-slate-200/70 bg-white p-2.5 shadow-sm sm:p-3 lg:p-2.5 dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div className="flex items-center gap-1 text-slate-400 sm:gap-1.5 dark:text-slate-500">
+          <span className="shrink-0 text-sky-500 dark:text-sky-400">{card.icon}</span>
+          <span className="truncate text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] lg:text-[10px]">
+            {card.label}
+          </span>
+        </div>
+        <p className="mt-1.5 text-base font-bold tabular-nums text-slate-900 sm:mt-2 sm:text-2xl lg:text-xl dark:text-slate-100">
+          {card.value}
+        </p>
+        <p className="mt-0.5 truncate text-[10px] text-slate-500 sm:text-xs lg:text-[11px] dark:text-slate-400">
+          {card.sub}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <section aria-labelledby="metrics-heading" className="space-y-3">
       <h2
@@ -129,27 +163,12 @@ export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps
       >
         {t("title")}
       </h2>
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4 lg:grid-cols-5">
-        {cards.map((card) => (
-          <div
-            key={card.key}
-            className="min-w-0 rounded-2xl border border-slate-200/70 bg-white p-2.5 shadow-sm sm:p-3 lg:p-2.5 dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div className="flex items-center gap-1 text-slate-400 sm:gap-1.5 dark:text-slate-500">
-              <span className="shrink-0 text-sky-500 dark:text-sky-400">{card.icon}</span>
-              <span className="truncate text-[9px] font-semibold uppercase tracking-wider sm:text-[11px] lg:text-[10px]">
-                {card.label}
-              </span>
-            </div>
-            <p className="mt-1.5 text-base font-bold tabular-nums text-slate-900 sm:mt-2 sm:text-2xl lg:text-xl dark:text-slate-100">
-              {card.value}
-            </p>
-            <p className="mt-0.5 truncate text-[10px] text-slate-500 sm:text-xs lg:text-[11px] dark:text-slate-400">
-              {card.sub}
-            </p>
-          </div>
-        ))}
-      </div>
+      <MetricCardsExpand
+        moreLabel={t("moreDetails")}
+        fewerLabel={t("fewerDetails")}
+        primary={primaryCards.map(renderCard)}
+        secondary={secondaryCards.map(renderCard)}
+      />
     </section>
   );
 }

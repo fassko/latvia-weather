@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
     root: import.meta.dirname,
   },
   async headers() {
+    // Note: Next.js overrides Cache-Control on dynamic App Router HTML/RSC
+    // responses. Anonymous bot HTML caching is applied best-effort in
+    // `src/proxy.ts` (public, s-maxage=300) when no personalization cookies
+    // are present — do not rely on static headers here for HTML freshness.
     return [
       {
         source: "/:path*",

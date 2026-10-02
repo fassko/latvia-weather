@@ -23,7 +23,8 @@
     "sunTimesFrom": "Saullēkta un saulrieta laiki no",
     "terms": "Noteikumi",
     "privacy": "Privātums",
-    "cookieSettings": "Sīkdatņu iestatījumi"
+    "cookieSettings": "Sīkdatņu iestatījumi",
+    "about": "Par datiem"
   },
   "cookies": {
     "title": "Jūsu privātuma izvēles",
@@ -171,7 +172,9 @@
     "sunset": "Saulriets",
     "rainPeak": "Visvairāk lietus ap plkst. {time}: {amount} mm, {chance}% iespēja",
     "rainChancePeak": "Lielākā lietus iespēja ap plkst. {time}: {chance}%",
-    "noRainExpected": "Nākamajās 24 stundās lietus nav gaidāms"
+    "noRainExpected": "Nākamajās 24 stundās lietus nav gaidāms",
+    "showChart": "Rādīt temperatūras grafiku",
+    "hideChart": "Paslēpt grafiku"
   },
   "daily": {
     "collapse": "Sakļaut",
@@ -306,7 +309,7 @@
   "map": {
     "title": "Laika karte",
     "description": "Pašreizējais laiks visās Latvijas prognožu vietās kartē",
-    "subtitle": "Pašreizējie apstākļi {count, plural, one {# vietā} other {# vietās}} Latvijā. Pieskaries punktam, lai uzzinātu vairāk.",
+    "subtitle": "Pašreizējie apstākļi {count, plural, one {# punktā} other {# punktos}} · Tagad {min}°C līdz {max}°C",
     "range": "Tagad: no {min}°C līdz {max}°C",
     "loading": "Ielādē karti…",
     "openForecast": "Atvērt prognozi",
@@ -344,8 +347,9 @@
     "warning": "Brīdinājums",
     "warningValid": "Spēkā",
     "warningMunicipalities": "Teritorijas:",
-    "showAlarms": "Rādīt brīdinājumus",
-    "hideAlarms": "Paslēpt brīdinājumus"
+    "showAlarms": "Rādīt brīdinājumus kartē",
+    "hideAlarms": "Paslēpt brīdinājumus",
+    "alarmsToggle": "Brīdinājumu slānis"
   },
   "hero": {
     "feelsLike": "Šķiet kā {temp}°C",
@@ -424,7 +428,9 @@
       "high": "Augsts",
       "veryHigh": "Ļoti augsts",
       "extreme": "Ekstrēms"
-    }
+    },
+    "moreDetails": "Vairāk detaļu",
+    "fewerDetails": "Mazāk detaļu"
   },
   "climate": {
     "title": "Salīdzinājums ar parasto",
@@ -490,7 +496,9 @@
       "orange": "Oranžais",
       "red": "Sarkanais",
       "unknown": "Brīdinājums"
-    }
+    },
+    "readMore": "Lasīt vairāk",
+    "showLess": "Rādīt mazāk"
   },
   "hourlyCard": {
     "title": "Pa stundām · Temperatūra un lietus",
@@ -502,5 +510,37 @@
     "title": "10 dienu prognoze",
     "today": "Šodien",
     "rainChance": "Lietus iespēja {value}%"
+  },
+  "nearbyPlaces": {
+    "nearbyTitle": "Tuvākās vietas",
+    "nearbySubtitle": "Laiks pilsētām un ciemiem pie {name}.",
+    "regionTitle": "Vēl {region}",
+    "distanceKm": "{value} km"
+  },
+  "about": {
+    "title": "Par laikapstākļu datiem",
+    "intro": "Kā Latvia Weather ņem prognozes, brīdinājumus un klimata kontekstu no LVĢMC — un kā tos lasīt.",
+    "updated": "Pēdējoreiz atjaunināts: 2026. gada 2. oktobris",
+    "sourceTitle": "No kurienes nāk prognoze",
+    "sourceBody": "Prognozes nāk no Latvijas Vides, ģeoloģijas un meteoroloģijas centra (LVĢMC). Rādām stundu un 10 dienu skatījumu simtiem prognozes punktu visā Latvijā, atjauninot aptuveni ik pēc 15 minūtēm, kad pieejami jauni dati.",
+    "warningsTitle": "Laikapstākļu brīdinājumi",
+    "warningsBody": "Oficiālie LVĢMC brīdinājumi prognozes lapā parādās kā dzelteni, oranži vai sarkani. Spiediet «Skatīt kartē», lai redzētu brīdinājuma zonas. Brīdinājumi var mainīties ātri — vienmēr sekojiet oficiālajām kompetento iestāžu norādēm.",
+    "climateTitle": "Salīdzinājumā ar ierastu",
+    "climateBody": "Klimata bloks salīdzina neseno stacijas novērojumu ar 1991.–2020. gadu normām (temperatūra un nokrišņi), lai redzētu, vai mēnesis bijis siltāks, aukstāks, slapjāks vai sausāks nekā ierasts.",
+    "mapTitle": "Laikapstākļu karte",
+    "mapBody": "Kartē redzama temperatūra visā Latvijā un aktīvās brīdinājumu zonas. Ar dienas un stundas vadīklām varat apskatīt nākamās 72 stundas.",
+    "assistantTitle": "Forecast Mate",
+    "assistantBody": "Forecast Mate atbild uz vienkāršiem jautājumiem par ielādēto prognozi. Tas neaizstāj oficiālos brīdinājumus vai ārkārtas norādes.",
+    "faqTitle": "Bieži uzdotie jautājumi",
+    "faq": {
+      "q1": "Cik bieži prognoze tiek atjaunināta?",
+      "a1": "LVĢMC stundu prognozes datus atjauninām aptuveni ik pēc 15 minūtēm, kad pieejama jauna plūsma.",
+      "q2": "Ko nozīmē dzeltenais, oranžais vai sarkanais brīdinājums?",
+      "a2": "Tie ir LVĢMC brīdinājumu līmeņi. Dzeltens — uzmanību, oranžs — būtisks risks, sarkans — augstākais trauksmes līmenis. Izvērsiet brīdinājumu un pārbaudiet karti par skartajiem reģioniem.",
+      "q3": "Kāpēc klimata «ierasti» var atšķirties no mana ciema?",
+      "a3": "Klimata salīdzinājums izmanto tuvāko LVĢMC klimatisko staciju. Ja stacija ir tālu, vietējie apstākļi var atšķirties — attālumu norādām lapā.",
+      "q4": "Vai varu paļauties uz to drošības kritiskos lēmumos?",
+      "a4": "Nē. Latvia Weather ir informatīvs. Drošības, ārkārtas, aviācijas, jūras vai medicīnas lēmumos sekojiet oficiālajām LVĢMC un iestāžu norādēm."
+    }
   }
 }

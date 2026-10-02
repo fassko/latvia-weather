@@ -9,6 +9,12 @@
     "title": "Popular places",
     "subtitle": "Hourly and 10-day forecasts for major cities and towns across Latvia."
   },
+  "nearbyPlaces": {
+    "nearbyTitle": "Nearby places",
+    "nearbySubtitle": "Weather for towns near {name}.",
+    "regionTitle": "More in {region}",
+    "distanceKm": "{value} km"
+  },
   "footer": {
     "dataFrom": "Data from",
     "updatedEvery": "Updated every 15 minutes.",
@@ -21,9 +27,36 @@
     "instagramAria": "Latvia Weather on Instagram",
     "tiktokAria": "Latvia Weather on TikTok",
     "sunTimesFrom": "Sunrise and sunset times from",
+    "about": "About the data",
     "terms": "Terms",
     "privacy": "Privacy",
     "cookieSettings": "Cookie settings"
+  },
+  "about": {
+    "title": "About the weather data",
+    "intro": "How Latvia Weather sources forecasts, warnings and climate context from LVĢMC — and how to read them.",
+    "updated": "Last updated: 2 October 2026",
+    "sourceTitle": "Where the forecast comes from",
+    "sourceBody": "Forecasts come from the Latvian Environment, Geology and Meteorology Centre (LVĢMC). We show hourly and 10-day outlooks for hundreds of forecast points across Latvia, updated about every 15 minutes when new data is published.",
+    "warningsTitle": "Weather warnings",
+    "warningsBody": "Official LVĢMC warnings appear as yellow, orange or red alerts on the forecast page. Tap “View on map” to see warning areas on the weather map. Warnings can change quickly — always follow official instructions from competent authorities.",
+    "climateTitle": "Compared with usual",
+    "climateBody": "The climate block compares recent station observations with 1991–2020 normals (temperature and rain) so you can see whether a month has been warmer, colder, wetter or drier than usual near each place.",
+    "mapTitle": "Weather map",
+    "mapBody": "The map shows temperatures across Latvia and can highlight active warning polygons. Use the day and hour controls to scrub the next 72 hours.",
+    "assistantTitle": "Forecast Mate",
+    "assistantBody": "Forecast Mate answers plain-language questions about the loaded forecast. It does not replace official warnings or emergency guidance.",
+    "faqTitle": "Frequently asked questions",
+    "faq": {
+      "q1": "How often is the forecast updated?",
+      "a1": "We refresh LVĢMC hourly forecast data about every 15 minutes when a new feed is available.",
+      "q2": "What does a yellow, orange or red warning mean?",
+      "a2": "Those are LVĢMC warning levels. Yellow is caution, orange is significant risk, and red is the highest alert. Expand the warning and check the map for affected regions.",
+      "q3": "Why might climate “usual” differ from my town?",
+      "a3": "Climate comparisons use the nearest LVĢMC climate station. If that station is far away, local conditions can differ — we note the distance on the page.",
+      "q4": "Can I rely on this for safety-critical decisions?",
+      "a4": "No. Treat Latvia Weather as informational. For safety-critical, emergency, aviation, marine or medical decisions, follow official LVĢMC and authority guidance."
+    }
   },
   "cookies": {
     "title": "Your privacy choices",
@@ -171,7 +204,9 @@
     "sunset": "Sunset",
     "rainPeak": "Rain mostly around {time}: {amount} mm, {chance}% chance",
     "rainChancePeak": "Highest rain chance around {time}: {chance}%",
-    "noRainExpected": "No rain expected in the next 24 hours"
+    "noRainExpected": "No rain expected in the next 24 hours",
+    "showChart": "Show temperature chart",
+    "hideChart": "Hide chart"
   },
   "daily": {
     "collapse": "Collapse",
@@ -306,8 +341,9 @@
   "map": {
     "title": "Weather map",
     "description": "Map of current weather across all forecast locations in Latvia",
-    "subtitle": "Current conditions at {count, plural, one {# location} other {# locations}} across Latvia. Tap a marker for details.",
+    "subtitle": "Current conditions at {count, plural, one {# location} other {# locations}} · Now {min}°C to {max}°C",
     "range": "Now: {min}°C to {max}°C",
+    "alarmsToggle": "Warnings layer",
     "loading": "Loading map…",
     "openForecast": "Open forecast",
     "wind": "Wind",
@@ -344,8 +380,8 @@
     "warning": "Warning",
     "warningValid": "Valid",
     "warningMunicipalities": "Areas:",
-    "showAlarms": "Show weather warnings",
-    "hideAlarms": "Hide weather warnings"
+    "showAlarms": "Show warnings on map",
+    "hideAlarms": "Hide warnings"
   },
   "hero": {
     "feelsLike": "Feels like {temp}°C",
@@ -396,6 +432,8 @@
     "today": "Today",
     "direction": "{direction} direction",
     "rainNextHour": "Chance next hour",
+    "moreDetails": "More details",
+    "fewerDetails": "Fewer details",
     "feelsBand": {
       "warmer": "Warmer",
       "colder": "Colder",
@@ -485,6 +523,8 @@
     "show": "Show",
     "count": "{count, plural, one {# warning} other {# warnings}}",
     "viewOnMap": "View on map",
+    "readMore": "Read more",
+    "showLess": "Show less",
     "levels": {
       "yellow": "Yellow",
       "orange": "Orange",

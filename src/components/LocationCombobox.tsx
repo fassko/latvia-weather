@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "@/i18n/navigation";
 import { findNearestLocation } from "@/lib/weather/coordinates";
 import { getBrowserPosition } from "@/lib/weather/geolocation";
@@ -14,6 +15,10 @@ import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
 import { locationSlug } from "@/lib/site";
 import { getConditionEmoji } from "@/lib/weather/parse";
 import type { WeatherLocationPoint } from "@/lib/weather/types";
+import {
+  FAVORITE_LOCATION_STORAGE_KEY,
+  notifyFavoriteLocationIdsChanged,
+} from "@/lib/weather/favorite-location-ids";
 
 interface LocationComboboxProps {
   selectedId: string;
@@ -21,7 +26,6 @@ interface LocationComboboxProps {
 }
 
 const RECENT_LOCATION_STORAGE_KEY = "latvia-weather-recent-locations";
-const FAVORITE_LOCATION_STORAGE_KEY = "latvia-weather-favorite-locations";
 const MAX_RECENT_LOCATIONS = 5;
 const MAX_FAVORITE_LOCATIONS = 5;
 
@@ -46,12 +50,14 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
   const [panelPosition, setPanelPosition] = useState<{
     top: number;
     left: number;
     width: number;
+    maxHeight: number;
   } | null>(null);
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<WeatherLocationPoint[] | null>(null);
@@ -148,6 +154,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         ? current.filter((id) => id !== nextId)
         : [nextId, ...current.filter((id) => id !== nextId)].slice(0, MAX_FAVORITE_LOCATIONS);
       localStorage.setItem(FAVORITE_LOCATION_STORAGE_KEY, JSON.stringify(next));
+      notifyFavoriteLocationIdsChanged();
       return next;
     });
   }
@@ -205,15 +212,32 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
-    const margin = 16;
-    const available = window.innerWidth - margin * 2;
-    const width = Math.min(448, available);
-    const left = Math.min(
-      Math.max(rect.left, margin),
-      window.innerWidth - margin - width,
+    const margin = 12;
+    const viewport = window.visualViewport;
+    const viewportWidth = viewport?.width ?? window.innerWidth;
+    const viewportHeight = viewport?.height ?? window.innerHeight;
+    const viewportOffsetTop = viewport?.offsetTop ?? 0;
+    const available = viewportWidth - margin * 2;
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    const width = isDesktop ? Math.min(448, available) : available;
+    const left = isDesktop
+      ? Math.min(Math.max(rect.left, margin), viewportWidth - margin - width)
+      : margin;
+    const top = Math.max(rect.bottom + 8, viewportOffsetTop + 8);
+    const maxHeight = Math.max(
+      160,
+      Math.min(
+        isDesktop ? 288 : 420,
+        viewportOffsetTop + viewportHeight - top - margin,
+      ),
     );
 
-    setPanelPosition({ top: rect.bottom + 8, left, width });
+    setPanelPosition({
+      top,
+      left,
+      width,
+      maxHeight,
+    });
   }, []);
 
   function handleOpen() {
@@ -228,10 +252,12 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     if (!open) return;
 
     function onPointerDown(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-        setQuery("");
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target) || panelRef.current?.contains(target)) {
+        return;
       }
+      setOpen(false);
+      setQuery("");
     }
 
     document.addEventListener("mousedown", onPointerDown);
@@ -244,9 +270,14 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
     updatePanelPosition();
     window.addEventListener("resize", updatePanelPosition);
     window.addEventListener("scroll", updatePanelPosition, true);
+    window.visualViewport?.addEventListener("resize", updatePanelPosition);
+    window.visualViewport?.addEventListener("scroll", updatePanelPosition);
+
     return () => {
       window.removeEventListener("resize", updatePanelPosition);
       window.removeEventListener("scroll", updatePanelPosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePanelPosition);
+      window.visualViewport?.removeEventListener("scroll", updatePanelPosition);
     };
   }, [open, updatePanelPosition]);
 
@@ -344,7 +375,7 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         onClick={handleOpen}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-1.5 pr-1.5 pl-2.5 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
+        className="flex min-h-11 max-w-full min-w-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 py-2 pr-2 pl-3 text-left shadow-sm backdrop-blur transition hover:border-sky-300 hover:bg-white focus:ring-2 focus:ring-sky-500/25 focus:outline-none dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-sky-600 dark:hover:bg-slate-800"
       >
         <PinIcon />
         <span className="min-w-0 truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -355,41 +386,54 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
         </span>
         <ChevronIcon />
       </button>
-      {open && panelPosition ? (
-        <div
-          className="fixed z-50 rounded-xl border border-sky-300 bg-white shadow-lg dark:border-sky-600 dark:bg-slate-900"
-          style={{
-            top: panelPosition.top,
-            left: panelPosition.left,
-            width: panelPosition.width,
-          }}
-        >
-          <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-700">
-            <SearchIcon />
-            <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setHighlightIndex(0);
-              }}
-              onKeyDown={onInputKeyDown}
-              placeholder={t("searchPlaceholder")}
-              aria-controls={listboxId}
-              aria-expanded={open}
-              aria-autocomplete="list"
-              role="combobox"
-              className="w-full bg-transparent text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
-            />
-          </div>
-          <ul
-            ref={listboxRef}
-            id={listboxId}
-            role="listbox"
+      {open && panelPosition
+        ? createPortal(
+            <>
+          <button
+            type="button"
             aria-label={t("select")}
-            className="max-h-72 overflow-y-auto py-1"
+            className="fixed inset-0 z-[60] bg-slate-950/40 md:bg-transparent"
+            onClick={() => {
+              setOpen(false);
+              setQuery("");
+            }}
+          />
+          <div
+            ref={panelRef}
+            className="fixed z-[70] flex flex-col overflow-hidden rounded-xl border border-sky-300 bg-white shadow-2xl dark:border-sky-600 dark:bg-slate-900"
+            style={{
+              top: panelPosition.top,
+              left: panelPosition.left,
+              width: panelPosition.width,
+              maxHeight: panelPosition.maxHeight,
+            }}
           >
+            <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-700">
+              <SearchIcon />
+              <input
+                ref={inputRef}
+                type="search"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setHighlightIndex(0);
+                }}
+                onKeyDown={onInputKeyDown}
+                placeholder={t("searchPlaceholder")}
+                aria-controls={listboxId}
+                aria-expanded={open}
+                aria-autocomplete="list"
+                role="combobox"
+                className="w-full bg-transparent text-base text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <ul
+              ref={listboxRef}
+              id={listboxId}
+              role="listbox"
+              aria-label={t("select")}
+              className="min-h-0 flex-1 overflow-y-auto py-1"
+            >
             <li className="border-b border-slate-100 px-2 pb-1 dark:border-slate-800">
               <button
                 type="button"
@@ -454,8 +498,11 @@ export function LocationCombobox({ selectedId, selectedName }: LocationComboboxP
               renderLocationOption(location, index + favoriteLocations.length + recentLocations.length),
             )}
           </ul>
-        </div>
-      ) : null}
+          </div>
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

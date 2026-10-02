@@ -158,13 +158,13 @@ export async function WeatherHero({ data, sunTimesByDay }: WeatherHeroProps) {
           {sunTimes ? (
             <>
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
+                className={`hidden items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm sm:inline-flex ${theme.text}`}
               >
                 <span aria-hidden="true">☀️</span>
                 {t("sunrise")} {formatLatviaTime(sunTimes.sunrise, "HH:mm")}
               </span>
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
+                className={`hidden items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm sm:inline-flex ${theme.text}`}
               >
                 <span aria-hidden="true">🌙</span>
                 {t("sunset")} {formatLatviaTime(sunTimes.sunset, "HH:mm")}

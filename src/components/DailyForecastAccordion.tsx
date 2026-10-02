@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
-import type { SunTimes } from "@/lib/weather/sun";
 import { getSunEventsByForecastTime, type SunEvent } from "@/lib/weather/sun-events";
 import {
   formatLatviaTime,
@@ -13,6 +12,15 @@ import {
 } from "@/lib/weather/timezone";
 import { formatWindSpeed, type WindUnit } from "@/lib/weather/wind-units";
 import type { HourlyForecast } from "@/lib/weather/types";
+
+export interface SerializableHourlyForecast extends Omit<HourlyForecast, "time"> {
+  time: string;
+}
+
+export interface SerializableSunTimes {
+  sunrise: string;
+  sunset: string;
+}
 
 export interface DailyForecastDayRow {
   dayKey: string;
@@ -29,8 +37,8 @@ export interface DailyForecastDayRow {
   rainChance: number;
   sunriseLabel: string | null;
   sunsetLabel: string | null;
-  forecasts: HourlyForecast[];
-  sunTimes: SunTimes | null;
+  forecasts: SerializableHourlyForecast[];
+  sunTimes: SerializableSunTimes | null;
 }
 
 interface DailyForecastAccordionProps {
@@ -52,10 +60,14 @@ export function DailyForecastAccordion({
   fadedBeforeIso,
 }: DailyForecastAccordionProps) {
   const t = useTranslations("dailyList");
-  const [mountedDayKeys, setMountedDayKeys] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  const [openDayKeys, setOpenDayKeys] = useState<string[]>([]);
   const fadedBefore = fadedBeforeIso ? new Date(fadedBeforeIso) : undefined;
+
+  function toggleDay(dayKey: string) {
+    setOpenDayKeys((prev) =>
+      prev.includes(dayKey) ? prev.filter((key) => key !== dayKey) : [...prev, dayKey],
+    );
+  }
 
   return (
     <section
@@ -70,24 +82,18 @@ export function DailyForecastAccordion({
       </h2>
       <ul className="divide-y divide-slate-100 dark:divide-slate-800">
         {days.map((day) => {
-          const isMounted = mountedDayKeys.has(day.dayKey);
+          const isOpen = openDayKeys.includes(day.dayKey);
 
           return (
             <li key={day.dayKey}>
-              <details
-                className="group"
-                onToggle={(event) => {
-                  const open = event.currentTarget.open;
-                  setMountedDayKeys((prev) => {
-                    const next = new Set(prev);
-                    if (open) next.add(day.dayKey);
-                    else next.delete(day.dayKey);
-                    return next;
-                  });
-                }}
-              >
-                <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 sm:gap-4 dark:hover:bg-slate-800/60">
-                  <ChevronIcon />
+              <div className="group">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => toggleDay(day.dayKey)}
+                  className="flex w-full cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-slate-50 sm:gap-4 dark:hover:bg-slate-800/60"
+                >
+                  <ChevronIcon open={isOpen} />
                   <div className="w-14 shrink-0 sm:w-16">
                     <p
                       className={`text-sm font-semibold ${
@@ -152,9 +158,9 @@ export function DailyForecastAccordion({
                       </span>
                     </span>
                   ) : null}
-                </summary>
+                </button>
 
-                {isMounted ? (
+                {isOpen ? (
                   <DayBreakdown
                     forecasts={day.forecasts}
                     sunTimes={day.sunTimes}
@@ -163,13 +169,17 @@ export function DailyForecastAccordion({
                     caption={`${day.weekday} ${day.dateLabel}`}
                   />
                 ) : null}
-              </details>
+              </div>
             </li>
           );
         })}
       </ul>
     </section>
   );
+}
+
+function asDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
 }
 
 function DayBreakdown({
@@ -179,8 +189,8 @@ function DayBreakdown({
   windUnit,
   caption,
 }: {
-  forecasts: HourlyForecast[];
-  sunTimes: SunTimes | null;
+  forecasts: SerializableHourlyForecast[];
+  sunTimes: SerializableSunTimes | null;
   fadedBefore?: Date;
   windUnit: WindUnit;
   caption: string;
@@ -189,15 +199,83 @@ function DayBreakdown({
   const tHourly = useTranslations("hourly");
   const tWind = useTranslations("wind");
 
-  const dayKey = forecasts[0] ? getLatviaDayKey(forecasts[0].time) : null;
+  const normalizedForecasts = forecasts.map((forecast) => ({
+    ...forecast,
+    time: asDate(forecast.time),
+  }));
+
+  const dayKey = normalizedForecasts[0]
+    ? getLatviaDayKey(normalizedForecasts[0].time)
+    : null;
+  const normalizedSunTimes = sunTimes
+    ? {
+        sunrise: asDate(sunTimes.sunrise),
+        sunset: asDate(sunTimes.sunset),
+      }
+    : null;
   const sunEventsByForecastTime =
-    sunTimes && dayKey
-      ? getSunEventsByForecastTime(forecasts, { [dayKey]: sunTimes })
+    normalizedSunTimes && dayKey
+      ? getSunEventsByForecastTime(normalizedForecasts, {
+          [dayKey]: normalizedSunTimes,
+        })
       : new Map<string, SunEvent[]>();
 
   return (
     <div className="overflow-x-auto px-3 pt-1 pb-3">
-      <table className="relative min-w-full text-left text-sm">
+      <div className="space-y-0 divide-y divide-slate-100 md:hidden dark:divide-slate-800">
+        {normalizedForecasts.map((forecast) => {
+          const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
+          const isPast =
+            fadedBefore != null && getLatviaWallClock(forecast.time) < fadedBefore;
+
+          return (
+            <article
+              key={`mobile-${forecast.time.toISOString()}`}
+              className={`flex items-center gap-3 py-2.5 ${isPast ? "opacity-45" : ""}`}
+            >
+              <time
+                dateTime={forecast.time.toISOString()}
+                className="w-12 shrink-0 text-sm font-medium tabular-nums text-slate-700 dark:text-slate-200"
+              >
+                {formatLatviaTime(forecast.time, "HH:mm")}
+              </time>
+              <span className="w-7 shrink-0 text-center text-xl" aria-hidden="true">
+                {getConditionEmoji(forecast.iconCode)}
+              </span>
+              <span
+                className={`w-14 shrink-0 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.temperature}`}
+              >
+                {Math.round(forecast.temperature)}°C
+              </span>
+              <span
+                className={`flex min-w-0 flex-1 items-center gap-1 text-xs tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}
+              >
+                {Math.round(forecast.precipitationProbability)}%
+                {forecast.precipitation > 0
+                  ? ` · ${forecast.precipitation.toFixed(1)} mm`
+                  : null}
+              </span>
+              <span
+                className={`shrink-0 text-xs whitespace-nowrap tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
+              >
+                {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}
+                <WindArrow degrees={forecast.windDirection} />
+              </span>
+              {sunEvents.length > 0 ? (
+                <span className="sr-only">
+                  {sunEvents
+                    .map(
+                      (sunEvent) =>
+                        `${tTable(sunEvent.event)} ${formatLatviaTime(asDate(sunEvent.time), "HH:mm")}`,
+                    )
+                    .join(", ")}
+                </span>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+      <table className="relative hidden min-w-full text-left text-sm md:table">
         <caption className="sr-only">
           {caption} — {tTable("title")}
         </caption>
@@ -236,7 +314,7 @@ function DayBreakdown({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {forecasts.map((forecast, index) => {
+          {normalizedForecasts.map((forecast, index) => {
             const sunEvents = sunEventsByForecastTime.get(forecast.time.toISOString()) ?? [];
             const isPast =
               fadedBefore != null && getLatviaWallClock(forecast.time) < fadedBefore;
@@ -264,8 +342,8 @@ function DayBreakdown({
                           <span aria-hidden="true">
                             {sunEvent.event === "sunrise" ? "☀️" : "🌙"}
                           </span>
-                          <time dateTime={sunEvent.time.toISOString()}>
-                            {formatLatviaTime(sunEvent.time, "HH:mm")}
+                          <time dateTime={asDate(sunEvent.time).toISOString()}>
+                            {formatLatviaTime(asDate(sunEvent.time), "HH:mm")}
                           </time>
                           <span>{tTable(sunEvent.event)}</span>
                         </span>
@@ -307,12 +385,14 @@ function DayBreakdown({
   );
 }
 
-function ChevronIcon() {
+function ChevronIcon({ open = false }: { open?: boolean }) {
   return (
     <svg
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none dark:text-slate-500"
+      className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 motion-reduce:transition-none dark:text-slate-500 ${
+        open ? "rotate-90" : ""
+      }`}
       aria-hidden="true"
     >
       <path

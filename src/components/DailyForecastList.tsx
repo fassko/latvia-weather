@@ -81,8 +81,17 @@ export async function DailyForecastList({
       rainChance: Math.round(summary.maxPrecipitationProbability),
       sunriseLabel: sunTimes ? formatLatviaTime(sunTimes.sunrise, "HH:mm") : null,
       sunsetLabel: sunTimes ? formatLatviaTime(sunTimes.sunset, "HH:mm") : null,
-      forecasts: breakdownForecasts,
-      sunTimes,
+      // ISO strings so the client accordion can hydrate (Date is not RSC-safe).
+      forecasts: breakdownForecasts.map((forecast) => ({
+        ...forecast,
+        time: forecast.time.toISOString(),
+      })),
+      sunTimes: sunTimes
+        ? {
+            sunrise: sunTimes.sunrise.toISOString(),
+            sunset: sunTimes.sunset.toISOString(),
+          }
+        : null,
     };
   });
 

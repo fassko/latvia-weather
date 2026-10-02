@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { WeatherWarning, WeatherWarningLevel } from "@/lib/weather/types";
@@ -59,6 +60,14 @@ function warningRegionText(warning: WeatherWarning, locale: string): string {
   return regions.join(", ");
 }
 
+function warningHeadline(warning: WeatherWarning, locale: string): string {
+  const text = locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
+  const firstSentence = text.split(/(?<=[.!?…])\s+/)[0]?.trim() || text.trim();
+  return firstSentence.length > 110
+    ? `${firstSentence.slice(0, 107).trimEnd()}…`
+    : firstSentence;
+}
+
 export function WeatherWarningsClient({
   locale,
   warnings,
@@ -67,6 +76,7 @@ export function WeatherWarningsClient({
   const t = useTranslations("warnings");
   const dismissedIds = useDismissedWarningIds(initialDismissedIds);
   const dismissedSet = new Set(dismissedIds);
+  const [expanded, setExpanded] = useState(false);
 
   if (warnings.length === 0) return null;
 
@@ -91,6 +101,7 @@ export function WeatherWarningsClient({
       warnings.flatMap((warning) => [getWarningDismissKey(warning), warning.id]),
     );
     persistDismissed(dismissedIds.filter((id) => !keysToClear.has(id)));
+    setExpanded(true);
   }
 
   if (allDismissed) {
@@ -130,15 +141,22 @@ export function WeatherWarningsClient({
 
   const level = highestLevel(visibleWarnings);
   const uniqueLevels = [...new Set(visibleWarnings.map((warning) => warning.level))];
+  const primary = visibleWarnings[0];
 
   return (
     <section aria-label={t("sectionLabel")}>
       <article
-        className={`rounded-2xl border p-4 shadow-sm ${warningTone[level]}`}
+        className={`rounded-2xl border shadow-sm ${warningTone[level]} ${
+          expanded ? "p-4" : "px-3 py-2.5"
+        }`}
       >
         <div className="flex gap-3">
-          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-current dark:bg-white/10">
-            <WarningIcon />
+          <span
+            className={`flex shrink-0 items-center justify-center rounded-full bg-white/70 text-current dark:bg-white/10 ${
+              expanded ? "mt-0.5 h-10 w-10" : "h-8 w-8"
+            }`}
+          >
+            <WarningIcon className={expanded ? "h-5 w-5" : "h-4 w-4"} />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2">
@@ -155,6 +173,11 @@ export function WeatherWarningsClient({
                 {visibleWarnings.some((warning) => warning.isStale) ? (
                   <span className="text-xs font-medium opacity-75">{t("stale")}</span>
                 ) : null}
+                {visibleWarnings.length > 1 ? (
+                  <span className="text-xs font-medium opacity-70">
+                    {t("count", { count: visibleWarnings.length })}
+                  </span>
+                ) : null}
               </div>
               <button
                 type="button"
@@ -166,30 +189,60 @@ export function WeatherWarningsClient({
               </button>
             </div>
 
-            <ul className="mt-1 space-y-3">
-              {visibleWarnings.map((warning) => {
-                const text =
-                  locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
-                const regions = warningRegionText(warning, locale);
+            {!expanded ? (
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <p className="min-w-0 flex-1 text-sm leading-5 opacity-90">
+                  {warningHeadline(primary, locale)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setExpanded(true)}
+                  className="shrink-0 text-xs font-semibold underline underline-offset-2"
+                >
+                  {t("readMore")}
+                </button>
+                <Link
+                  href="/map?alarms=1"
+                  className="shrink-0 text-xs font-semibold underline underline-offset-2"
+                >
+                  {t("viewOnMap")}
+                </Link>
+              </div>
+            ) : (
+              <ul className="mt-1 space-y-3">
+                {visibleWarnings.map((warning) => {
+                  const text =
+                    locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
+                  const regions = warningRegionText(warning, locale);
 
-                return (
-                  <li key={warning.id}>
-                    <p className="text-sm leading-6">{text}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs opacity-75">
-                      <p>
-                        {t("source")} LVĢMC{regions ? ` · ${regions}` : ""}
-                      </p>
-                      <Link
-                        href="/map?alarms=1"
-                        className="font-semibold underline underline-offset-2 transition hover:opacity-100"
-                      >
-                        {t("viewOnMap")}
-                      </Link>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                  return (
+                    <li key={warning.id}>
+                      <p className="text-sm leading-6">{text}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs opacity-75">
+                        <p>
+                          {t("source")} LVĢMC{regions ? ` · ${regions}` : ""}
+                        </p>
+                        <Link
+                          href="/map?alarms=1"
+                          className="font-semibold underline underline-offset-2 transition hover:opacity-100"
+                        >
+                          {t("viewOnMap")}
+                        </Link>
+                      </div>
+                    </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(false)}
+                    className="text-xs font-semibold underline underline-offset-2 opacity-80"
+                  >
+                    {t("showLess")}
+                  </button>
+                </li>
+              </ul>
+            )}
           </div>
         </div>
       </article>
