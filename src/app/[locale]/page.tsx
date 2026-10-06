@@ -378,6 +378,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
               navLabel={tFooter("socialNav")}
               instagramLabel={tFooter("instagramAria")}
               tiktokLabel={tFooter("tiktokAria")}
+              xLabel={tFooter("xAria")}
             />
             <p>
               {tFooter("developedBy")}{" "}
