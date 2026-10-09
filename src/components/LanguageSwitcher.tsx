@@ -33,24 +33,61 @@ export function LanguageSwitcher({ fullWidth = false }: LanguageSwitcherProps) {
       role="group"
       aria-label={t("groupLabel")}
     >
-      {routing.locales.map((loc) => (
-        <button
-          key={loc}
-          type="button"
-          aria-pressed={locale === loc}
-          aria-label={t("switchTo", { locale: t(loc) })}
-          onClick={() => switchLocale(loc)}
-          className={`rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-            fullWidth ? "flex-1" : ""
-          } ${
-            locale === loc
-              ? "bg-sky-700 text-white"
-              : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-          }`}
-        >
-          {t(loc)}
-        </button>
-      ))}
+      {routing.locales.map((loc) => {
+        const active = locale === loc;
+        return (
+          <button
+            key={loc}
+            type="button"
+            aria-pressed={active}
+            aria-label={t("switchTo", { locale: t(`${loc}Name`) })}
+            onClick={() => switchLocale(loc)}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+              fullWidth ? "flex-1" : ""
+            } ${
+              active
+                ? "bg-sky-700 text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+            }`}
+          >
+            {loc === "lv" ? <LatviaFlag /> : <UkFlag />}
+            <span>{t(loc)}</span>
+          </button>
+        );
+      })}
     </div>
+  );
+}
+
+/** Simplified Latvia flag — crimson / white / crimson. */
+function LatviaFlag() {
+  return (
+    <svg
+      viewBox="0 0 21 15"
+      className="h-3 w-[1.05rem] shrink-0 overflow-hidden rounded-[2px] ring-1 ring-black/15 dark:ring-white/20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect width="21" height="15" fill="#9E3039" />
+      <rect y="6" width="21" height="3" fill="#FFF" />
+    </svg>
+  );
+}
+
+/** Simplified UK flag for English — not relied on alone (label beside it). */
+function UkFlag() {
+  return (
+    <svg
+      viewBox="0 0 60 30"
+      className="h-3 w-[1.05rem] shrink-0 overflow-hidden rounded-[2px] ring-1 ring-black/15 dark:ring-white/20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect width="60" height="30" fill="#012169" />
+      <path d="M0 0 60 30M60 0 0 30" stroke="#FFF" strokeWidth="6" />
+      <path d="M0 0 60 30M60 0 0 30" stroke="#C8102E" strokeWidth="2" />
+      <path d="M30 0v30M0 15h60" stroke="#FFF" strokeWidth="10" />
+      <path d="M30 0v30M0 15h60" stroke="#C8102E" strokeWidth="6" />
+    </svg>
   );
 }
