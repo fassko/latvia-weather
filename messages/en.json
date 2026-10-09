@@ -329,6 +329,8 @@
     "switchTo": "Switch to {locale}",
     "en": "EN",
     "lv": "LV",
+    "enName": "English",
+    "lvName": "Latvian",
     "groupLabel": "Language"
   },
   "nav": {

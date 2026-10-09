@@ -16,7 +16,7 @@ export PATH="$(dirname "$(nvm which 24)"):$PATH"
 ```
 
 - Dependencies: `npm ci` (lockfile is `package-lock.json`).
-- Dev server: `npm run dev` → http://localhost:3000. The app always prefixes locales, so the home forecast is http://localhost:3000/en (Latvian: `/lv`). Default location is Rīga (`P269`).
+- Dev server: `npm run dev` → http://localhost:3000. The app always prefixes locales; Latvian is the default (`/` → `/lv`). English: `/en`. Default location is Rīga (`P269`).
 - Live forecast data is fetched from `https://videscentrs.lvgmc.lv` when a page or `/api/weather` is requested. `/api/locations` returns the station list with current temperatures.
 - CI checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
 - The chat assistant reads `AI_GATEWAY_API_KEY` from `.env.local`. Forecast pages and the map work without it. Assistant rate limits stay in memory unless Upstash Redis or Vercel KV REST variables are set. See the README.

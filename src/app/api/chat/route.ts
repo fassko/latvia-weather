@@ -29,7 +29,7 @@ const MAX_REQUEST_MESSAGES = 40;
 
 const chatRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1).max(MAX_REQUEST_MESSAGES),
-  locale: z.enum(["en", "lv"]).default("en"),
+  locale: z.enum(["en", "lv"]).default("lv"),
   locationId: z.string().max(16).default(DEFAULT_LOCATION_ID),
 });
 
@@ -205,7 +205,7 @@ function compactForecast(punkts: string, locale: string) {
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
-  let locale = "en";
+  let locale = "lv";
 
   try {
     const gatewayConfigurationError = getGatewayConfigurationError();
