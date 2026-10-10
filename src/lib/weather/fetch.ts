@@ -1,5 +1,6 @@
 import { LOCATION_POINT_IDS } from "./locations";
 import { getWeatherAlarmRegionLabelsByText } from "./alarms";
+import { createResourceCache, REVALIDATE_SECONDS } from "./cache";
 import { parseHourlyForecast, parseLaiks, parseNumber } from "./parse";
 import type {
   HourlyForecastRaw,
@@ -13,64 +14,27 @@ import type {
 
 const WEATHER_API_BASE = "https://videscentrs.lvgmc.lv/data";
 
-export const REVALIDATE_SECONDS = 900;
-
-export const STALE_REFRESH_MS = REVALIDATE_SECONDS * 1000;
-
-const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
 const LOCATION_POINTS_BATCH_SIZE = 80;
+/** Covers the forecast hours the map can request within a single day. */
+const LOCATION_POINTS_CACHE_LIMIT = 24;
 /** Caps the per-instance stale fallback so crawlers cannot grow it unbounded. */
 const HOURLY_FORECAST_CACHE_LIMIT = 64;
 
-interface CachedValue<T> {
-  value: T;
-  storedAt: number;
-}
-
-const locationPointsCache: CachedValue<WeatherLocationPoint[]> = {
-  value: [],
-  storedAt: 0,
-};
-const weatherWarningsCache: CachedValue<WeatherWarning[]> = {
-  value: [],
-  storedAt: 0,
-};
-const hourlyForecastCache = new Map<string, CachedValue<WeatherData>>();
+const locationPointsCache = createResourceCache<WeatherLocationPoint[]>({
+  limit: LOCATION_POINTS_CACHE_LIMIT,
+  isEmpty: (value) => value.length === 0,
+  staleFallback: "latest",
+});
+const weatherWarningsCache = createResourceCache<WeatherWarning[]>({
+  isEmpty: (value) => value.length === 0,
+});
+const hourlyForecastCache = createResourceCache<WeatherData>({
+  limit: HOURLY_FORECAST_CACHE_LIMIT,
+  isEmpty: (value) => value.forecasts.length === 0,
+});
 
 function normalizeWarningText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
-}
-
-function isUsableStaleValue<T>(
-  cache: CachedValue<T>,
-  isEmpty: (value: T) => boolean,
-): boolean {
-  return !isEmpty(cache.value) && Date.now() - cache.storedAt <= STALE_FALLBACK_MS;
-}
-
-function rememberLocationPoints(value: WeatherLocationPoint[]) {
-  locationPointsCache.value = value;
-  locationPointsCache.storedAt = Date.now();
-}
-
-function rememberHourlyForecast(punkts: string, value: WeatherData) {
-  // Re-inserting keeps the Map ordered from least to most recently used.
-  hourlyForecastCache.delete(punkts);
-  hourlyForecastCache.set(punkts, {
-    value,
-    storedAt: Date.now(),
-  });
-
-  while (hourlyForecastCache.size > HOURLY_FORECAST_CACHE_LIMIT) {
-    const oldestKey = hourlyForecastCache.keys().next().value;
-    if (oldestKey === undefined) break;
-    hourlyForecastCache.delete(oldestKey);
-  }
-}
-
-function rememberWeatherWarnings(value: WeatherWarning[]) {
-  weatherWarningsCache.value = value;
-  weatherWarningsCache.storedAt = Date.now();
 }
 
 function chunkArray<T>(items: readonly T[], size: number): T[][] {
@@ -129,155 +93,142 @@ export function parseWeatherWarning(raw: WeatherWarningRaw): WeatherWarning {
   };
 }
 
+async function fetchLocationPoints(laiks: string): Promise<WeatherLocationPoint[]> {
+  const raw = (
+    await Promise.all(
+      chunkArray(LOCATION_POINT_IDS, LOCATION_POINTS_BATCH_SIZE).map(
+        async (batch) => {
+          const punkti = batch.join(",");
+          const url = `${WEATHER_API_BASE}/weather_points_forecast?laiks=${laiks}&punkti=${encodeURIComponent(punkti)}`;
+          const response = await fetch(url, {
+            next: { revalidate: REVALIDATE_SECONDS },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Location points API returned ${response.status}`);
+          }
+
+          return (await response.json()) as WeatherPointForecastRaw[];
+        },
+      ),
+    )
+  ).flat();
+
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new Error("Location points API returned empty data");
+  }
+
+  return raw
+    .map((point) => ({
+      id: point.punkts,
+      name: point.nosaukums,
+      region: point.novads,
+      lat: parseNumber(point.lat),
+      lon: parseNumber(point.lon),
+      temperature: parseNumber(point.temperatura),
+      windSpeed: parseNumber(point.veja_atrums),
+      windDirection: parseNumber(point.veja_virziens),
+      iconCode: point.laika_apstaklu_ikona,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "lv"));
+}
+
 export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoint[]> {
   const laiks = formatLaiks(time ?? new Date());
+  const { value } = await locationPointsCache.read(laiks, () =>
+    fetchLocationPoints(laiks),
+  );
 
-  try {
-    const raw = (
-      await Promise.all(
-        chunkArray(LOCATION_POINT_IDS, LOCATION_POINTS_BATCH_SIZE).map(
-          async (batch) => {
-            const punkti = batch.join(",");
-            const url = `${WEATHER_API_BASE}/weather_points_forecast?laiks=${laiks}&punkti=${encodeURIComponent(punkti)}`;
-            const response = await fetch(url, {
-              next: { revalidate: REVALIDATE_SECONDS },
-            });
+  return value;
+}
 
-            if (!response.ok) {
-              throw new Error(`Location points API returned ${response.status}`);
-            }
+async function fetchWeatherWarnings(): Promise<WeatherWarning[]> {
+  const url = `${WEATHER_API_BASE}/warnings`;
+  const response = await fetch(url, {
+    next: { revalidate: REVALIDATE_SECONDS },
+  });
 
-            return (await response.json()) as WeatherPointForecastRaw[];
-          },
-        ),
-      )
-    ).flat();
-
-    if (!Array.isArray(raw) || raw.length === 0) {
-      throw new Error("Location points API returned empty data");
-    }
-
-    const points = raw
-      .map((point) => ({
-        id: point.punkts,
-        name: point.nosaukums,
-        region: point.novads,
-        lat: parseNumber(point.lat),
-        lon: parseNumber(point.lon),
-        temperature: parseNumber(point.temperatura),
-        windSpeed: parseNumber(point.veja_atrums),
-        windDirection: parseNumber(point.veja_virziens),
-        iconCode: point.laika_apstaklu_ikona,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, "lv"));
-
-    rememberLocationPoints(points);
-    return points;
-  } catch (error) {
-    if (isUsableStaleValue(locationPointsCache, (value) => value.length === 0)) {
-      return locationPointsCache.value;
-    }
-
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Warnings API returned ${response.status}`);
   }
+
+  const raw = (await response.json()) as WeatherWarningRaw[];
+
+  if (!Array.isArray(raw)) {
+    throw new Error("Warnings API returned invalid data");
+  }
+
+  const warnings = raw.map(parseWeatherWarning);
+  const labelsByText = await getWeatherAlarmRegionLabelsByText();
+
+  return warnings.map((warning) => {
+    const labels =
+      labelsByText.get(normalizeWarningText(warning.textLv)) ??
+      labelsByText.get(normalizeWarningText(warning.textEn));
+
+    return labels
+      ? {
+          ...warning,
+          regionNamesLv: labels.lv,
+          regionNamesEn: labels.en,
+        }
+      : warning;
+  });
 }
 
 export async function getWeatherWarnings(): Promise<WeatherWarning[]> {
-  const url = `${WEATHER_API_BASE}/warnings`;
-
   try {
-    const response = await fetch(url, {
-      next: { revalidate: REVALIDATE_SECONDS },
-    });
+    const { value, isStale } = await weatherWarningsCache.read(
+      "warnings",
+      fetchWeatherWarnings,
+    );
 
-    if (!response.ok) {
-      throw new Error(`Warnings API returned ${response.status}`);
-    }
-
-    const raw = (await response.json()) as WeatherWarningRaw[];
-
-    if (!Array.isArray(raw)) {
-      throw new Error("Warnings API returned invalid data");
-    }
-
-    const warnings = raw.map(parseWeatherWarning);
-    const labelsByText = await getWeatherAlarmRegionLabelsByText();
-    const enrichedWarnings = warnings.map((warning) => {
-      const labels =
-        labelsByText.get(normalizeWarningText(warning.textLv)) ??
-        labelsByText.get(normalizeWarningText(warning.textEn));
-
-      return labels
-        ? {
-            ...warning,
-            regionNamesLv: labels.lv,
-            regionNamesEn: labels.en,
-          }
-        : warning;
-    });
-    rememberWeatherWarnings(enrichedWarnings);
-    return enrichedWarnings;
+    return isStale
+      ? value.map((warning) => ({ ...warning, isStale: true }))
+      : value;
   } catch {
-    if (isUsableStaleValue(weatherWarningsCache, (value) => value.length === 0)) {
-      return weatherWarningsCache.value.map((warning) => ({
-        ...warning,
-        isStale: true,
-      }));
-    }
-
     return [];
   }
 }
 
-export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
+async function fetchHourlyForecast(punkts: string): Promise<WeatherData> {
   const url = `${WEATHER_API_BASE}/weather_forecast_for_location_hourly?punkts=${encodeURIComponent(punkts)}`;
+  const response = await fetch(url, {
+    next: { revalidate: REVALIDATE_SECONDS },
+  });
 
-  try {
-    const response = await fetch(url, {
-      next: { revalidate: REVALIDATE_SECONDS },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Weather API returned ${response.status}`);
-    }
-
-    const raw = (await response.json()) as HourlyForecastRaw[];
-
-    if (!Array.isArray(raw) || raw.length === 0) {
-      throw new Error("Weather API returned empty data");
-    }
-
-    const first = raw[0];
-    const data = {
-      location: {
-        id: first.punkts,
-        name: first.nosaukums,
-        region: first.novads,
-        lat: 0,
-        lon: 0,
-      },
-      forecasts: raw.map(parseHourlyForecast),
-      fetchedAt: parseLaiks(first.laiks),
-      isStale: false,
-    };
-
-    rememberHourlyForecast(punkts, data);
-    return data;
-  } catch (error) {
-    const cached = hourlyForecastCache.get(punkts);
-
-    if (
-      cached &&
-      isUsableStaleValue(cached, (value) => value.forecasts.length === 0)
-    ) {
-      return {
-        ...cached.value,
-        isStale: true,
-      };
-    }
-
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Weather API returned ${response.status}`);
   }
+
+  const raw = (await response.json()) as HourlyForecastRaw[];
+
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new Error("Weather API returned empty data");
+  }
+
+  const first = raw[0];
+
+  return {
+    location: {
+      id: first.punkts,
+      name: first.nosaukums,
+      region: first.novads,
+      lat: 0,
+      lon: 0,
+    },
+    forecasts: raw.map(parseHourlyForecast),
+    fetchedAt: parseLaiks(first.laiks),
+    isStale: false,
+  };
+}
+
+export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
+  const { value, isStale } = await hourlyForecastCache.read(punkts, () =>
+    fetchHourlyForecast(punkts),
+  );
+
+  return isStale ? { ...value, isStale: true } : value;
 }
 
 export function mergeForecastLocation(
