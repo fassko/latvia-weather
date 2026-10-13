@@ -536,6 +536,11 @@
     "mapBody": "Kartē redzama temperatūra visā Latvijā un aktīvās brīdinājumu zonas. Ar dienas un stundas vadīklām varat apskatīt nākamās 72 stundas.",
     "assistantTitle": "Forecast Mate",
     "assistantBody": "Forecast Mate atbild uz vienkāršiem jautājumiem par ielādēto prognozi. Tas neaizstāj oficiālos brīdinājumus vai ārkārtas norādes.",
+    "creditTitle": "Kas izstrādāja",
+    "creditLead": "Latvia Weather izstrādāja",
+    "authorName": "Kristaps Grinbergs",
+    "onGitHub": "GitHub",
+    "onX": "X",
     "faqTitle": "Bieži uzdotie jautājumi",
     "faq": {
       "q1": "Cik bieži prognoze tiek atjaunināta?",

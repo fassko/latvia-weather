@@ -122,6 +122,40 @@ export default async function AboutPage({ params }: AboutPageProps) {
             ))}
             <section>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {t("creditTitle")}
+              </h2>
+              <p className="mt-2">
+                {t("creditLead")}{" "}
+                <a
+                  href="https://kristaps.me/"
+                  className="font-medium text-sky-700 underline dark:text-sky-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("authorName")}
+                </a>
+                {" · "}
+                <a
+                  href="https://github.com/fassko"
+                  className="font-medium text-sky-700 underline dark:text-sky-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("onGitHub")}
+                </a>
+                {" · "}
+                <a
+                  href="https://x.com/fassko"
+                  className="font-medium text-sky-700 underline dark:text-sky-300"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("onX")}
+                </a>
+              </p>
+            </section>
+            <section>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {t("faqTitle")}
               </h2>
               <dl className="mt-4 space-y-4">
