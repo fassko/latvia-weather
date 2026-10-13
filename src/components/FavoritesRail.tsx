@@ -37,7 +37,7 @@ function RemoveIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="h-3.5 w-3.5"
+      className="h-3 w-3"
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
@@ -68,8 +68,11 @@ export function FavoritesRail({ currentLocationId, locations }: FavoritesRailPro
   if (favorites.length === 0) return null;
 
   return (
-    <nav aria-label={t("favorites")} className="-mt-2">
-      <ul className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav
+      aria-label={t("favorites")}
+      className="favorites-rail -mx-4 -mt-2 min-w-0 sm:-mx-6"
+    >
+      <ul className="favorites-rail__track">
         {favorites.map((location) => {
           const temperature = formatMapTemperature(location.temperature);
           const emoji = getConditionEmoji(location.iconCode);
@@ -77,7 +80,7 @@ export function FavoritesRail({ currentLocationId, locations }: FavoritesRailPro
 
           return (
             <li key={location.id} className="shrink-0">
-              <div className="inline-flex min-h-11 items-stretch overflow-hidden rounded-full border border-amber-200/80 bg-amber-50 text-sm font-medium text-amber-950 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-100">
+              <div className="favorites-rail__chip">
                 <Link
                   href={locationHref(location)}
                   aria-label={t("favoriteChip", {
@@ -85,9 +88,9 @@ export function FavoritesRail({ currentLocationId, locations }: FavoritesRailPro
                     temperature,
                     condition,
                   })}
-                  className="inline-flex items-center gap-1.5 py-2 pr-2 pl-3.5 transition hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                  className="favorites-rail__link"
                 >
-                  <span aria-hidden="true" className="text-base leading-none">
+                  <span aria-hidden="true" className="favorites-rail__emoji">
                     {emoji}
                   </span>
                   <span aria-hidden="true" className="tabular-nums">
@@ -98,10 +101,11 @@ export function FavoritesRail({ currentLocationId, locations }: FavoritesRailPro
                 <button
                   type="button"
                   aria-label={t("removeFavoriteNamed", { name: location.name })}
-                  className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center border-l border-amber-200/80 text-amber-800/80 transition hover:bg-amber-100 hover:text-amber-950 dark:border-amber-500/30 dark:text-amber-200/80 dark:hover:bg-amber-900/50 dark:hover:text-amber-50"
+                  className="favorites-rail__remove"
                   onClick={() => removeFavoriteLocationId(location.id)}
                   onPointerDown={(event) => event.stopPropagation()}
                 >
+                  <span aria-hidden="true" className="favorites-rail__remove-hit" />
                   <RemoveIcon />
                 </button>
               </div>
