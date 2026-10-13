@@ -1,4 +1,5 @@
-const LETTER_CLASS = "A-Za-zĀāČčĒēĢģĪīĶķĻļŅņŠšŪūŽž";
+const LETTER_CLASS =
+  "A-Za-zĀāČčĒēĢģĪīĶķĻļŅņŠšŪūŽžА-Яа-яЁё";
 
 /**
  * Whole-word weekend tokens for the AI assistant.
@@ -11,14 +12,16 @@ const WEEKEND_DAY_SPLIT = new RegExp(
   `(?<![${LETTER_CLASS}])(` +
     `[Ss]aturday|[Ss]unday|` +
     `[Ss]estdien[aāu]?|[Ss]vētdien[aāu]?|` +
+    `[Сс]уббот[аеуы]?|[Вв]оскресен[ьияеию]+|` +
     `SATURDAY|SUNDAY|SESTDIEN[AĀU]?|SVĒTDIEN[AĀU]?|` +
+    `СУББОТ[АЕУЫ]?|ВОСКРЕСЕН[ЬИЯЕИЮ]+|` +
     `Sat\\.?|Sun\\.?|SAT\\.?|SUN\\.?` +
     `)(?![${LETTER_CLASS}])`,
   "g",
 );
 
 const FULL_WEEKEND_DAY =
-  /^(saturday|sunday|sestdien[aāu]?|svētdien[aāu]?)$/i;
+  /^(saturday|sunday|sestdien[aāu]?|svētdien[aāu]?|суббот[аеуы]?|воскресен[ьияеию]+)$/i;
 const WEEKEND_DAY_ABBREVIATION = /^(Sat|Sun|SAT|SUN)\.?$/;
 
 export function isWeekendDayToken(text: string): boolean {

@@ -104,10 +104,12 @@ function getLocaleInstructions(locale: string): string {
 
   if (locale === "ru") {
     return [
+      'You are "Погодный помощник" (Forecast Mate). Always present yourself with that Russian name, never the English product name.',
       "Answer only in Russian.",
       "Do not use English or Latvian labels, recommendation words, or mixed-language phrases.",
       'Translate recommendation labels: use "Хорошо", "Избегайте", "Лучшее время", "Возьмите зонт", and "Зонт не нужен" instead of English.',
       'Use "по латвийскому времени" for time context. Do not write "Europe/Riga" in user-facing answers.',
+      "When discussing a week or multi-day forecast, mention суббота/воскресенье by name so the UI can highlight weekend days.",
     ].join(" ");
   }
 
@@ -308,7 +310,7 @@ export async function POST(request: Request) {
         "The bold headline and timing paragraphs must never contradict each other.",
         "Format answers as compact Markdown: start with one relevant weather emoji and a bold one-line summary, then use two or three short paragraphs for timing, risk, and advice.",
         "Use **bold** for important temperatures, rain chances, wind, and recommendation words.",
-        "When discussing a week or multi-day forecast, mention Saturday/Sunday or sestdiena/svētdiena by name so the UI can highlight weekend days.",
+        "When discussing a week or multi-day forecast, mention Saturday/Sunday, sestdiena/svētdiena, or суббота/воскресенье by name (matching the reply language) so the UI can highlight weekend days.",
         "For weather trend questions, copy the exact trendStrip from the forecast tool output into the answer. Do not invent another chart. Do not use a code block.",
         "Do not use bullet points, numbered lists, or tables. Keep the response easy to scan on a phone.",
         `Current page locale: ${locale}. Current selected punkts ID: ${currentLocationId}.`,
