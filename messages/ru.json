@@ -296,6 +296,7 @@
     "noResults": "Нет подходящих мест",
     "recent": "Недавние места",
     "favorites": "Избранное",
+    "favoriteChip": "{name}, {temperature}, {condition}",
     "addFavorite": "Добавить в избранное",
     "removeFavorite": "Удалить из избранного",
     "useCurrent": "Моё местоположение",
