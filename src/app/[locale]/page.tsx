@@ -37,6 +37,11 @@ import {
   resolveLocationId,
 } from "@/lib/weather/locations";
 import { pickLocationQueryValue } from "@/lib/weather/location-query";
+import {
+  getIntlLocale,
+  getOgAlternateLocales,
+  getOgLocale,
+} from "@/lib/locale";
 import { getSiteUrl, localizedPath } from "@/lib/site";
 
 export interface HomeProps {
@@ -56,10 +61,6 @@ function buildOgImagePath(locale: string, punkts?: string): string {
     params.set("punkts", punkts);
   }
   return `/og?${params.toString()}`;
-}
-
-function getLocaleName(locale: string): "lv_LV" | "en_US" {
-  return locale === "lv" ? "lv_LV" : "en_US";
 }
 
 function buildLanguageAlternates(baseUrl: string, punkts?: string, locationName?: string) {
@@ -91,20 +92,31 @@ function climateSnippetLine(
   const temperature = comparison.metrics.find((metric) => metric.kind === "temperature");
   if (!temperature) return null;
 
-  const monthLabel = new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-GB", {
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(comparison.year, comparison.month - 1, 1)));
+  const monthLabel = new Intl.DateTimeFormat(
+    locale === "en" ? "en-GB" : getIntlLocale(locale),
+    {
+      month: "long",
+      timeZone: "UTC",
+    },
+  ).format(new Date(Date.UTC(comparison.year, comparison.month - 1, 1)));
 
   if (temperature.delta >= 0.5) {
-    return locale === "lv"
-      ? `${monthLabel} ${locationName} bija siltāks par ierastu (${temperature.delta.toFixed(1)}°C).`
-      : `${monthLabel} was warmer than usual in ${locationName} (+${temperature.delta.toFixed(1)}°C).`;
+    if (locale === "lv") {
+      return `${monthLabel} ${locationName} bija siltāks par ierastu (${temperature.delta.toFixed(1)}°C).`;
+    }
+    if (locale === "ru") {
+      return `${monthLabel} в ${locationName} было теплее обычного (+${temperature.delta.toFixed(1)}°C).`;
+    }
+    return `${monthLabel} was warmer than usual in ${locationName} (+${temperature.delta.toFixed(1)}°C).`;
   }
   if (temperature.delta <= -0.5) {
-    return locale === "lv"
-      ? `${monthLabel} ${locationName} bija aukstāks par ierastu (${Math.abs(temperature.delta).toFixed(1)}°C).`
-      : `${monthLabel} was colder than usual in ${locationName} (${temperature.delta.toFixed(1)}°C).`;
+    if (locale === "lv") {
+      return `${monthLabel} ${locationName} bija aukstāks par ierastu (${Math.abs(temperature.delta).toFixed(1)}°C).`;
+    }
+    if (locale === "ru") {
+      return `${monthLabel} в ${locationName} было холоднее обычного (${temperature.delta.toFixed(1)}°C).`;
+    }
+    return `${monthLabel} was colder than usual in ${locationName} (${temperature.delta.toFixed(1)}°C).`;
   }
   return null;
 }
@@ -175,8 +187,8 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
       description,
       url: pageUrl,
       siteName: t("siteTitle"),
-      locale: getLocaleName(locale),
-      alternateLocale: locale === "lv" ? ["en_US"] : ["lv_LV"],
+      locale: getOgLocale(locale),
+      alternateLocale: getOgAlternateLocales(locale),
       type: "website",
       images: [{ url: imageUrl, width: 1200, height: 630 }],
     },

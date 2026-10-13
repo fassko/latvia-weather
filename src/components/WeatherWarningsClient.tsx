@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { WeatherWarning, WeatherWarningLevel } from "@/lib/weather/types";
 import { useDismissedWarningIds } from "@/lib/weather/use-dismissed-warning-ids";
+import { prefersLatvianWeatherCopy } from "@/lib/locale";
 import {
   getWarningDismissKey,
   isWarningDismissed,
@@ -52,8 +53,9 @@ function highestLevel(warnings: WeatherWarning[]): WeatherWarningLevel {
 }
 
 function warningRegionText(warning: WeatherWarning, locale: string): string {
-  const regionNames =
-    locale === "lv" ? warning.regionNamesLv : warning.regionNamesEn;
+  const regionNames = prefersLatvianWeatherCopy(locale)
+    ? warning.regionNamesLv
+    : warning.regionNamesEn;
   const regions =
     regionNames && regionNames.length > 0 ? regionNames : warning.regions;
 
@@ -61,7 +63,9 @@ function warningRegionText(warning: WeatherWarning, locale: string): string {
 }
 
 function warningHeadline(warning: WeatherWarning, locale: string): string {
-  const text = locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
+  const text = prefersLatvianWeatherCopy(locale)
+    ? warning.textLv
+    : warning.textEn || warning.textLv;
   const firstSentence = text.split(/(?<=[.!?…])\s+/)[0]?.trim() || text.trim();
   return firstSentence.length > 110
     ? `${firstSentence.slice(0, 107).trimEnd()}…`
@@ -212,7 +216,9 @@ export function WeatherWarningsClient({
               <ul className="mt-1 space-y-3">
                 {visibleWarnings.map((warning) => {
                   const text =
-                    locale === "lv" ? warning.textLv : warning.textEn || warning.textLv;
+                    prefersLatvianWeatherCopy(locale)
+                      ? warning.textLv
+                      : warning.textEn || warning.textLv;
                   const regions = warningRegionText(warning, locale);
 
                   return (

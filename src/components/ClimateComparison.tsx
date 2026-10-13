@@ -30,7 +30,9 @@ function formatSigned(value: number, digits: number, suffix: string): string {
 
 function monthLabel(locale: string, year: number, month: number): string {
   const date = new Date(Date.UTC(year, month - 1, 1));
-  return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-GB", {
+  const intlLocale =
+    locale === "lv" ? "lv-LV" : locale === "ru" ? "ru-RU" : "en-GB";
+  return new Intl.DateTimeFormat(intlLocale, {
     month: "long",
     year: "numeric",
     timeZone: "UTC",

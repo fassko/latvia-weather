@@ -297,8 +297,10 @@
     "switchTo": "Pārslēgt uz {locale}",
     "en": "EN",
     "lv": "LV",
+    "ru": "RU",
     "enName": "angļu",
     "lvName": "latviešu",
+    "ruName": "krievu",
     "groupLabel": "Valoda"
   },
   "nav": {

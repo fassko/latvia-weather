@@ -4,7 +4,7 @@ const themeScript = `
 (function () {
   try {
     var locale = location.pathname.split("/")[1];
-    if (locale === "en" || locale === "lv") {
+    if (locale === "en" || locale === "lv" || locale === "ru") {
       document.documentElement.lang = locale;
     }
     var stored = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
