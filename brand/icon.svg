@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Latvia Weather">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14a4ef"/>
+      <stop offset="1" stop-color="#0878c4"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="42%" cy="38%" r="68%">
+      <stop offset="0" stop-color="#ffe56a"/>
+      <stop offset="1" stop-color="#f5b400"/>
+    </radialGradient>
+    <linearGradient id="cloud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e4edf5"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="118" fill="url(#tile)"/>
+  <g transform="translate(198 196)" fill="#f6c21a">
+    <g>
+      <rect x="-12" y="-132" width="24" height="40" rx="10"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(45)"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(90)"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(135)"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(180)"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(225)"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(270)"/>
+      <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(315)"/>
+    </g>
+    <circle r="78" fill="url(#sun)"/>
+  </g>
+  <g fill="url(#cloud)">
+    <ellipse cx="312" cy="328" rx="128" ry="72"/>
+    <circle cx="236" cy="318" r="58"/>
+    <circle cx="304" cy="286" r="74"/>
+    <circle cx="378" cy="316" r="60"/>
+  </g>
+</svg>

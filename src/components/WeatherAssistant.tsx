@@ -16,6 +16,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { BrandMark } from "@/components/BrandMark";
 import { useCookieBannerVisible } from "@/components/CookieConsent";
 import {
   ASSISTANT_HISTORY_CHAT_ID,
@@ -226,15 +227,14 @@ function getAssistantErrorMessage(
   return error.message;
 }
 
-function AppWeatherIcon({ className = "" }: { className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-800 shadow-sm ${className}`}
-    >
-      <span className="translate-y-[1px] text-[1.65em] leading-none">🌤️</span>
-    </span>
-  );
+function AppWeatherIcon({
+  className = "",
+  shape = "rounded",
+}: {
+  className?: string;
+  shape?: "rounded" | "square";
+}) {
+  return <BrandMark shape={shape} className={`shrink-0 ${className}`} />;
 }
 
 export function WeatherAssistant({
@@ -366,7 +366,7 @@ export function WeatherAssistant({
           bannerVisible && !isOpen ? "hidden" : ""
         }`}
       >
-        <AppWeatherIcon className="h-7 w-7 bg-none shadow-none" />
+        <AppWeatherIcon shape="square" className="h-8 w-8 rounded-full ring-2 ring-white/35" />
         {labels.open}
       </button>
       ) : null}

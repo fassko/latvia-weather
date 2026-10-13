@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="lv">
+  <head>
+    <meta charset="utf-8" />
+    <title>Laika prognoze Latvijā — X cover</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1500px; height: 500px; overflow: hidden; }
+      body {
+        position: relative;
+        background: linear-gradient(165deg, #2f78ff 0%, #1a68d8 48%, #004ca3 100%);
+        font-family: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #fff;
+      }
+      .copy {
+        position: absolute;
+        left: 156px;
+        top: 46px;
+        z-index: 2;
+      }
+      h1 {
+        font-size: 86px;
+        font-weight: 700;
+        letter-spacing: -2.4px;
+        line-height: 0.9;
+      }
+      h1 span {
+        display: block;
+        margin-top: 4px;
+        color: #ffe08a;
+      }
+      .url {
+        margin-top: 18px;
+        font-size: 28px;
+        font-weight: 650;
+        letter-spacing: -0.3px;
+        color: rgba(255, 255, 255, 0.92);
+      }
+      ul {
+        margin-top: 16px;
+        list-style: none;
+      }
+      li {
+        font-size: 28px;
+        font-weight: 620;
+        letter-spacing: -0.4px;
+        line-height: 1.28;
+      }
+      li::before {
+        content: "";
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 12px;
+        border-radius: 50%;
+        background: #ffe08a;
+        transform: translateY(-1px);
+      }
+      .art {
+        position: absolute;
+        right: 36px;
+        top: -28px;
+        width: 560px;
+        height: 560px;
+        -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%);
+        mask-image: linear-gradient(90deg, transparent 0%, #000 8%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <h1>Laika prognoze<span>Latvijā</span></h1>
+      <div class="url">latvia-weather.com</div>
+      <ul>
+        <li>Detalizētas prognozes</li>
+        <li>MI čatbots</li>
+        <li>Ikdienas prognozes video</li>
+      </ul>
+    </div>
+    <img class="art" src="weather-art.png" alt="" />
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="lv">
+  <head>
+    <meta charset="utf-8" />
+    <title>Latvia Weather profile icon</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1080px; overflow: hidden; }
+      body {
+        position: relative;
+        background: linear-gradient(165deg, #2f78ff 0%, #1a68d8 48%, #004ca3 100%);
+      }
+      /* Keep sun + cloud inside the circular safe zone; fade art edges into the canvas */
+      img {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 860px;
+        height: 860px;
+        transform: translate(-50%, -50%);
+        -webkit-mask-image: radial-gradient(circle closest-side, #000 78%, transparent 100%);
+        mask-image: radial-gradient(circle closest-side, #000 78%, transparent 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <img src="../social/weather-art.png" alt="" />
+  </body>
+</html>

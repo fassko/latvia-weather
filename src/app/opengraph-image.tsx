@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { SatoriBrandMark } from "@/app/icons/app-icon";
 
 export const size = {
   width: 1200,
@@ -24,7 +25,7 @@ export default function Image() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-          <div style={{ fontSize: "76px" }}>☀️</div>
+          <SatoriBrandMark size={96} />
           <div style={{ fontSize: "32px", opacity: 0.82 }}>Latvia Weather</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>

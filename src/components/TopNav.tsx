@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { BrandMark } from "@/components/BrandMark";
 import { LocationCombobox } from "@/components/LocationCombobox";
 import { NavControls } from "@/components/NavControls";
 import { Link } from "@/i18n/navigation";
@@ -104,13 +105,5 @@ function MapIcon() {
 }
 
 function BrandIcon() {
-  return (
-    <span
-      className="flex h-7 w-7 items-center justify-center rounded-lg text-base shadow-sm"
-      style={{ background: "linear-gradient(135deg, #0ea5e9, #0369a1)" }}
-      aria-hidden="true"
-    >
-      🌤️
-    </span>
-  );
+  return <BrandMark className="h-7 w-7 shrink-0" />;
 }
