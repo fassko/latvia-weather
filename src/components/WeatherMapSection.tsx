@@ -8,9 +8,16 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { useTranslations } from "next-intl";
 import { getIntlLocale } from "@/lib/locale";
+import {
+  getEmptyFavoriteLocationIds,
+  readFavoriteLocationIds,
+  subscribeFavoriteLocationIds,
+} from "@/lib/weather/favorite-location-ids";
+import { filterLocationsByFavoriteIds } from "@/lib/weather/filter-favorite-locations";
 import { MOBILE_MAP_MAX_WIDTH } from "@/lib/weather/map-view";
 import type {
   WeatherAlarmPolygon,
@@ -146,6 +153,23 @@ function writeStoredMobileMapHeight(heightPx: number) {
 
 function isMobileMapViewport(width = window.innerWidth): boolean {
   return width > 0 && width < MOBILE_MAP_MAX_WIDTH;
+}
+
+function FavoritesOnlyIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill={active ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3.5 14.7 9l6 .9-4.4 4.3 1 6L12 17.5 6.7 20.2l1-6L3.3 9.9l6-.9Z" />
+    </svg>
+  );
 }
 
 async function fetchMapWeather(offsetHours: number): Promise<MapWeatherResponse> {
@@ -360,15 +384,32 @@ export function WeatherMapSection({
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [mobileMapHeightPx, setMobileMapHeightPx] = useState<number | null>(null);
   const [isResizingMap, setIsResizingMap] = useState(false);
+  const [wantFavoritesOnly, setWantFavoritesOnly] = useState(false);
   const resizeStartRef = useRef<{ pointerY: number; heightPx: number } | null>(
     null,
   );
   const mobileMapHeightRef = useRef<number | null>(null);
+  const favoriteIds = useSyncExternalStore(
+    subscribeFavoriteLocationIds,
+    readFavoriteLocationIds,
+    getEmptyFavoriteLocationIds,
+  );
+  const favoritesOnly = wantFavoritesOnly;
   const hasCachedForecast = offsetHours === 0 || mapWeatherCache.has(offsetHours);
-  const displayLocations =
+  const allDisplayLocations =
     offsetHours === 0
       ? locations
       : (mapWeatherCache.get(offsetHours) ?? locations);
+  const displayLocations = favoritesOnly
+    ? filterLocationsByFavoriteIds(allDisplayLocations, favoriteIds)
+    : allDisplayLocations;
+  const effectiveFocusLocationId =
+    favoritesOnly &&
+    focusLocationId &&
+    !favoriteIds.includes(focusLocationId)
+      ? undefined
+      : focusLocationId;
+  const showFavoritesEmpty = favoritesOnly && displayLocations.length === 0;
 
   useEffect(() => {
     mobileMapHeightRef.current = mobileMapHeightPx;
@@ -484,6 +525,10 @@ export function WeatherMapSection({
     });
   }
 
+  function handleFavoritesOnlyToggle() {
+    setWantFavoritesOnly((current) => !current);
+  }
+
   function handleResizePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (mobileMapHeightPx == null) return;
     event.preventDefault();
@@ -558,22 +603,66 @@ export function WeatherMapSection({
       ? Math.round(getViewportHeight() * 0.72)
       : undefined;
 
+  const favoritesToggleLabel = tMap("favoritesOnly");
+  const favoritesToggleTitle = showFavoritesEmpty
+    ? tMap("favoritesOnlyDisabled")
+    : tMap("favoritesOnlyHint");
+
   return (
     <section className="flex w-full flex-col gap-2">
+      <div className="weather-map-favorites-filter">
+        <button
+          type="button"
+          className="weather-map-favorites-filter__button"
+          data-active={favoritesOnly ? "true" : "false"}
+          aria-pressed={favoritesOnly}
+          aria-label={favoritesToggleLabel}
+          title={favoritesToggleTitle}
+          onClick={handleFavoritesOnlyToggle}
+        >
+          <FavoritesOnlyIcon active={favoritesOnly} />
+          <span>{favoritesToggleLabel}</span>
+        </button>
+        {favoritesOnly ? (
+          <p className="weather-map-favorites-filter__status" role="status">
+            {showFavoritesEmpty
+              ? tMap("favoritesOnlyEmpty")
+              : tMap("favoritesOnlyActive", {
+                  count: displayLocations.length,
+                })}
+          </p>
+        ) : null}
+      </div>
       <div
         className={`weather-map-frame w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800 ${
           isResizingMap ? "select-none" : ""
         }`}
         style={mapFrameStyle}
       >
-        <WeatherMap
-          locations={displayLocations}
-          alarms={alarms}
-          locale={locale}
-          selectedId={selectedId}
-          focusLocationId={focusLocationId}
-          initialShowAlarms={initialShowAlarms}
-        />
+        {showFavoritesEmpty ? (
+          <div
+            className="weather-map-favorites-empty flex h-full min-h-[28rem] w-full flex-col items-center justify-center gap-2 px-6 text-center"
+            role="status"
+          >
+            <FavoritesOnlyIcon active={false} />
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {tMap("favoritesOnlyEmpty")}
+            </p>
+            <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+              {tMap("favoritesOnlyEmptyHint")}
+            </p>
+          </div>
+        ) : (
+          <WeatherMap
+            locations={displayLocations}
+            alarms={alarms}
+            locale={locale}
+            selectedId={selectedId}
+            focusLocationId={effectiveFocusLocationId}
+            initialShowAlarms={initialShowAlarms}
+            fitToLocations={favoritesOnly}
+          />
+        )}
       </div>
       {isMobileViewport ? (
         <div

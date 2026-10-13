@@ -355,8 +355,15 @@
     "warningMunicipalities": "Teritorijas:",
     "showAlarms": "Rādīt brīdinājumus kartē",
     "hideAlarms": "Paslēpt brīdinājumus",
-    "alarmsToggle": "Brīdinājumu slānis"
+    "alarmsToggle": "Brīdinājumu slānis",
+    "favoritesOnly": "Tikai izlase",
+    "favoritesOnlyHint": "Rādīt kartē tikai izlases vietas",
+    "favoritesOnlyActive": "Rāda {count, plural, one {# izlases vietu} other {# izlases vietas}}",
+    "favoritesOnlyEmpty": "Izlase vēl ir tukša",
+    "favoritesOnlyEmptyHint": "Pievieno vietu izlasei prognozes lapā un tad ieslēdz šo filtru.",
+    "favoritesOnlyDisabled": "Vispirms pievieno izlases vietas, lai ierobežotu karti"
   },
+
   "hero": {
     "feelsLike": "Šķiet kā {temp}°C",
     "highLow": "Augst. {high}°C · Zem. {low}°C",

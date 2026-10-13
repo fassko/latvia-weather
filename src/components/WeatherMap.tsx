@@ -65,6 +65,8 @@ interface WeatherMapProps {
   selectedId?: string;
   focusLocationId?: string;
   initialShowAlarms?: boolean;
+  /** When true, fit the map to the provided locations instead of Latvia overview. */
+  fitToLocations?: boolean;
 }
 
 type MarkersById = Map<string, L.Marker>;
@@ -765,6 +767,51 @@ function FitLatvia({ enabled }: { enabled: boolean }) {
   return null;
 }
 
+function FitLocations({
+  locations,
+  enabled,
+}: {
+  locations: WeatherLocationPoint[];
+  enabled: boolean;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!enabled || locations.length === 0) return;
+
+    const points = locations.filter(
+      (location) =>
+        Number.isFinite(location.lat) && Number.isFinite(location.lon),
+    );
+    if (points.length === 0) return;
+
+    function applyFit() {
+      map.invalidateSize();
+      if (points.length === 1) {
+        map.setView([points[0].lat, points[0].lon], LOCATE_ZOOM, {
+          animate: false,
+        });
+        return;
+      }
+
+      const bounds = L.latLngBounds(
+        points.map((location) => [location.lat, location.lon] as [number, number]),
+      );
+      map.fitBounds(bounds, {
+        padding: [48, 48],
+        maxZoom: LOCATE_ZOOM,
+        animate: false,
+      });
+    }
+
+    applyFit();
+    const frame = requestAnimationFrame(applyFit);
+    return () => cancelAnimationFrame(frame);
+  }, [enabled, locations, map]);
+
+  return null;
+}
+
 function LocateIcon({ spinning }: { spinning?: boolean }) {
   return (
     <svg
@@ -933,6 +980,7 @@ export function WeatherMap({
   selectedId,
   focusLocationId,
   initialShowAlarms = true,
+  fitToLocations = false,
 }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
@@ -940,6 +988,7 @@ export function WeatherMap({
   const markersByIdRef = useRef<MarkersById>(new Map());
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const mapTiles = mapTilesForTheme(theme);
+  const shouldFitLocations = fitToLocations && !focusLocationId;
 
   useEffect(() => {
     const sync = () => setTheme(getActiveTheme());
@@ -978,7 +1027,8 @@ export function WeatherMap({
         url={mapTiles.url}
         maxZoom={19}
       />
-      <FitLatvia enabled={!focusLocationId} />
+      <FitLatvia enabled={!focusLocationId && !shouldFitLocations} />
+      <FitLocations locations={locations} enabled={shouldFitLocations} />
       <InvalidateSizeOnContainerResize />
       <MapZoomDetailClass />
       {showAlarms ? <AlarmPolygons alarms={alarms} locale={locale} /> : null}

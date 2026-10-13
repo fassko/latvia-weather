@@ -659,6 +659,113 @@ body {
   }
 }
 
+.weather-map-favorites-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.weather-map-favorites-filter__button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgb(203 213 225 / 0.95);
+  border-radius: 0.55rem;
+  background: rgb(255 255 255 / 0.98);
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.weather-map-favorites-filter__button:hover:not(:disabled) {
+  border-color: rgb(148 163 184 / 0.95);
+  background: #f8fafc;
+}
+
+.weather-map-favorites-filter__button[data-active="true"] {
+  border-color: rgb(251 191 36 / 0.85);
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.weather-map-favorites-filter__button[data-active="true"]:hover:not(:disabled) {
+  border-color: rgb(245 158 11 / 0.95);
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.weather-map-favorites-filter__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.weather-map-favorites-filter__status {
+  min-width: 0;
+  flex: 1 1 10rem;
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.weather-map-favorites-empty {
+  background:
+    linear-gradient(180deg, rgb(248 250 252 / 0.95), rgb(241 245 249 / 0.98));
+  color: #475569;
+}
+
+.weather-map-favorites-empty svg {
+  color: #94a3b8;
+}
+
+.dark .weather-map-favorites-filter__button {
+  border-color: rgb(51 65 85 / 0.95);
+  background: rgb(15 23 42 / 0.92);
+  color: #cbd5e1;
+  box-shadow: none;
+}
+
+.dark .weather-map-favorites-filter__button:hover:not(:disabled) {
+  border-color: rgb(71 85 105 / 0.95);
+  background: rgb(30 41 59 / 0.95);
+}
+
+.dark .weather-map-favorites-filter__button[data-active="true"] {
+  border-color: rgb(245 158 11 / 0.55);
+  background: rgb(69 26 3 / 0.45);
+  color: #fde68a;
+}
+
+.dark .weather-map-favorites-filter__button[data-active="true"]:hover:not(:disabled) {
+  border-color: rgb(251 191 36 / 0.7);
+  background: rgb(69 26 3 / 0.6);
+  color: #fef3c7;
+}
+
+.dark .weather-map-favorites-filter__status {
+  color: #94a3b8;
+}
+
+.dark .weather-map-favorites-empty {
+  background:
+    linear-gradient(180deg, rgb(15 23 42 / 0.98), rgb(2 6 23 / 0.98));
+  color: #94a3b8;
+}
+
+.dark .weather-map-favorites-empty svg {
+  color: #64748b;
+}
+
 .weather-map-time-control {
   flex: none;
   padding: 0.55rem 0.75rem 0.35rem;
