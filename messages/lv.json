@@ -264,6 +264,7 @@
     "noResults": "Nav atbilstošu vietu",
     "recent": "Nesenās vietas",
     "favorites": "Izlase",
+    "favoriteChip": "{name}, {temperature}, {condition}",
     "addFavorite": "Pievienot izlasei",
     "removeFavorite": "Noņemt no izlases",
     "useCurrent": "Lietot manu atrašanās vietu",

@@ -296,6 +296,7 @@
     "noResults": "No matching locations",
     "recent": "Recent locations",
     "favorites": "Favorites",
+    "favoriteChip": "{name}, {temperature}, {condition}",
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
     "useCurrent": "Use my location",
