@@ -386,8 +386,15 @@
     "warningValid": "Действует",
     "warningMunicipalities": "Районы:",
     "showAlarms": "Показать предупреждения на карте",
-    "hideAlarms": "Скрыть предупреждения"
+    "hideAlarms": "Скрыть предупреждения",
+    "favoritesOnly": "Только избранное",
+    "favoritesOnlyHint": "Показать на карте только избранные пункты",
+    "favoritesOnlyActive": "Показано {count, plural, one {# избранный пункт} few {# избранных пункта} many {# избранных пунктов} other {# избранных пунктов}}",
+    "favoritesOnlyEmpty": "Избранное пока пусто",
+    "favoritesOnlyEmptyHint": "Добавьте пункт в избранное на странице прогноза, затем включите этот фильтр.",
+    "favoritesOnlyDisabled": "Сначала добавьте избранное, чтобы ограничить карту"
   },
+
   "hero": {
     "feelsLike": "Ощущается как {temp}°C",
     "highLow": "Макс. {high}°C · Мин. {low}°C",

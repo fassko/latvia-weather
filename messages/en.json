@@ -386,8 +386,15 @@
     "warningValid": "Valid",
     "warningMunicipalities": "Areas:",
     "showAlarms": "Show warnings on map",
-    "hideAlarms": "Hide warnings"
+    "hideAlarms": "Hide warnings",
+    "favoritesOnly": "Favorites only",
+    "favoritesOnlyHint": "Show only your favorite locations on the map",
+    "favoritesOnlyActive": "Showing {count, plural, one {# favorite} other {# favorites}}",
+    "favoritesOnlyEmpty": "No favorites yet",
+    "favoritesOnlyEmptyHint": "Star a location on the forecast page, then turn this on to limit the map.",
+    "favoritesOnlyDisabled": "Add favorites first to limit the map"
   },
+
   "hero": {
     "feelsLike": "Feels like {temp}°C",
     "highLow": "H {high}°C · L {low}°C",
