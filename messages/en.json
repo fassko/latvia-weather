@@ -47,6 +47,11 @@
     "mapBody": "The map shows temperatures across Latvia and can highlight active warning polygons. Use the day and hour controls to scrub the next 72 hours.",
     "assistantTitle": "Forecast Mate",
     "assistantBody": "Forecast Mate answers plain-language questions about the loaded forecast. It does not replace official warnings or emergency guidance.",
+    "creditTitle": "Who built this",
+    "creditLead": "Latvia Weather was developed by",
+    "authorName": "Kristaps Grinbergs",
+    "onGitHub": "GitHub",
+    "onX": "X",
     "faqTitle": "Frequently asked questions",
     "faq": {
       "q1": "How often is the forecast updated?",
