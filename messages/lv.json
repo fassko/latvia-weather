@@ -267,6 +267,7 @@
     "favoriteChip": "{name}, {temperature}, {condition}",
     "addFavorite": "Pievienot izlasei",
     "removeFavorite": "Noņemt no izlases",
+    "removeFavoriteNamed": "Noņemt {name} no izlases",
     "useCurrent": "Lietot manu atrašanās vietu",
     "locating": "Meklē tuvāko vietu...",
     "locationError": "Neizdevās noteikt atrašanās vietu."

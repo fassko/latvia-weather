@@ -304,6 +304,7 @@
     "favoriteChip": "{name}, {temperature}, {condition}",
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
+    "removeFavoriteNamed": "Remove {name} from favorites",
     "useCurrent": "Use my location",
     "locating": "Finding nearest location...",
     "locationError": "Could not use your location."
