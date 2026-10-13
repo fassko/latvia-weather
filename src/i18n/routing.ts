@@ -1,11 +1,11 @@
 import { defineRouting } from "next-intl/routing";
 
 export const routing = defineRouting({
-  locales: ["lv", "en"],
+  locales: ["lv", "en", "ru"],
   defaultLocale: "lv",
   localePrefix: "always",
-  // Latvian is the primary locale: `/` always resolves to `/lv`. English stays
-  // available via `/en` and the language switcher (URL-prefixed).
+  // Latvian is the primary locale: `/` always resolves to `/lv`. English and
+  // Russian stay available via `/en`, `/ru`, and the language switcher.
   localeDetection: false,
   // Location pages supply their own hreflang metadata, including the active
   // forecast point, so middleware-generated alternates stay disabled.

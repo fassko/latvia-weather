@@ -22,7 +22,7 @@ import {
 } from "./timezone";
 import type { HourlyForecast, WeatherData, WeatherLocation } from "./types";
 
-/** Keep in sync with messages summary.cond / summary.advice (en + lv). */
+/** Keep in sync with messages summary.cond / summary.advice (en + lv + ru). */
 const SUMMARY_COPY = {
   en: {
     cond: {
@@ -74,6 +74,32 @@ const SUMMARY_COPY = {
       snow: "Uzmanies no slidenām takām.",
       thunder: "Labāk palikt telpās.",
       fog: "Esi uzmanīgs uz ceļa.",
+    },
+  },
+  ru: {
+    cond: {
+      clearDay: "Ясно и солнечно",
+      clearNight: "Ясное небо ночью",
+      partlyCloudy: "Солнце и облака",
+      cloudy: "Облачно",
+      overcast: "Серо и пасмурно",
+      fog: "Туман",
+      rain: "В прогнозе дождь",
+      drizzle: "Лёгкая морось",
+      snow: "Идёт снег",
+      thunder: "Возможны грозы",
+    },
+    advice: {
+      freezing: "Одевайтесь теплее — на улице мороз.",
+      cold: "Оденьтесь тепло перед выходом.",
+      cool: "Хватит лёгкой куртки.",
+      mild: "Хороший день, чтобы быть на улице.",
+      warm: "Отличная погода для прогулки.",
+      hot: "Держитесь в прохладе и пейте воду.",
+      rain: "Возьмите с собой зонт.",
+      snow: "Осторожно: скользко.",
+      thunder: "Лучше остаться в помещении.",
+      fog: "Будьте осторожны на дороге.",
     },
   },
 } as const;
@@ -213,6 +239,14 @@ const COPY: Record<Locale, LocaleCopy> = {
     highLow: (high, low) => `Augst. ${high} · Zem. ${low}`,
     summary: SUMMARY_COPY.lv,
   },
+  ru: {
+    brandName: "Погода в Латвии",
+    cta: "Почасовой прогноз: latvia-weather.com",
+    precipUnit: "мм",
+    windUnit: "м/с",
+    highLow: (high, low) => `Макс. ${high} · Мин. ${low}`,
+    summary: SUMMARY_COPY.ru,
+  },
 };
 
 const ACCENT_BY_CONDITION: Record<string, { day: string; night: string }> = {
@@ -227,7 +261,8 @@ const ACCENT_BY_CONDITION: Record<string, { day: string; night: string }> = {
 };
 
 function resolveLocale(locale: string | undefined): Locale {
-  return locale === "lv" ? "lv" : "en";
+  if (locale === "lv" || locale === "ru" || locale === "en") return locale;
+  return "en";
 }
 
 function findCurrentForecast(
@@ -325,34 +360,58 @@ function buildHook(options: {
 
   if (options.slot.angle === "weekend_plan") {
     if (wet) {
-      return options.locale === "lv"
-        ? `${options.cityName} brīvdienās — ņem lietussargu`
-        : `${options.cityName} weekend — pack an umbrella`;
+      if (options.locale === "lv") {
+        return `${options.cityName} brīvdienās — ņem lietussargu`;
+      }
+      if (options.locale === "ru") {
+        return `${options.cityName} на выходных — возьмите зонт`;
+      }
+      return `${options.cityName} weekend — pack an umbrella`;
     }
-    return options.locale === "lv"
-      ? `${options.cityName} — brīvdienu laiks`
-      : `${options.cityName} — weekend weather`;
+    if (options.locale === "lv") {
+      return `${options.cityName} — brīvdienu laiks`;
+    }
+    if (options.locale === "ru") {
+      return `${options.cityName} — погода на выходные`;
+    }
+    return `${options.cityName} — weekend weather`;
   }
 
   if (options.slot.angle === "weekend_evening") {
     if (wet) {
-      return options.locale === "lv"
-        ? `${options.cityName} rīt — lietus risks`
-        : `${options.cityName} tomorrow — rain risk`;
+      if (options.locale === "lv") {
+        return `${options.cityName} rīt — lietus risks`;
+      }
+      if (options.locale === "ru") {
+        return `${options.cityName} завтра — риск дождя`;
+      }
+      return `${options.cityName} tomorrow — rain risk`;
     }
-    return options.locale === "lv"
-      ? `${options.cityName} — rītdienas laiks`
-      : `${options.cityName} — tomorrow's weather`;
+    if (options.locale === "lv") {
+      return `${options.cityName} — rītdienas laiks`;
+    }
+    if (options.locale === "ru") {
+      return `${options.cityName} — погода на завтра`;
+    }
+    return `${options.cityName} — tomorrow's weather`;
   }
 
   if (wet) {
-    return options.locale === "lv"
-      ? `${options.cityName} rīt — ņem lietussargu`
-      : `${options.cityName} tomorrow — take an umbrella`;
+    if (options.locale === "lv") {
+      return `${options.cityName} rīt — ņem lietussargu`;
+    }
+    if (options.locale === "ru") {
+      return `${options.cityName} завтра — возьмите зонт`;
+    }
+    return `${options.cityName} tomorrow — take an umbrella`;
   }
-  return options.locale === "lv"
-    ? `${options.cityName} šovakar — ${options.temperature}`
-    : `${options.cityName} tonight — ${options.temperature}`;
+  if (options.locale === "lv") {
+    return `${options.cityName} šovakar — ${options.temperature}`;
+  }
+  if (options.locale === "ru") {
+    return `${options.cityName} сегодня вечером — ${options.temperature}`;
+  }
+  return `${options.cityName} tonight — ${options.temperature}`;
 }
 
 function buildCaptions(options: {
@@ -372,26 +431,35 @@ function buildCaptions(options: {
 
   let body: string;
   if (options.slot.angle === "weekend_plan") {
-    body =
-      options.locale === "lv"
-        ? `${options.cityName} brīvdienās: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
-        : `${options.cityName} this weekend: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    if (options.locale === "lv") {
+      body = `${options.cityName} brīvdienās: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    } else if (options.locale === "ru") {
+      body = `${options.cityName} на выходных: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    } else {
+      body = `${options.cityName} this weekend: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    }
   } else if (options.slot.angle === "weekend_evening") {
-    body =
-      options.locale === "lv"
-        ? `${options.cityName} šovakar / rīt: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
-        : `${options.cityName} tonight / tomorrow: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    if (options.locale === "lv") {
+      body = `${options.cityName} šovakar / rīt: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    } else if (options.locale === "ru") {
+      body = `${options.cityName} сегодня вечером / завтра: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    } else {
+      body = `${options.cityName} tonight / tomorrow: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    }
+  } else if (options.locale === "lv") {
+    body = `${options.cityName} šovakar: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+  } else if (options.locale === "ru") {
+    body = `${options.cityName} сегодня вечером: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
   } else {
-    body =
-      options.locale === "lv"
-        ? `${options.cityName} šovakar: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`
-        : `${options.cityName} tonight: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
+    body = `${options.cityName} tonight: ${options.temperature} (${highLow}). ${options.condition}. ${options.advice}`;
   }
 
   const hashtags =
     options.locale === "lv"
       ? ["#laiks", "#Latvija", `#${options.cityName.replace(/\s+/g, "")}`, "#prognoze", "#LatviaWeather"]
-      : ["#weather", "#Latvia", `#${options.cityName.replace(/\s+/g, "")}`, "#forecast", "#LatviaWeather"];
+      : options.locale === "ru"
+        ? ["#погода", "#Латвия", `#${options.cityName.replace(/\s+/g, "")}`, "#прогноз", "#LatviaWeather"]
+        : ["#weather", "#Latvia", `#${options.cityName.replace(/\s+/g, "")}`, "#forecast", "#LatviaWeather"];
 
   const tagLine = hashtags.join(" ");
 

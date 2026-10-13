@@ -1,3 +1,4 @@
+import { getBcp47Tag } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/site";
 
 export interface BreadcrumbItem {
@@ -24,10 +25,11 @@ interface WebPageGraphInput {
 const SITE_NAMES: Record<string, string> = {
   en: "Latvia Weather",
   lv: "Laika prognoze Latvijā",
+  ru: "Погода в Латвии",
 };
 
 function getLanguageTag(locale: string): string {
-  return locale === "lv" ? "lv-LV" : "en-US";
+  return getBcp47Tag(locale);
 }
 
 /**

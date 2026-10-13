@@ -29,7 +29,7 @@ const MAX_REQUEST_MESSAGES = 40;
 
 const chatRequestSchema = z.object({
   messages: z.array(z.custom<UIMessage>()).min(1).max(MAX_REQUEST_MESSAGES),
-  locale: z.enum(["en", "lv"]).default("lv"),
+  locale: z.enum(["en", "lv", "ru"]).default("lv"),
   locationId: z.string().max(16).default(DEFAULT_LOCATION_ID),
 });
 
@@ -102,6 +102,15 @@ function getLocaleInstructions(locale: string): string {
     ].join(" ");
   }
 
+  if (locale === "ru") {
+    return [
+      "Answer only in Russian.",
+      "Do not use English or Latvian labels, recommendation words, or mixed-language phrases.",
+      'Translate recommendation labels: use "Хорошо", "Избегайте", "Лучшее время", "Возьмите зонт", and "Зонт не нужен" instead of English.',
+      'Use "по латвийскому времени" for time context. Do not write "Europe/Riga" in user-facing answers.',
+    ].join(" ");
+  }
+
   return [
     "Answer only in English.",
     "Use English labels and recommendation words.",
@@ -109,7 +118,9 @@ function getLocaleInstructions(locale: string): string {
 }
 
 function getTrendStrip(forecasts: HourlyForecast[], locale: string): string {
-  const formatter = new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
+  const intlLocale =
+    locale === "lv" ? "lv-LV" : locale === "ru" ? "ru-RU" : "en-US";
+  const formatter = new Intl.DateTimeFormat(intlLocale, {
     timeZone: "Europe/Riga",
     weekday: "short",
   });
@@ -144,6 +155,9 @@ function getTrendStrip(forecasts: HourlyForecast[], locale: string): string {
 function getRateLimitError(locale: string): string {
   if (locale === "lv") {
     return "Pārāk daudz jautājumu asistentam. Lūdzu, mēģini vēlāk.";
+  }
+  if (locale === "ru") {
+    return "Слишком много вопросов ассистенту. Пожалуйста, попробуйте позже.";
   }
 
   return "Too many assistant messages. Please try again later.";

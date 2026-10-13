@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { useTranslations } from "next-intl";
+import { getIntlLocale } from "@/lib/locale";
 import { MOBILE_MAP_MAX_WIDTH } from "@/lib/weather/map-view";
 import type {
   WeatherAlarmPolygon,
@@ -57,7 +58,7 @@ function formatForecastTime(locale: string, offsetHours: number): string {
   const time = getInitialForecastTime();
   time.setHours(time.getHours() + offsetHours);
 
-  return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     timeZone: "Europe/Riga",
     weekday: "short",
     day: "numeric",
@@ -68,13 +69,17 @@ function formatForecastTime(locale: string, offsetHours: number): string {
 }
 
 function formatForecastDay(locale: string, offsetHours: number): string {
-  if (offsetHours === 0) return locale === "lv" ? "Šodien" : "Today";
+  if (offsetHours === 0) {
+    if (locale === "lv") return "Šodien";
+    if (locale === "ru") return "Сегодня";
+    return "Today";
+  }
 
   const time = getInitialForecastTime();
   time.setHours(time.getHours() + offsetHours);
 
   // Weekday-only keeps day chips readable on narrow phone timelines.
-  return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     timeZone: "Europe/Riga",
     weekday: "short",
   }).format(time);
@@ -84,7 +89,7 @@ function formatForecastHour(locale: string, offsetHours: number): string {
   const time = getInitialForecastTime();
   time.setHours(time.getHours() + offsetHours);
 
-  return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     timeZone: "Europe/Riga",
     hour: "2-digit",
     minute: "2-digit",

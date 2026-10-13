@@ -6,6 +6,7 @@ import {
   buildLanguageAlternates,
   buildLocalePageUrl,
 } from "@/lib/seo/alternates";
+import { getOgLocale } from "@/lib/locale";
 
 interface LegalPageProps {
   params: Promise<{ locale: string }>;
@@ -33,7 +34,7 @@ export async function generateMetadata({
       description,
       url: pageUrl,
       siteName: tMetadata("siteTitle"),
-      locale: locale === "lv" ? "lv_LV" : "en_US",
+      locale: getOgLocale(locale),
       type: "website",
     },
   };

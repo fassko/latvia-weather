@@ -50,13 +50,19 @@ export function LanguageSwitcher({ fullWidth = false }: LanguageSwitcherProps) {
                 : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
             }`}
           >
-            {loc === "lv" ? <LatviaFlag /> : <UkFlag />}
+            <LocaleFlag locale={loc} />
             <span>{t(loc)}</span>
           </button>
         );
       })}
     </div>
   );
+}
+
+function LocaleFlag({ locale }: { locale: Locale }) {
+  if (locale === "lv") return <LatviaFlag />;
+  if (locale === "ru") return <RussiaFlag />;
+  return <UkFlag />;
 }
 
 /** Simplified Latvia flag — crimson / white / crimson. */
@@ -88,6 +94,22 @@ function UkFlag() {
       <path d="M0 0 60 30M60 0 0 30" stroke="#C8102E" strokeWidth="2" />
       <path d="M30 0v30M0 15h60" stroke="#FFF" strokeWidth="10" />
       <path d="M30 0v30M0 15h60" stroke="#C8102E" strokeWidth="6" />
+    </svg>
+  );
+}
+
+/** Simplified Russian flag — white / blue / red. */
+function RussiaFlag() {
+  return (
+    <svg
+      viewBox="0 0 21 15"
+      className="h-3 w-[1.05rem] shrink-0 overflow-hidden rounded-[2px] ring-1 ring-black/15 dark:ring-white/20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect width="21" height="5" fill="#FFF" />
+      <rect y="5" width="21" height="5" fill="#0039A6" />
+      <rect y="10" width="21" height="5" fill="#D52B1E" />
     </svg>
   );
 }

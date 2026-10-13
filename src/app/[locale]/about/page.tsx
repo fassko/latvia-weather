@@ -6,6 +6,7 @@ import {
   buildLanguageAlternates,
   buildLocalePageUrl,
 } from "@/lib/seo/alternates";
+import { getBcp47Tag, getOgLocale } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/site";
 
 interface AboutPageProps {
@@ -34,7 +35,7 @@ export async function generateMetadata({
       description,
       url: pageUrl,
       siteName: tMetadata("siteTitle"),
-      locale: locale === "lv" ? "lv_LV" : "en_US",
+      locale: getOgLocale(locale),
       type: "website",
     },
   };
@@ -82,7 +83,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
     description: t("intro"),
     url: pageUrl,
     isPartOf: { "@id": `${getSiteUrl()}/#website` },
-    inLanguage: locale === "lv" ? "lv-LV" : "en-US",
+    inLanguage: getBcp47Tag(locale),
   };
 
   return (

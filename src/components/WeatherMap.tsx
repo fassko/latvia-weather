@@ -21,6 +21,7 @@ import {
   temperatureTextColor,
 } from "@/lib/weather/map-temp";
 import { DEFAULT_LOCATION_ID } from "@/lib/weather/locations";
+import { getIntlLocale, prefersLatvianWeatherCopy } from "@/lib/locale";
 import { localizedPath } from "@/lib/site";
 import {
   getActiveTheme,
@@ -208,7 +209,7 @@ function formatAlarmTime(locale: string, value: string): string {
   const time = new Date(value);
   if (Number.isNaN(time.getTime())) return value;
 
-  return new Intl.DateTimeFormat(locale === "lv" ? "lv-LV" : "en-US", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     timeZone: "Europe/Riga",
     day: "2-digit",
     month: "2-digit",
@@ -218,11 +219,13 @@ function formatAlarmTime(locale: string, value: string): string {
 }
 
 function getAlarmAreaText(alarm: WeatherAlarmPolygon, locale: string): string {
-  const regionSummary = locale === "lv" ? alarm.regionsLv : alarm.regionsEn;
+  const useLv = prefersLatvianWeatherCopy(locale);
+  const regionSummary = useLv ? alarm.regionsLv : alarm.regionsEn;
   if (regionSummary.trim()) return regionSummary.trim();
 
-  const municipalityNames =
-    locale === "lv" ? alarm.municipalityNamesLv : alarm.municipalityNamesEn;
+  const municipalityNames = useLv
+    ? alarm.municipalityNamesLv
+    : alarm.municipalityNamesEn;
 
   return municipalityNames.length <= 3 ? municipalityNames.join(", ") : "";
 }
@@ -255,10 +258,10 @@ function createAlarmPopupContent(
 
   const title = document.createElement("p");
   title.className = "weather-map-popup__title";
-  title.textContent =
-    locale === "lv"
-      ? `${alarm.intensityLv}: ${alarm.phenomenonLv}`
-      : `${alarm.intensityEn}: ${alarm.phenomenonEn}`;
+  const useLv = prefersLatvianWeatherCopy(locale);
+  title.textContent = useLv
+    ? `${alarm.intensityLv}: ${alarm.phenomenonLv}`
+    : `${alarm.intensityEn}: ${alarm.phenomenonEn}`;
   root.appendChild(title);
 
   const number = document.createElement("p");
@@ -273,7 +276,7 @@ function createAlarmPopupContent(
 
   const text = document.createElement("p");
   text.className = "weather-map-popup__today";
-  text.textContent = locale === "lv" ? alarm.textLv : alarm.textEn;
+  text.textContent = useLv ? alarm.textLv : alarm.textEn;
   root.appendChild(text);
 
   const areaText = getAlarmAreaText(alarm, locale);

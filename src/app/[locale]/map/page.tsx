@@ -16,6 +16,7 @@ import {
   type TemperatureLegendBandId,
 } from "@/lib/weather/map-temp";
 import { buildPageStructuredData } from "@/lib/seo/structured-data";
+import { getOgAlternateLocales, getOgLocale } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
@@ -56,8 +57,8 @@ export async function generateMetadata({
       description: t("description"),
       url: pageUrl,
       siteName: tMetadata("siteTitle"),
-      locale: locale === "lv" ? "lv_LV" : "en_US",
-      alternateLocale: locale === "lv" ? ["en_US"] : ["lv_LV"],
+      locale: getOgLocale(locale),
+      alternateLocale: getOgAlternateLocales(locale),
       type: "website",
       images: [{ url: imageUrl, width: 1200, height: 630 }],
     },

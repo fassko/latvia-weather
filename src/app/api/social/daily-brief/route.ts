@@ -32,8 +32,11 @@ const CACHE_HEADERS = {
   "Cache-Control": `public, s-maxage=${REVALIDATE_SECONDS}, stale-while-revalidate=600`,
 };
 
-function parseLocale(value: string | null, slot: SocialBriefSlot): "en" | "lv" {
-  if (value === "en" || value === "lv") return value;
+function parseLocale(
+  value: string | null,
+  slot: SocialBriefSlot,
+): "en" | "lv" | "ru" {
+  if (value === "en" || value === "lv" || value === "ru") return value;
   return slot.localeDefault;
 }
 
@@ -49,7 +52,7 @@ function unauthorized() {
 
 async function buildPayloadForPunkts(
   punkts: string,
-  locale: "en" | "lv",
+  locale: "en" | "lv" | "ru",
   slot: SocialBriefSlot,
 ): Promise<HyperframesDailyBriefPayload> {
   const [data, locations] = await Promise.all([
@@ -66,7 +69,7 @@ async function buildPayloadForPunkts(
 
 function slotResponse(
   slot: SocialBriefSlot,
-  locale: "en" | "lv",
+  locale: "en" | "lv" | "ru",
   payloads: HyperframesDailyBriefPayload[],
 ) {
   return {

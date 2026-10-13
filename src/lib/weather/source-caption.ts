@@ -3,6 +3,9 @@ export function getSourceCaption(locationName: string, locale: string): string {
   if (locale === "lv") {
     return `Balstīts uz šīs lietotnes LVĢMC prognozi — ${locationName}.`;
   }
+  if (locale === "ru") {
+    return `На основе прогноза LVĢMC в этом приложении — ${locationName}.`;
+  }
 
   return `Based on this app’s LVGMC forecast — ${locationName}.`;
 }

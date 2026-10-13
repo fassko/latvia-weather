@@ -329,8 +329,10 @@
     "switchTo": "Switch to {locale}",
     "en": "EN",
     "lv": "LV",
+    "ru": "RU",
     "enName": "English",
     "lvName": "Latvian",
+    "ruName": "Russian",
     "groupLabel": "Language"
   },
   "nav": {
