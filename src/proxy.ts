@@ -87,7 +87,7 @@ async function redirectNonCanonicalPunkts(
   request: NextRequest,
 ): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl;
-  const match = /^\/(en|lv)\/punkts\/([^/]+)\/?$/i.exec(pathname);
+  const match = /^\/(en|lv|ru)\/punkts\/([^/]+)\/?$/i.exec(pathname);
   if (!match) return null;
 
   const locale = match[1].toLowerCase();
@@ -209,5 +209,5 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/(en|lv)/:path*"],
+  matcher: ["/", "/(en|lv|ru)/:path*"],
 };
