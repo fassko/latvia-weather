@@ -54,10 +54,19 @@ describe("weekend day highlighting", () => {
     );
   });
 
+  it("highlights Russian weekend day forms", () => {
+    assert.deepEqual(
+      highlightedParts("В субботу дождь, в воскресенье яснее."),
+      ["субботу", "воскресенье"],
+    );
+  });
+
   it("recognizes only whole weekend day tokens", () => {
     assert.equal(isWeekendDayToken("Saturday"), true);
     assert.equal(isWeekendDayToken("Sun"), true);
     assert.equal(isWeekendDayToken("sunny"), false);
     assert.equal(isWeekendDayToken("Sat"), true);
+    assert.equal(isWeekendDayToken("суббота"), true);
+    assert.equal(isWeekendDayToken("воскресенье"), true);
   });
 });
