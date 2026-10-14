@@ -6,6 +6,10 @@ import {
   groupForecastsByDay,
 } from "../src/lib/weather/daily.ts";
 import {
+  clearResourceCaches,
+  STALE_REFRESH_MS,
+} from "../src/lib/weather/cache.ts";
+import {
   formatLaiks,
   getHourlyForecast,
   getWeatherWarnings,
@@ -476,7 +480,11 @@ test("findNearestLocation ignores locations without usable coordinates", () => {
   assert.equal(nearest?.id, "riga");
 });
 
-test("getHourlyForecast falls back to last successful data on transient API failure", async () => {
+test("getHourlyForecast falls back to last successful data on transient API failure", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: 0 });
+  t.after(() => clearResourceCaches());
+  clearResourceCaches();
+
   const rawForecast = [
     {
       punkts: "P269",
@@ -509,13 +517,66 @@ test("getHourlyForecast falls back to last successful data on transient API fail
   const fresh = await getHourlyForecast("P269");
   assert.equal(fresh.forecasts[0].temperature, 21);
 
+  t.mock.timers.tick(STALE_REFRESH_MS);
   globalThis.fetch = async () => new Response("Service unavailable", { status: 503 });
 
   const stale = await getHourlyForecast("P269");
   assert.equal(stale.forecasts[0].temperature, 21);
+  assert.equal(stale.isStale, true);
 });
 
-test("getWeatherWarnings falls back to stale warning data on transient API failure", async () => {
+test("getHourlyForecast reuses cached data instead of refetching within the refresh window", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: 0 });
+  t.after(() => clearResourceCaches());
+  clearResourceCaches();
+
+  const rawForecast = [
+    {
+      punkts: "P269",
+      nosaukums: "Rīga",
+      novads: "Rīga",
+      laiks: "202607061200",
+      temperatura: "21",
+      veja_atrums: "2",
+      veja_virziens: "180",
+      brazmas: "4",
+      nokrisni_1h: "0",
+      relativais_mitrums: "70",
+      laika_apstaklu_ikona: "1101",
+      spiediens: "1010",
+      sajutu_temperatura: "21",
+      sniegs: null,
+      makoni: "10",
+      nokrisnu_varbutiba: "5",
+      uvi_indekss: null,
+      perkons: "0",
+    },
+  ];
+
+  let upstreamCalls = 0;
+  globalThis.fetch = async () => {
+    upstreamCalls += 1;
+    return new Response(JSON.stringify(rawForecast), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  await getHourlyForecast("P269");
+  t.mock.timers.tick(STALE_REFRESH_MS - 1);
+  await getHourlyForecast("P269");
+  assert.equal(upstreamCalls, 1);
+
+  t.mock.timers.tick(1);
+  await getHourlyForecast("P269");
+  assert.equal(upstreamCalls, 2);
+});
+
+test("getWeatherWarnings falls back to stale warning data on transient API failure", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: 0 });
+  t.after(() => clearResourceCaches());
+  clearResourceCaches();
+
   const rawWarnings = [
     {
       id: 1,
@@ -538,6 +599,7 @@ test("getWeatherWarnings falls back to stale warning data on transient API failu
   assert.equal(fresh[0].level, "orange");
   assert.equal(fresh[0].isStale, undefined);
 
+  t.mock.timers.tick(STALE_REFRESH_MS);
   globalThis.fetch = async () => new Response("Service unavailable", { status: 503 });
 
   const stale = await getWeatherWarnings();

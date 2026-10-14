@@ -11,6 +11,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the forecast.
 
+### Data freshness
+
+Forecasts, location points, warnings, and alarm polygons are refreshed every 15
+minutes. Upstream responses are held in process memory for that window on top of
+the Next.js data cache, so a warm instance answers repeat requests without
+calling LVĢMC again, and requests that miss at the same moment share a single
+upstream call. When upstream fails, the last successful response is served for
+up to six hours and flagged as stale in the UI. The window is defined once in
+`src/lib/weather/cache.ts`.
+
 ### Weather assistant
 
 The chat assistant uses Vercel AI Gateway. For local development, either add an

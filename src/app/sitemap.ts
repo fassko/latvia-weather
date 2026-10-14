@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { routing } from "@/i18n/routing";
 import { DEFAULT_LOCATION_ID, LOCATION_POINT_IDS } from "@/lib/weather/locations";
-import { getLocationPoints, REVALIDATE_SECONDS } from "@/lib/weather/fetch";
+import { REVALIDATE_SECONDS } from "@/lib/weather/cache";
+import { getLocationPoints } from "@/lib/weather/fetch";
 import { getSiteUrl, locationSlug } from "@/lib/site";
 
 function buildLocationPath(locationId: string, locationName?: string): string {

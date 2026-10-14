@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { STALE_REFRESH_MS } from "@/lib/weather/fetch";
+import { STALE_REFRESH_MS } from "@/lib/weather/cache";
 import { getLatviaDayKey } from "@/lib/weather/timezone";
 
 const STORAGE_KEY = "latvia-weather-last-refresh";
