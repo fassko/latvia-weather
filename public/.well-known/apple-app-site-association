@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "3SGNZQGS68.com.fassko.latviaweather.com",
+          "3SGNZQGS68.devplaceholder.V2JXWT7C.latvia-weather"
+        ],
+        "components": [
+          { "/": "/en", "?": { "punkts": "P*" } },
+          { "/": "/lv", "?": { "punkts": "P*" } },
+          { "/": "/ru", "?": { "punkts": "P*" } },
+          { "/": "/en/punkts/*" },
+          { "/": "/lv/punkts/*" },
+          { "/": "/ru/punkts/*" }
+        ]
+      }
+    ]
+  }
+}
