@@ -186,7 +186,7 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
   }
 }
 
-export async function getWeatherWarnings(): Promise<WeatherWarning[]> {
+export async function getWeatherWarnings(options?: { throwOnUnavailable?: boolean }): Promise<WeatherWarning[]> {
   const url = `${WEATHER_API_BASE}/warnings`;
 
   try {
@@ -221,7 +221,7 @@ export async function getWeatherWarnings(): Promise<WeatherWarning[]> {
     });
     rememberWeatherWarnings(enrichedWarnings);
     return enrichedWarnings;
-  } catch {
+  } catch (error) {
     if (isUsableStaleValue(weatherWarningsCache, (value) => value.length === 0)) {
       return weatherWarningsCache.value.map((warning) => ({
         ...warning,
@@ -229,6 +229,7 @@ export async function getWeatherWarnings(): Promise<WeatherWarning[]> {
       }));
     }
 
+    if (options?.throwOnUnavailable) throw error;
     return [];
   }
 }

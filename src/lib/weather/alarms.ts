@@ -358,7 +358,7 @@ export async function getWeatherAlarmRegionLabelsByText(): Promise<
   }
 }
 
-export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> {
+export async function getWeatherAlarmPolygons(options?: { throwOnUnavailable?: boolean }): Promise<WeatherAlarmPolygon[]> {
   try {
     const [
       metadataRecords,
@@ -382,7 +382,7 @@ export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> 
     );
     rememberWeatherAlarmPolygons(alarms);
     return alarms;
-  } catch {
+  } catch (error) {
     if (hasUsableStaleAlarms()) {
       return weatherAlarmPolygonsCache.value.map((alarm) => ({
         ...alarm,
@@ -390,6 +390,7 @@ export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> 
       }));
     }
 
+    if (options?.throwOnUnavailable) throw error;
     return [];
   }
 }
