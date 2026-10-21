@@ -29,7 +29,10 @@ const HOUR_TICKS = Array.from({ length: 13 }, (_, index) => index * 6);
 const DAY_TICKS = [0, 24, 48, 72];
 const MAP_HEIGHT_STORAGE_KEY = "latvia-weather-map-height-px";
 const MOBILE_MAP_MIN_HEIGHT_PX = 160;
-const MOBILE_MAP_CHROME_PX = 360;
+const MOBILE_MAP_MAX_VIEWPORT_RATIO = 0.46;
+const MOBILE_MAP_DEFAULT_VIEWPORT_RATIO = 0.38;
+const MOBILE_MAP_MAX_RESERVED_CHROME_PX = 420;
+const MOBILE_MAP_DEFAULT_RESERVED_CHROME_PX = 500;
 type TimelineTickStyle = CSSProperties & { "--tick-position": string };
 
 const WeatherMap = dynamic(
@@ -117,8 +120,8 @@ function clampMobileMapHeight(heightPx: number, viewportHeight = getViewportHeig
   const maxHeight = Math.max(
     MOBILE_MAP_MIN_HEIGHT_PX,
     Math.min(
-      Math.round(viewportHeight * 0.72),
-      Math.round(viewportHeight - MOBILE_MAP_CHROME_PX + 80),
+      Math.round(viewportHeight * MOBILE_MAP_MAX_VIEWPORT_RATIO),
+      Math.round(viewportHeight - MOBILE_MAP_MAX_RESERVED_CHROME_PX),
     ),
   );
   return Math.min(maxHeight, Math.max(MOBILE_MAP_MIN_HEIGHT_PX, Math.round(heightPx)));
@@ -126,7 +129,10 @@ function clampMobileMapHeight(heightPx: number, viewportHeight = getViewportHeig
 
 function defaultMobileMapHeight(viewportHeight = getViewportHeight()): number {
   return clampMobileMapHeight(
-    Math.min(viewportHeight * 0.52, viewportHeight - MOBILE_MAP_CHROME_PX),
+    Math.min(
+      viewportHeight * MOBILE_MAP_DEFAULT_VIEWPORT_RATIO,
+      viewportHeight - MOBILE_MAP_DEFAULT_RESERVED_CHROME_PX,
+    ),
     viewportHeight,
   );
 }
@@ -581,7 +587,7 @@ export function WeatherMapSection({
         nextHeight = MOBILE_MAP_MIN_HEIGHT_PX;
         break;
       case "End":
-        nextHeight = getViewportHeight() * 0.72;
+        nextHeight = clampMobileMapHeight(Number.POSITIVE_INFINITY);
         break;
       default:
         return;
@@ -600,7 +606,7 @@ export function WeatherMapSection({
       : undefined;
   const mobileMaxHeightPx =
     isMobileViewport && typeof window !== "undefined"
-      ? Math.round(getViewportHeight() * 0.72)
+      ? clampMobileMapHeight(Number.POSITIVE_INFINITY)
       : undefined;
 
   const favoritesToggleLabel = tMap("favoritesOnly");
