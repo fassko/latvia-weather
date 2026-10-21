@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 
 /**
  * Latvia Weather mark as used in Remotion promo / social-unlock videos.
@@ -13,6 +13,8 @@ type VideoIconProps = {
 };
 
 export const VideoIcon: React.FC<VideoIconProps> = ({ size = 190, style }) => {
+  const uid = useId().replace(/:/g, "");
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -23,38 +25,94 @@ export const VideoIcon: React.FC<VideoIconProps> = ({ size = 190, style }) => {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="video-tile" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#14a4ef" />
-          <stop offset="1" stopColor="#0878c4" />
-        </linearGradient>
-        <radialGradient id="video-sun" cx="42%" cy="38%" r="68%">
-          <stop offset="0" stopColor="#ffe56a" />
-          <stop offset="1" stopColor="#f5b400" />
-        </radialGradient>
-        <linearGradient id="video-cloud" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#e4edf5" />
-        </linearGradient>
+        <clipPath id={`${uid}-tile-clip`}>
+          <rect width="512" height="512" rx="118" />
+        </clipPath>
       </defs>
-      <rect width="512" height="512" rx="118" fill="url(#video-tile)" />
-      <g transform="translate(198 196)" fill="#f6c21a">
-        <g>
-          <rect x="-12" y="-132" width="24" height="40" rx="10" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(45)" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(90)" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(135)" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(180)" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(225)" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(270)" />
-          <rect x="-12" y="-132" width="24" height="40" rx="10" transform="rotate(315)" />
-        </g>
-        <circle r="78" fill="url(#video-sun)" />
-      </g>
-      <g fill="url(#video-cloud)">
-        <ellipse cx="312" cy="328" rx="128" ry="72" />
-        <circle cx="236" cy="318" r="58" />
-        <circle cx="304" cy="286" r="74" />
-        <circle cx="378" cy="316" r="60" />
+      <g clipPath={`url(#${uid}-tile-clip)`}>
+        <defs>
+                <linearGradient x1="55.9882416%" y1="-16.9079107%" x2="98.3881643%" y2="95.7185%" id={`${uid}-linearGradient-1`}>
+                    <stop stopColor="#2F78FF" offset="0%" />
+                    <stop stopColor="#004CA3" offset="100%" />
+                </linearGradient>
+                <filter x="-45.5%" y="-45.5%" width="190.9%" height="190.9%" filterUnits="objectBoundingBox" id={`${uid}-filter-2`}>
+                    <feGaussianBlur stdDeviation="30" in="SourceGraphic" />
+                </filter>
+                <path d="M74.8209568,-0.000896185352 C74.2797078,3.92196224 74,7.92831649 74,12 C74,40.2550335 87.469398,65.3641206 108.3382,81.2550455 C85.2735401,96.1144234 70,122.023549 70,151.5 C70,154.712344 70.1813984,157.88232 70.5345106,161.000244 L-9.23705556e-14,161 L-9.23705556e-14,0 Z" id={`${uid}-path-3`} />
+                <linearGradient x1="16.0742188%" y1="26.1682129%" x2="50%" y2="62.5%" id={`${uid}-linearGradient-5`}>
+                    <stop stopColor="#FFFFFF" stopOpacity="0" offset="0%" />
+                    <stop stopColor="#FFFFFF" stopOpacity="0.5" offset="100%" />
+                </linearGradient>
+                <polyline id={`${uid}-path-6`} points="0 0 160 0 160 80 0 80" />
+                <linearGradient x1="0%" y1="37.9243827%" x2="215.357507%" y2="37.9243827%" id={`${uid}-linearGradient-7`}>
+                    <stop stopColor="#000000" stopOpacity="0" offset="0%" />
+                    <stop stopColor="#010001" stopOpacity="0.8" offset="100%" />
+                </linearGradient>
+                <linearGradient x1="50%" y1="6.76077429%" x2="50%" y2="98.1958996%" id={`${uid}-linearGradient-8`}>
+                    <stop stopColor="#FFCE3F" offset="0%" />
+                    <stop stopColor="#FF873D" offset="100%" />
+                </linearGradient>
+                <linearGradient x1="50%" y1="100%" x2="50%" y2="11.8652344%" id={`${uid}-linearGradient-9`}>
+                    <stop stopColor="#F9FCFF" stopOpacity="0.64" offset="0%" />
+                    <stop stopColor="#FFFFFF" stopOpacity="0.89416327" offset="100%" />
+                </linearGradient>
+                <path d="M140.003601,180.071991 C140.001203,179.881613 140,179.690947 140,179.5 C140,154.923329 159.923329,135 184.5,135 C189.595871,135 194.491684,135.85655 199.051319,137.433529 C216.330114,110.129385 246.797884,92 281.5,92 C335.347763,92 379,135.652237 379,189.5 C379,191.677972 378.928587,193.839265 378.787976,195.981664 C415.19588,201.86022 443,233.43311 443,271.5 C443,313.582991 409.019673,347.729452 367,348 L153,348 C106.562018,347.729483 69,310.001281 69,263.5 C69,221.425568 99.7507421,186.533357 140.003601,180.071991 L140.003601,180.071991 Z" id={`${uid}-path-10`} />1
+                <filter x="-3.2%" y="-4.7%" width="106.4%" height="109.4%" filterUnits="objectBoundingBox" id={`${uid}-filter-11`}>
+                    <feGaussianBlur stdDeviation="11" in="SourceAlpha" result="shadowBlurInner1" />
+                    <feOffset dx="0" dy="2" in="shadowBlurInner1" result="shadowOffsetInner1" />
+                    <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1" />
+                    <feColorMatrix values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1" />
+                </filter>
+                <circle id={`${uid}-path-12`} cx="184.5" cy="179.5" r="44.5" />
+                <filter x="-1.7%" y="-1.7%" width="103.4%" height="103.4%" filterUnits="objectBoundingBox" id={`${uid}-filter-13`}>
+                    <feOffset dx="3" dy="3" in="SourceAlpha" result="shadowOffsetInner1" />
+                    <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1" />
+                    <feColorMatrix values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1  0 0 0 0.3 0" type="matrix" in="shadowInnerInner1" />
+                </filter>
+                <circle id={`${uid}-path-14`} cx="366.5" cy="271.5" r="76.5" />
+                <filter x="-1.0%" y="-1.0%" width="102.0%" height="102.0%" filterUnits="objectBoundingBox" id={`${uid}-filter-15`}>
+                    <feOffset dx="-3" dy="3" in="SourceAlpha" result="shadowOffsetInner1" />
+                    <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1" />
+                    <feColorMatrix values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1  0 0 0 0.3 0" type="matrix" in="shadowInnerInner1" />
+                </filter>
+            </defs>
+            <g id={`${uid}-Icon-3`} stroke="none" fill="none">
+                <rect id={`${uid}-Background`} fill={`url(#${uid}-linearGradient-1)`} fillRule="nonzero" x="0" y="0" width="512" height="512" />
+                <g id={`${uid}-Glyph`} strokeWidth="1" fillRule="evenodd" transform="translate(0, 64)">
+                    <circle id={`${uid}-sun-glow`} fill="#FFE6AA" fillRule="nonzero" opacity="0.400000006" filter={`url(#${uid}-filter-2)`} cx="161" cy="124" r="99" />
+                    <g id={`${uid}-flag-cut`} transform="translate(0, 112)">
+                        <mask id={`${uid}-mask-4`} fill="white">
+                            <use href={`#${uid}-path-3`} />
+                        </mask>
+                        <g id={`${uid}-mask`} fillRule="nonzero"></g>
+                        <g id={`${uid}-flag`} mask={`url(#${uid}-mask-4)`}>
+                            <g transform="translate(0, 41)" id={`${uid}-Path`}>
+                                <g fill="none">
+                                    <use fill="#9E1B34" href={`#${uid}-path-6`} />
+                                    <use fillOpacity="0.13" fill={`url(#${uid}-linearGradient-5)`} style={{ mixBlendMode: 'screen' }} href={`#${uid}-path-6`} />
+                                </g>
+                                <polyline fill="#FFFFFF" points="0 32 160 32 160 48 0 48" />
+                            </g>
+                        </g>
+                        <rect id={`${uid}-shade`} fillOpacity="0.41" fill={`url(#${uid}-linearGradient-7)`} fillRule="nonzero" opacity="0.871479728" mask={`url(#${uid}-mask-4)`} x="43" y="41" width="66" height="80" />
+                    </g>
+                    <circle id={`${uid}-sun-beam`} fillOpacity="0.04" fill="#FFFFFF" fillRule="nonzero" style={{ mixBlendMode: 'overlay' }} cx="161" cy="124" r="124" />
+                    <circle id={`${uid}-sun-beam`} fillOpacity="0.08" fill="#FFFFFF" fillRule="nonzero" style={{ mixBlendMode: 'overlay' }} cx="161" cy="124" r="106" />
+                    <circle id={`${uid}-sun`} fill={`url(#${uid}-linearGradient-8)`} fillRule="nonzero" cx="161" cy="124" r="88" />
+                    <g id={`${uid}-cloud`} fillRule="nonzero">
+                        <use fill={`url(#${uid}-linearGradient-9)`} href={`#${uid}-path-10`} />
+                        <use fill="black" fillOpacity="1" filter={`url(#${uid}-filter-11)`} href={`#${uid}-path-10`} />
+                    </g>
+                    <g id={`${uid}-cloud-light`} fillRule="nonzero" fill="black" fillOpacity="1">
+                        <use filter={`url(#${uid}-filter-13)`} href={`#${uid}-path-12`} />
+                    </g>
+                    <g id={`${uid}-cloud-light`} fillRule="nonzero" fill="black" fillOpacity="1">
+                        <use filter={`url(#${uid}-filter-15)`} href={`#${uid}-path-14`} />
+                    </g>
+                    <path d="M406,62 C417.045695,62 426,53.045695 426,42 C426,30.954305 417.045695,22 406,22 C394.954305,22 386,30.954305 386,42 C386,53.045695 394.954305,62 406,62 Z M406,76 C387.222319,76 372,60.7776815 372,42 C372,23.2223185 387.222319,8 406,8 C424.777681,8 440,23.2223185 440,42 C440,60.7776815 424.777681,76 406,76 Z" id={`${uid}-degree`} fill="#458FEE" fillRule="nonzero" />
+                    <path d="M474,185.5 L512,185.5 L512,197.5 L474,197.5 C470.686292,197.5 468,194.813708 468,191.5 C468,188.186292 470.686292,185.5 474,185.5 Z M474,88.5 L512,88.5 L512,100.5 L474,100.5 C470.686292,100.5 468,97.8137085 468,94.5 C468,91.1862915 470.686292,88.5 474,88.5 Z M492,139 L512,139 L512,147 L492,147 C489.790861,147 488,145.209139 488,143 C488,140.790861 489.790861,139 492,139 Z M492,42 L512,42 L512,50 L492,50 C489.790861,50 488,48.209139 488,46 C488,43.790861 489.790861,42 492,42 Z M492,236 L512,236 L512,244 L492,244 C489.790861,244 488,242.209139 488,240 C488,237.790861 489.790861,236 492,236 Z M492,333 L512,333 L512,341 L492,341 C489.790861,341 488,339.209139 488,337 C488,334.790861 489.790861,333 492,333 Z M474,282.5 L512,282.5 L512,294.5 L474,294.5 C470.686292,294.5 468,291.813708 468,288.5 C468,285.186292 470.686292,282.5 474,282.5 Z" id={`${uid}-temp-met`} fill="#458FEE" fillRule="nonzero" />
+                </g>
+            </g>
       </g>
     </svg>
   );
