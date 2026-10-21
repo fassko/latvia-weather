@@ -21,16 +21,14 @@ const STALE_FALLBACK_MS = 6 * 60 * 60 * 1000;
 const LOCATION_POINTS_BATCH_SIZE = 80;
 /** Caps the per-instance stale fallback so crawlers cannot grow it unbounded. */
 const HOURLY_FORECAST_CACHE_LIMIT = 64;
+const LOCATION_POINTS_CACHE_LIMIT = 80;
 
 interface CachedValue<T> {
   value: T;
   storedAt: number;
 }
 
-const locationPointsCache: CachedValue<WeatherLocationPoint[]> = {
-  value: [],
-  storedAt: 0,
-};
+const locationPointsCache = new Map<string, CachedValue<WeatherLocationPoint[]>>();
 const weatherWarningsCache: CachedValue<WeatherWarning[]> = {
   value: [],
   storedAt: 0,
@@ -48,9 +46,14 @@ function isUsableStaleValue<T>(
   return !isEmpty(cache.value) && Date.now() - cache.storedAt <= STALE_FALLBACK_MS;
 }
 
-function rememberLocationPoints(value: WeatherLocationPoint[]) {
-  locationPointsCache.value = value;
-  locationPointsCache.storedAt = Date.now();
+function rememberLocationPoints(laiks: string, value: WeatherLocationPoint[]) {
+  locationPointsCache.delete(laiks);
+  locationPointsCache.set(laiks, { value, storedAt: Date.now() });
+  while (locationPointsCache.size > LOCATION_POINTS_CACHE_LIMIT) {
+    const oldestKey = locationPointsCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    locationPointsCache.delete(oldestKey);
+  }
 }
 
 function rememberHourlyForecast(punkts: string, value: WeatherData) {
@@ -171,11 +174,12 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "lv"));
 
-    rememberLocationPoints(points);
+    rememberLocationPoints(laiks, points);
     return points;
   } catch (error) {
-    if (isUsableStaleValue(locationPointsCache, (value) => value.length === 0)) {
-      return locationPointsCache.value;
+    const cached = locationPointsCache.get(laiks);
+    if (cached && isUsableStaleValue(cached, (value) => value.length === 0)) {
+      return cached.value;
     }
 
     throw error;

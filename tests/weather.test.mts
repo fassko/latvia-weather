@@ -8,6 +8,7 @@ import {
 import {
   formatLaiks,
   getHourlyForecast,
+  getLocationPoints,
   getWeatherWarnings,
   parseWeatherWarning,
 } from "../src/lib/weather/fetch.ts";
@@ -513,6 +514,30 @@ test("getHourlyForecast falls back to last successful data on transient API fail
 
   const stale = await getHourlyForecast("P269");
   assert.equal(stale.forecasts[0].temperature, 21);
+});
+
+test("getLocationPoints never uses another forecast hour as stale fallback", async () => {
+  const currentHour = new Date("2026-07-06T12:00:00.000Z");
+  const nextHour = new Date("2026-07-06T13:00:00.000Z");
+  const rawPoint = {
+    punkts: "P269",
+    nosaukums: "Rīga",
+    novads: "Rīga",
+    lat: "56.95",
+    lon: "24.10",
+    temperatura: "21",
+    veja_atrums: "2",
+    veja_virziens: "180",
+    laika_apstaklu_ikona: "1101",
+  };
+
+  globalThis.fetch = async () => new Response(JSON.stringify([rawPoint]), { status: 200 });
+  const fresh = await getLocationPoints(currentHour);
+  assert.equal(fresh[0].id, "P269");
+
+  globalThis.fetch = async () => new Response("Service unavailable", { status: 503 });
+  await assert.rejects(getLocationPoints(nextHour), /Location points API returned 503/);
+  assert.equal((await getLocationPoints(currentHour))[0].id, "P269");
 });
 
 test("getWeatherWarnings falls back to stale warning data on transient API failure", async () => {
