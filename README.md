@@ -2,6 +2,14 @@
 
 Hourly weather forecast for locations across Latvia, powered by [LVĢMC](https://videscentrs.lvgmc.lv/) data.
 
+Forecasts and map temperatures use `videscentrs.lvgmc.lv` first. If it is
+unavailable, the app falls back to the [LVĢMC city forecast dataset on
+data.gov.lv](https://data.gov.lv/dati/eng/dataset/meteorologiskas-prognozes-apdzivotam-vietam-jaunaka-datu-kopa).
+That dataset provides about 24 hours of hourly forecasts. It does not publish
+hourly rain probability, snow amount, or cloud cover, so those values appear as
+unavailable during fallback. Weather warnings come from the
+[data.gov.lv warnings dataset](https://data.gov.lv/dati/eng/dataset/hidrometeorologiskie-bridinajumi).
+
 ## Getting Started
 
 ```bash

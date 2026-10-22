@@ -7,6 +7,7 @@ import { getUpcomingHourlyForecasts } from "@/lib/weather/chart-data";
 import { buildUpcomingDailyGroups } from "@/lib/weather/daily";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
+import { formatOptionalPercent } from "@/lib/weather/optional-metrics";
 import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import type { HourlyForecast } from "@/lib/weather/types";
@@ -93,16 +94,16 @@ export async function WeatherTable({ forecasts }: WeatherTableProps) {
                       </td>
                       <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                         {forecast.precipitation.toFixed(1)} mm
-                        {forecast.snow > 0 ? ` / ${forecast.snow.toFixed(1)} cm` : ""}
+                        {forecast.snow !== null && forecast.snow > 0 ? ` / ${forecast.snow.toFixed(1)} cm` : ""}
                       </td>
                       <td className={`px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                        {Math.round(forecast.precipitationProbability)}%
+                        {formatOptionalPercent(forecast.precipitationProbability)}
                       </td>
                       <td className="px-4 py-2 tabular-nums">
                         {Math.round(forecast.humidity)}%
                       </td>
                       <td className="px-4 py-2 tabular-nums">
-                        {Math.round(forecast.cloudCover)}%
+                        {formatOptionalPercent(forecast.cloudCover)}
                       </td>
                       <td className={`whitespace-nowrap px-4 py-2 tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}>
                         {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}

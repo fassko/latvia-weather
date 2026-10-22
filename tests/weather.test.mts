@@ -10,7 +10,6 @@ import {
   getHourlyForecast,
   getLocationPoints,
   getWeatherWarnings,
-  parseWeatherWarning,
 } from "../src/lib/weather/fetch.ts";
 import {
   getRemainingTodayForecasts,
@@ -73,23 +72,6 @@ test("parseHourlyForecast maps raw LVGMC fields", () => {
   assert.equal(forecast.snow, 1.2);
   assert.equal(forecast.uvIndex, 5);
   assert.equal(forecast.thunderProbability, 7);
-});
-
-test("parseWeatherWarning maps LVGMC warning fields", () => {
-  const warning = parseWeatherWarning({
-    id: 414683703,
-    teksts: "Latvijā gaidāms stiprs karstums.",
-    teksts_en: "Intensive heat is expected in Latvia.",
-    veids: "weather",
-    krasa: "Dzeltenā",
-    ikona: "1806",
-    regions: "163,164",
-  });
-
-  assert.equal(warning.id, "414683703");
-  assert.equal(warning.level, "yellow");
-  assert.equal(warning.textLv, "Latvijā gaidāms stiprs karstums.");
-  assert.deepEqual(warning.regions, ["163", "164"]);
 });
 
 test("condition helpers map LVGMC pictogram codes correctly", () => {
@@ -478,12 +460,13 @@ test("findNearestLocation ignores locations without usable coordinates", () => {
 });
 
 test("getHourlyForecast falls back to last successful data on transient API failure", async () => {
+  const currentLaiks = formatLaiks(new Date());
   const rawForecast = [
     {
       punkts: "P269",
       nosaukums: "Rīga",
       novads: "Rīga",
-      laiks: "202607061200",
+      laiks: currentLaiks,
       temperatura: "21",
       veja_atrums: "2",
       veja_virziens: "180",
@@ -541,26 +524,38 @@ test("getLocationPoints never uses another forecast hour as stale fallback", asy
 });
 
 test("getWeatherWarnings falls back to stale warning data on transient API failure", async () => {
-  const rawWarnings = [
+  const metadata = [
     {
-      id: 1,
-      teksts: "Brīdinājums",
-      teksts_en: "Warning",
-      veids: "weather",
-      krasa: "Oranžā",
-      ikona: "1806",
-      regions: "163",
+      WARNING_NO: "1/1",
+      WEATHER_WARNING_EV_ID: 1,
+      INTENSITY_LV: "Oranžs",
+      INTENSITY_EN: "Orange",
+      REGIONS: "Rīga",
+      REGIONS_EN: "Riga",
+      PARADIBA: "Vētra",
+      PARADIBA_EN: "Storm",
+      TIME_FROM: "2026-10-22T12:00:00",
+      TIME_TILL: "2026-10-22T18:00:00",
+      TEKSTS_LV: "Brīdinājums",
+      TEKSTS_EN: "Warning",
+      RISKS_LV: "",
+      RISKS_EN: "",
     },
   ];
 
-  globalThis.fetch = async () =>
-    new Response(JSON.stringify(rawWarnings), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
+  globalThis.fetch = async (input) => {
+    assert.match(String(input), /data\.gov\.lv\/dati\/api\/3\/action\/datastore_search/);
+    assert.match(String(input), /resource_id=59c111fb-8c9a-4a63-8284-0a64a2920681/);
+    return new Response(JSON.stringify({
+      success: true,
+      result: { records: metadata, total: 1 },
+    }), { status: 200 });
+  };
 
   const fresh = await getWeatherWarnings();
   assert.equal(fresh[0].level, "orange");
+  assert.equal(fresh[0].type, "Vētra");
+  assert.deepEqual(fresh[0].regionNamesEn, ["Riga"]);
   assert.equal(fresh[0].isStale, undefined);
 
   globalThis.fetch = async () => new Response("Service unavailable", { status: 503 });
@@ -568,4 +563,79 @@ test("getWeatherWarnings falls back to stale warning data on transient API failu
   const stale = await getWeatherWarnings();
   assert.equal(stale[0].textEn, "Warning");
   assert.equal(stale[0].isStale, true);
+});
+
+test("getHourlyForecast uses data.gov.lv when the primary forecast fails or expires", async () => {
+  const future = new Date(Date.now() + 3_600_000);
+  const laiks = formatLaiks(future);
+  const timestamp = `${laiks.slice(0, 4)}-${laiks.slice(4, 6)}-${laiks.slice(6, 8)}T${laiks.slice(8, 10)}:00:00`;
+  const rows = [
+    [1, 1101], [2, 12], [3, 11], [4, 3], [5, 180],
+    [6, 5], [7, 0.4], [8, 1012], [9, 78], [11, 0],
+  ].map(([PARA_ID, VERTIBA]) => ({ CITY_ID: "P450", PARA_ID, DATUMS: timestamp, VERTIBA }));
+
+  let expiredPrimary = false;
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("videscentrs.lvgmc.lv")) {
+      return expiredPrimary
+        ? Response.json([{
+            punkts: "P450", nosaukums: "Liepāja", novads: "Liepāja",
+            laiks: "202609211200", temperatura: "12", laika_apstaklu_ikona: "1101",
+          }])
+        : new Response("Unavailable", { status: 503 });
+    }
+    if (url.includes("datastore_search_sql")) {
+      return Response.json({ success: true, result: { records: rows } });
+    }
+    if (url.includes("datastore_search")) {
+      return Response.json({ success: true, result: { records: [{
+        CITY_ID: "P450", NOSAUKUMS: "Liepāja", PAGASTS_NOVADS: "Liepāja",
+        LAT: 56.5, LON: 21.0,
+      }] } });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  const data = await getHourlyForecast("P450");
+  assert.equal(data.location.name, "Liepāja");
+  assert.equal(data.forecasts[0].temperature, 12);
+  assert.equal(data.forecasts[0].precipitation, 0.4);
+  assert.equal(data.forecasts[0].precipitationProbability, null);
+  assert.equal(data.forecasts[0].cloudCover, null);
+  assert.equal(data.forecasts[0].snow, null);
+
+  expiredPrimary = true;
+  const afterExpiredPrimary = await getHourlyForecast("P450");
+  assert.equal(afterExpiredPrimary.forecasts[0].temperature, 12);
+  assert.equal(afterExpiredPrimary.forecasts[0].time.toISOString(), data.forecasts[0].time.toISOString());
+});
+
+test("getLocationPoints uses data.gov.lv values for the requested hour", async () => {
+  const time = new Date("2026-07-08T11:00:00.000Z");
+  const rows = [
+    [1, 1101], [2, 19], [4, 3], [5, 180],
+  ].map(([PARA_ID, VERTIBA]) => ({
+    CITY_ID: "P269", PARA_ID, DATUMS: "2026-07-08T14:00:00", VERTIBA,
+  }));
+
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("videscentrs.lvgmc.lv")) return new Response("Unavailable", { status: 503 });
+    if (url.includes("datastore_search_sql")) {
+      return Response.json({ success: true, result: { records: rows } });
+    }
+    if (url.includes("datastore_search")) {
+      return Response.json({ success: true, result: { records: [{
+        CITY_ID: "P269", NOSAUKUMS: "Rīga", PAGASTS_NOVADS: "Rīga",
+        LAT: 56.95, LON: 24.1,
+      }] } });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  const points = await getLocationPoints(time);
+  assert.equal(points.length, 1);
+  assert.equal(points[0].temperature, 19);
+  assert.equal(points[0].iconCode, "1101");
 });

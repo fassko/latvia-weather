@@ -19,13 +19,13 @@ export interface SummaryHour {
   temperature: number;
   feelsLike: number;
   precipitationMm: number;
-  snowCm: number;
-  precipitationProbability: number;
+  snowCm: number | null;
+  precipitationProbability: number | null;
   thunderProbability: number;
   windSpeed: number;
   windGust: number;
   windDirection: string;
-  cloudCover: number;
+  cloudCover: number | null;
 }
 
 export interface SummaryContext {
@@ -75,13 +75,14 @@ export function buildSummaryContext(
       temperature: round(hour.temperature),
       feelsLike: round(hour.feelsLike),
       precipitationMm: round(hour.precipitation),
-      snowCm: round(hour.snow),
-      precipitationProbability: Math.round(hour.precipitationProbability),
+      snowCm: hour.snow === null ? null : round(hour.snow),
+      precipitationProbability: hour.precipitationProbability === null
+        ? null : Math.round(hour.precipitationProbability),
       thunderProbability: Math.round(hour.thunderProbability),
       windSpeed: round(hour.windSpeed),
       windGust: round(hour.windGust),
       windDirection: getWindDirection(hour.windDirection),
-      cloudCover: Math.round(hour.cloudCover),
+      cloudCover: hour.cloudCover === null ? null : Math.round(hour.cloudCover),
     })),
   };
 }

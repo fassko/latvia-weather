@@ -319,7 +319,7 @@ function buildHourlyCurve(forecasts: HourlyForecast[]): HyperframesHourlyPoint[]
   return getTodayForecasts(forecasts).map((forecast) => ({
     hour: formatLatviaTime(forecast.time, "HH"),
     temperature: Math.round(forecast.temperature),
-    rainChance: Math.round(forecast.precipitationProbability),
+    rainChance: Math.round(forecast.precipitationProbability ?? 0),
     precipMm: Math.round(forecast.precipitation * 10) / 10,
     iconCode: forecast.iconCode,
   }));
@@ -540,6 +540,9 @@ export function buildHyperframesDailyBrief(
   if (data.forecasts.length === 0) {
     throw new Error("No forecast hours available for daily brief");
   }
+  if (data.forecasts.some((forecast) => forecast.precipitationProbability === null)) {
+    throw new Error("Rain chance is unavailable for daily brief");
+  }
 
   const current = findCurrentForecast(data.forecasts, now);
   const focusHours = pickForecastHoursForSlot(data.forecasts, slot, now);
@@ -552,7 +555,7 @@ export function buildHyperframesDailyBrief(
   const temperature = formatSignedTemp(current.temperature);
   const tempHigh = formatDegree(focus.maxTemperature);
   const tempLow = formatDegree(focus.minTemperature);
-  const rainChanceValue = Math.round(focus.maxPrecipitationProbability);
+  const rainChanceValue = Math.round(focus.maxPrecipitationProbability ?? 0);
   const rainChance = `${rainChanceValue}%`;
   const precipMm = formatPrecip(focus.totalPrecipitation, copy.precipUnit);
   const windLine = `${Math.round(current.windSpeed)} ${copy.windUnit} ${getWindDirection(current.windDirection)}`;
@@ -571,7 +574,7 @@ export function buildHyperframesDailyBrief(
       ? focusHours.map((forecast) => ({
           hour: formatLatviaTime(forecast.time, "HH"),
           temperature: Math.round(forecast.temperature),
-          rainChance: Math.round(forecast.precipitationProbability),
+          rainChance: Math.round(forecast.precipitationProbability ?? 0),
           precipMm: Math.round(forecast.precipitation * 10) / 10,
           iconCode: forecast.iconCode,
         }))

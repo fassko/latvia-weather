@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
+import { formatOptionalPercent } from "@/lib/weather/optional-metrics";
 import { getConditionEmoji, getWindDirection } from "@/lib/weather/parse";
 import { getSunEventsByForecastTime, type SunEvent } from "@/lib/weather/sun-events";
 import {
@@ -34,7 +35,7 @@ export interface DailyForecastDayRow {
   barWidth: number;
   iconCode: string;
   precipMm: number;
-  rainChance: number;
+  rainChance: number | null;
   sunriseLabel: string | null;
   sunsetLabel: string | null;
   forecasts: SerializableHourlyForecast[];
@@ -141,10 +142,10 @@ export function DailyForecastAccordion({
 
                   <span
                     className="flex w-12 shrink-0 items-center justify-end gap-0.5 text-xs text-sky-600 tabular-nums dark:text-sky-400"
-                    aria-label={t("rainChance", { value: day.rainChance })}
+                    aria-label={day.rainChance === null ? undefined : t("rainChance", { value: day.rainChance })}
                   >
                     <RainChanceIcon />
-                    <span aria-hidden="true">{day.rainChance}%</span>
+                    <span aria-hidden="true">{formatOptionalPercent(day.rainChance)}</span>
                   </span>
                   {day.sunriseLabel && day.sunsetLabel ? (
                     <span className="hidden shrink-0 items-center gap-1.5 text-[11px] font-medium tabular-nums text-amber-700 sm:flex dark:text-amber-300">
@@ -250,7 +251,7 @@ function DayBreakdown({
               <span
                 className={`flex min-w-0 flex-1 items-center gap-1 text-xs tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}
               >
-                {Math.round(forecast.precipitationProbability)}%
+                {formatOptionalPercent(forecast.precipitationProbability)}
                 {forecast.precipitation > 0
                   ? ` · ${forecast.precipitation.toFixed(1)} mm`
                   : null}
@@ -364,7 +365,7 @@ function DayBreakdown({
                   {forecast.precipitation > 0 ? `${forecast.precipitation.toFixed(1)} mm` : "—"}
                 </td>
                 <td className={`py-1.5 pr-3 tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                  {Math.round(forecast.precipitationProbability)}%
+                  {formatOptionalPercent(forecast.precipitationProbability)}
                 </td>
                 <td
                   className={`py-1.5 pr-3 whitespace-nowrap tabular-nums ${METRIC_TEXT_CLASS_NAMES.wind}`}
@@ -374,7 +375,7 @@ function DayBreakdown({
                   {tWind(`directions.${getWindDirection(forecast.windDirection)}`)}
                 </td>
                 <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.humidity)}%</td>
-                <td className="py-1.5 pr-3 tabular-nums">{Math.round(forecast.cloudCover)}%</td>
+                <td className="py-1.5 pr-3 tabular-nums">{formatOptionalPercent(forecast.cloudCover)}</td>
                 <td className="py-1.5 tabular-nums">{forecast.pressure.toFixed(0)}</td>
               </tr>
             );

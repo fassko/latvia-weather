@@ -3,7 +3,7 @@ import { test } from "node:test";
 import {
   alarmCoversPoint,
   buildWeatherAlarmPolygons,
-  buildWeatherAlarmRegionLabelsByText,
+  buildWeatherWarnings,
   filterAlarmsByCoordinates,
   pointInRing,
 } from "../src/lib/weather/alarms.ts";
@@ -74,15 +74,15 @@ test("buildWeatherAlarmPolygons joins metadata, ordered rings, and municipality 
   ]);
 });
 
-test("buildWeatherAlarmRegionLabelsByText indexes localized region labels by warning text", () => {
-  const labels = buildWeatherAlarmRegionLabelsByText([
+test("buildWeatherWarnings maps warning metadata for the banner", () => {
+  const warnings = buildWeatherWarnings([
     {
       WARNING_NO: "8/25",
       WEATHER_WARNING_EV_ID: 27978,
       INTENSITY_LV: "Dzeltens",
       INTENSITY_EN: "Yellow",
-      REGIONS: "Latvija",
-      REGIONS_EN: "Latvia",
+      REGIONS: "Latvija, Rīga",
+      REGIONS_EN: "Latvia, Riga",
       PARADIBA: "Pērkona negaiss",
       PARADIBA_EN: "Thunderstorm",
       TIME_FROM: "2026-08-11T12:00:00",
@@ -94,14 +94,32 @@ test("buildWeatherAlarmRegionLabelsByText indexes localized region labels by war
     },
   ]);
 
-  assert.deepEqual(labels.get("Latvijā gaidāms pērkona negaiss."), {
-    lv: ["Latvija"],
-    en: ["Latvia"],
-  });
-  assert.deepEqual(labels.get("Thunderstorm is expected in Latvia."), {
-    lv: ["Latvija"],
-    en: ["Latvia"],
-  });
+  assert.equal(warnings[0].id, "27978");
+  assert.equal(warnings[0].level, "yellow");
+  assert.equal(warnings[0].type, "Pērkona negaiss");
+  assert.equal(warnings[0].textEn, "Thunderstorm is expected in Latvia.");
+  assert.deepEqual(warnings[0].regions, ["Latvija", "Rīga"]);
+  assert.deepEqual(warnings[0].regionNamesEn, ["Latvia", "Riga"]);
+});
+
+test("buildWeatherWarnings ignores the empty record published when no warnings are active", () => {
+  const warnings = buildWeatherWarnings([{
+    WARNING_NO: "",
+    WEATHER_WARNING_EV_ID: "",
+    INTENSITY_LV: "",
+    INTENSITY_EN: "",
+    REGIONS: "",
+    REGIONS_EN: "",
+    PARADIBA: "",
+    PARADIBA_EN: "",
+    TIME_FROM: "",
+    TIME_TILL: "",
+    TEKSTS_LV: "",
+    TEKSTS_EN: "",
+    RISKS_LV: "",
+    RISKS_EN: "",
+  }]);
+  assert.deepEqual(warnings, []);
 });
 
 const squareAlarm: WeatherAlarmPolygon = {

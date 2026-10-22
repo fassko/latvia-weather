@@ -1,15 +1,16 @@
 import { LOCATION_POINT_IDS } from "./locations";
-import { getWeatherAlarmRegionLabelsByText } from "./alarms";
+import { getDataGovHourlyForecast, getDataGovLocationPoints } from "./data-gov";
 import { parseHourlyForecast, parseLaiks, parseNumber } from "./parse";
+import { formatLaiks } from "./timezone";
 import type {
   HourlyForecastRaw,
   WeatherData,
   WeatherLocationPoint,
   WeatherPointForecastRaw,
-  WeatherWarning,
-  WeatherWarningLevel,
-  WeatherWarningRaw,
 } from "./types";
+
+export { getWeatherWarnings } from "./alarms";
+export { formatLaiks } from "./timezone";
 
 const WEATHER_API_BASE = "https://videscentrs.lvgmc.lv/data";
 
@@ -29,15 +30,7 @@ interface CachedValue<T> {
 }
 
 const locationPointsCache = new Map<string, CachedValue<WeatherLocationPoint[]>>();
-const weatherWarningsCache: CachedValue<WeatherWarning[]> = {
-  value: [],
-  storedAt: 0,
-};
 const hourlyForecastCache = new Map<string, CachedValue<WeatherData>>();
-
-function normalizeWarningText(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
-}
 
 function isUsableStaleValue<T>(
   cache: CachedValue<T>,
@@ -71,11 +64,6 @@ function rememberHourlyForecast(punkts: string, value: WeatherData) {
   }
 }
 
-function rememberWeatherWarnings(value: WeatherWarning[]) {
-  weatherWarningsCache.value = value;
-  weatherWarningsCache.storedAt = Date.now();
-}
-
 function chunkArray<T>(items: readonly T[], size: number): T[][] {
   const chunks: T[][] = [];
 
@@ -86,50 +74,11 @@ function chunkArray<T>(items: readonly T[], size: number): T[][] {
   return chunks;
 }
 
-/** LVĢMC expects `laiks` in Europe/Riga local time (start of current hour). */
-export function formatLaiks(date: Date): string {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Riga",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hour12: false,
-  });
-  const parts = Object.fromEntries(
-    formatter
-      .formatToParts(date)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
+function hasCurrentForecast(value: WeatherData, now = Date.now()): boolean {
+  return value.forecasts.some((forecast) =>
+    Number.isFinite(forecast.time.getTime()) &&
+    forecast.time.getTime() + 3_600_000 > now,
   );
-  const hour = parts.hour === "24" ? "00" : parts.hour;
-  return `${parts.year}${parts.month}${parts.day}${hour}00`;
-}
-
-function getWarningLevel(color: string): WeatherWarningLevel {
-  const normalized = color.toLocaleLowerCase("lv");
-
-  if (normalized.includes("dzelten")) return "yellow";
-  if (normalized.includes("oran")) return "orange";
-  if (normalized.includes("sarkan")) return "red";
-
-  return "unknown";
-}
-
-export function parseWeatherWarning(raw: WeatherWarningRaw): WeatherWarning {
-  return {
-    id: String(raw.id),
-    textLv: raw.teksts,
-    textEn: raw.teksts_en,
-    type: raw.veids,
-    color: raw.krasa,
-    level: getWarningLevel(raw.krasa),
-    iconCode: raw.ikona,
-    regions: raw.regions
-      .split(",")
-      .map((region) => region.trim())
-      .filter(Boolean),
-  };
 }
 
 export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoint[]> {
@@ -177,60 +126,19 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
     rememberLocationPoints(laiks, points);
     return points;
   } catch (error) {
+    try {
+      const points = await getDataGovLocationPoints(time ?? new Date());
+      rememberLocationPoints(laiks, points);
+      return points;
+    } catch {
+      // Keep the last usable response if both public sources are unavailable.
+    }
     const cached = locationPointsCache.get(laiks);
     if (cached && isUsableStaleValue(cached, (value) => value.length === 0)) {
       return cached.value;
     }
 
     throw error;
-  }
-}
-
-export async function getWeatherWarnings(options?: { throwOnUnavailable?: boolean }): Promise<WeatherWarning[]> {
-  const url = `${WEATHER_API_BASE}/warnings`;
-
-  try {
-    const response = await fetch(url, {
-      next: { revalidate: REVALIDATE_SECONDS },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Warnings API returned ${response.status}`);
-    }
-
-    const raw = (await response.json()) as WeatherWarningRaw[];
-
-    if (!Array.isArray(raw)) {
-      throw new Error("Warnings API returned invalid data");
-    }
-
-    const warnings = raw.map(parseWeatherWarning);
-    const labelsByText = await getWeatherAlarmRegionLabelsByText();
-    const enrichedWarnings = warnings.map((warning) => {
-      const labels =
-        labelsByText.get(normalizeWarningText(warning.textLv)) ??
-        labelsByText.get(normalizeWarningText(warning.textEn));
-
-      return labels
-        ? {
-            ...warning,
-            regionNamesLv: labels.lv,
-            regionNamesEn: labels.en,
-          }
-        : warning;
-    });
-    rememberWeatherWarnings(enrichedWarnings);
-    return enrichedWarnings;
-  } catch (error) {
-    if (isUsableStaleValue(weatherWarningsCache, (value) => value.length === 0)) {
-      return weatherWarningsCache.value.map((warning) => ({
-        ...warning,
-        isStale: true,
-      }));
-    }
-
-    if (options?.throwOnUnavailable) throw error;
-    return [];
   }
 }
 
@@ -266,14 +174,25 @@ export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
       isStale: false,
     };
 
+    if (!hasCurrentForecast(data)) {
+      throw new Error(`Weather API returned an expired forecast for ${punkts}`);
+    }
+
     rememberHourlyForecast(punkts, data);
     return data;
   } catch (error) {
+    try {
+      const data = await getDataGovHourlyForecast(punkts);
+      rememberHourlyForecast(punkts, data);
+      return data;
+    } catch {
+      // Keep the last usable response if both public sources are unavailable.
+    }
     const cached = hourlyForecastCache.get(punkts);
 
     if (
       cached &&
-      isUsableStaleValue(cached, (value) => value.forecasts.length === 0)
+      isUsableStaleValue(cached, (value) => !hasCurrentForecast(value))
     ) {
       return {
         ...cached.value,

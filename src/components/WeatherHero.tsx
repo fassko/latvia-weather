@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { CurrentConditionsPopup } from "@/components/CurrentConditionsPopup";
 import { getTodayForecasts } from "@/lib/weather/chart-data";
 import { summarizeDay } from "@/lib/weather/daily";
 import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
@@ -59,14 +61,17 @@ function MapPinIcon() {
 interface WeatherHeroProps {
   data: WeatherData;
   sunTimesByDay: SunTimesByDay;
+  conditions: ReactNode;
 }
 
-export async function WeatherHero({ data, sunTimesByDay }: WeatherHeroProps) {
+export async function WeatherHero({ data, sunTimesByDay, conditions }: WeatherHeroProps) {
   const locale = await getLocale();
   const t = await getTranslations("hero");
   const tConditions = await getTranslations("conditions");
   const tSummary = await getTranslations("summary");
   const tWind = await getTranslations("wind");
+  const tMetrics = await getTranslations("metrics");
+  const tNav = await getTranslations("nav");
   const windUnit = await getWindUnitsCookie();
 
   const subtitle = getLocationSubtitle(
@@ -133,28 +138,21 @@ export async function WeatherHero({ data, sunTimesByDay }: WeatherHeroProps) {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <span
-            className={`rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
+          <CurrentConditionsPopup
+            title={tMetrics("title")}
+            closeLabel={tNav("closeConditions")}
+            triggerClassName={`inline-flex min-h-8 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${theme.text}`}
+            triggers={[
+              t("feelsLike", { temp: Math.round(current.feelsLike) }),
+              t("highLow", {
+                high: Math.round(today.maxTemperature),
+                low: Math.round(today.minTemperature),
+              }),
+              <><WindArrow degrees={current.windDirection} />{formatWindSpeed(current.windSpeed, windUnit)}<span className="opacity-80">{tWind(`directions.${getWindDirection(current.windDirection)}`)}</span></>,
+            ]}
           >
-            {t("feelsLike", { temp: Math.round(current.feelsLike) })}
-          </span>
-          <span
-            className={`rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
-          >
-            {t("highLow", {
-              high: Math.round(today.maxTemperature),
-              low: Math.round(today.minTemperature),
-            })}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-medium backdrop-blur-sm ${theme.text}`}
-          >
-            <WindArrow degrees={current.windDirection} />
-            {formatWindSpeed(current.windSpeed, windUnit)}
-            <span className="opacity-80">
-              {tWind(`directions.${getWindDirection(current.windDirection)}`)}
-            </span>
-          </span>
+            {conditions}
+          </CurrentConditionsPopup>
           {sunTimes ? (
             <>
               <span

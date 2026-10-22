@@ -311,7 +311,8 @@
     "map": "Karte",
     "skipToContent": "Pāriet uz saturu",
     "moreControls": "Vairāk vadīklu",
-    "closeControls": "Aizvērt vadīklas"
+    "closeControls": "Aizvērt vadīklas",
+    "closeConditions": "Aizvērt pašreizējos apstākļus"
   },
   "map": {
     "title": "Laika karte",
@@ -488,13 +489,6 @@
     "stationNear": "Tuvākā klimatiskā stacija: {station} ({distance} km).",
     "stationFar": "Tuvākā pieejamā klimatiskā stacija: {station} ({distance} km) — vietējie apstākļi var atšķirties.",
     "disclaimer": "Novērojumi no LVĢMC stundu arhīva (aptuveni pēdējās 365 dienas). Temperatūra un nokrišņi izmantoti 1991.–2020. gadu klimata normas; vējš — tas pats mēnesis pērn, ja pieejams, citādi stacijas daudzgadu mēneša vidējais (oficiālas vēja normas nav). Arhīva dati ir operatīvi un var mainīties pēc kvalitātes pārbaudēm. Avots:"
-  },
-  "highlights": {
-    "title": "Šodienas maksimumi",
-    "warmest": "Siltākais",
-    "peakRain": "Lietus maksimums",
-    "windGusts": "Vēja brāzmas",
-    "at": "plkst. {time}"
   },
   "warnings": {
     "sectionLabel": "Laikapstākļu brīdinājumi",

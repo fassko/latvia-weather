@@ -24,15 +24,15 @@ export interface HourlyForecast {
   temperature: number;
   feelsLike: number;
   precipitation: number;
-  snow: number;
+  snow: number | null;
   humidity: number;
   windSpeed: number;
   windGust: number;
   windDirection: number;
   pressure: number;
-  cloudCover: number;
+  cloudCover: number | null;
   iconCode: string;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
   uvIndex: number | null;
   thunderProbability: number;
 }
@@ -73,16 +73,7 @@ export interface WeatherLocationPoint extends WeatherLocation {
   windSpeed: number;
   windDirection: number;
   iconCode: string;
-}
-
-export interface WeatherWarningRaw {
-  id: number | string;
-  teksts: string;
-  teksts_en: string;
-  veids: string;
-  krasa: string;
-  ikona: string;
-  regions: string;
+  source?: "data.gov.lv";
 }
 
 export type WeatherWarningLevel = "yellow" | "orange" | "red" | "unknown";

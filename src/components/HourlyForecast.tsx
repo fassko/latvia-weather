@@ -84,7 +84,9 @@ export async function HourlyForecastList({ forecasts }: HourlyForecastProps) {
                       <td className={`px-2 py-2 tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                         {forecast.precipitation > 0
                           ? `${forecast.precipitation.toFixed(1)} mm`
-                          : t("chance", { value: Math.round(forecast.precipitationProbability) })}
+                          : forecast.precipitationProbability === null
+                            ? "—"
+                            : t("chance", { value: Math.round(forecast.precipitationProbability) })}
                       </td>
                       <td className={`whitespace-nowrap px-2 py-2 tabular-nums sm:px-4 ${METRIC_TEXT_CLASS_NAMES.wind}`}>
                         {formatWindSpeed(forecast.windSpeed, windUnit)}{" "}

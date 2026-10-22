@@ -78,7 +78,8 @@ export async function DailyForecastList({
       ),
       iconCode: summary.representativeIconCode,
       precipMm: summary.totalPrecipitation,
-      rainChance: Math.round(summary.maxPrecipitationProbability),
+      rainChance: summary.maxPrecipitationProbability === null
+        ? null : Math.round(summary.maxPrecipitationProbability),
       sunriseLabel: sunTimes ? formatLatviaTime(sunTimes.sunrise, "HH:mm") : null,
       sunsetLabel: sunTimes ? formatLatviaTime(sunTimes.sunset, "HH:mm") : null,
       // ISO strings so the client accordion can hydrate (Date is not RSC-safe).

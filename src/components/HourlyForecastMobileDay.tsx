@@ -110,7 +110,9 @@ export function HourlyForecastMobileDay({
                 <span className={`shrink-0 ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                   {forecast.precipitation > 0
                     ? `${forecast.precipitation.toFixed(1)} mm`
-                    : t("chance", { value: Math.round(forecast.precipitationProbability) })}
+                    : forecast.precipitationProbability === null
+                      ? "—"
+                      : t("chance", { value: Math.round(forecast.precipitationProbability) })}
                 </span>
                 <span aria-hidden="true" className="shrink-0 text-slate-300 dark:text-slate-600">
                   ·
