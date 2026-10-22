@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -16,13 +17,16 @@ export function LanguageSwitcher({ fullWidth = false }: LanguageSwitcherProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations("language");
+  const [isPending, startTransition] = useTransition();
+  const [requestedLocale, setRequestedLocale] = useState<Locale | null>(null);
 
   function switchLocale(nextLocale: Locale) {
     if (nextLocale === locale) return;
 
     const query = searchParams.toString();
     const href = query ? `${pathname}?${query}` : pathname;
-    router.replace(href, { locale: nextLocale });
+    setRequestedLocale(nextLocale);
+    startTransition(() => router.replace(href, { locale: nextLocale }));
   }
 
   return (
@@ -32,9 +36,11 @@ export function LanguageSwitcher({ fullWidth = false }: LanguageSwitcherProps) {
       }`}
       role="group"
       aria-label={t("groupLabel")}
+      aria-busy={isPending}
     >
       {routing.locales.map((loc) => {
         const active = locale === loc;
+        const pending = isPending && requestedLocale === loc;
         return (
           <button
             key={loc}
@@ -51,6 +57,12 @@ export function LanguageSwitcher({ fullWidth = false }: LanguageSwitcherProps) {
             }`}
           >
             <span>{t(loc)}</span>
+            {pending ? (
+              <span
+                aria-hidden="true"
+                className="ml-1 inline-block h-3 w-3 rounded-full border-2 border-current border-r-transparent animate-spin motion-reduce:animate-none"
+              />
+            ) : null}
           </button>
         );
       })}

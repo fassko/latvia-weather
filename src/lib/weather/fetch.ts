@@ -83,6 +83,10 @@ function hasCurrentForecast(value: WeatherData, now = Date.now()): boolean {
 
 export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoint[]> {
   const laiks = formatLaiks(time ?? new Date());
+  const fresh = locationPointsCache.get(laiks);
+  if (fresh && Date.now() - fresh.storedAt < REVALIDATE_SECONDS * 1000) {
+    return fresh.value;
+  }
 
   try {
     const raw = (

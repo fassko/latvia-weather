@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import Home, { generateMetadata as generateHomeMetadata, type HomeProps } from "../../page";
 import { isValidLocationId } from "@/lib/weather/locations";
 import { getHourlyForecast, getLocationPoints } from "@/lib/weather/fetch";
@@ -16,8 +17,7 @@ interface LocationPageProps {
   params: Promise<{ locale: string; punkts: string }>;
 }
 
-async function getLocationId(params: LocationPageProps["params"]): Promise<string | undefined> {
-  const { punkts } = await params;
+const getLocationId = cache(async (punkts: string): Promise<string | undefined> => {
   // Accept existing ID and hybrid URLs so they can be permanently redirected
   // to the concise name-only canonical URL.
   const legacyLocationId = locationIdFromSlug(punkts);
@@ -30,7 +30,7 @@ async function getLocationId(params: LocationPageProps["params"]): Promise<strin
   // Never silently choose the wrong forecast if the upstream source contains
   // two locations that normalize to the same readable path.
   return matches.length === 1 ? matches[0].id : undefined;
-}
+});
 
 function asHomeProps({ params }: LocationPageProps, locationId: string): HomeProps {
   return {
@@ -40,17 +40,16 @@ function asHomeProps({ params }: LocationPageProps, locationId: string): HomePro
 }
 
 export async function generateMetadata(props: LocationPageProps): Promise<Metadata> {
-  const locationId = await getLocationId(props.params);
+  const { punkts } = await props.params;
+  const locationId = await getLocationId(punkts);
   if (!locationId) return {};
   return generateHomeMetadata(asHomeProps(props, locationId));
 }
 
 /** A concise, indexable URL based on the LVĢMC location name. */
 export default async function LocationPage(props: LocationPageProps) {
-  const [{ locale, punkts }, locationId] = await Promise.all([
-    props.params,
-    getLocationId(props.params),
-  ]);
+  const { locale, punkts } = await props.params;
+  const locationId = await getLocationId(punkts);
   if (!locationId) notFound();
 
   // Prefer the location directory for redirects so we do not depend on the

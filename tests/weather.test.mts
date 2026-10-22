@@ -514,9 +514,16 @@ test("getLocationPoints never uses another forecast hour as stale fallback", asy
     laika_apstaklu_ikona: "1101",
   };
 
-  globalThis.fetch = async () => new Response(JSON.stringify([rawPoint]), { status: 200 });
+  let requests = 0;
+  globalThis.fetch = async () => {
+    requests += 1;
+    return new Response(JSON.stringify([rawPoint]), { status: 200 });
+  };
   const fresh = await getLocationPoints(currentHour);
   assert.equal(fresh[0].id, "P269");
+  const firstLookupRequests = requests;
+  assert.equal((await getLocationPoints(currentHour))[0].id, "P269");
+  assert.equal(requests, firstLookupRequests, "repeat lookups should reuse fresh location points");
 
   globalThis.fetch = async () => new Response("Service unavailable", { status: 503 });
   await assert.rejects(getLocationPoints(nextHour), /Location points API returned 503/);
