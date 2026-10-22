@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DailyForecastList } from "@/components/DailyForecastList";
 import { ForecastChartsSection } from "@/components/ForecastChartsSection";
@@ -23,7 +24,6 @@ import {
   getHourlyForecast,
   getLocationPoints,
   getWeatherWarnings,
-  mergeForecastLocation,
 } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { getSourceCaption } from "@/lib/weather/source-caption";
@@ -35,12 +35,9 @@ import {
   resolveLocationId,
 } from "@/lib/weather/locations";
 import { pickLocationQueryValue } from "@/lib/weather/location-query";
-import {
-  getIntlLocale,
-  getOgAlternateLocales,
-  getOgLocale,
-} from "@/lib/locale";
+import { getOgAlternateLocales, getOgLocale } from "@/lib/locale";
 import { getSiteUrl, localizedPath } from "@/lib/site";
+import type { WeatherData } from "@/lib/weather/types";
 
 export interface HomeProps {
   params: Promise<{ locale: string }>;
@@ -81,44 +78,6 @@ function buildLanguageAlternates(baseUrl: string, punkts?: string, locationName?
   };
 }
 
-function climateSnippetLine(
-  locale: string,
-  locationName: string,
-  comparison: Awaited<ReturnType<typeof getClimateMonthComparison>>,
-): string | null {
-  if (!comparison) return null;
-  const temperature = comparison.metrics.find((metric) => metric.kind === "temperature");
-  if (!temperature) return null;
-
-  const monthLabel = new Intl.DateTimeFormat(
-    locale === "en" ? "en-GB" : getIntlLocale(locale),
-    {
-      month: "long",
-      timeZone: "UTC",
-    },
-  ).format(new Date(Date.UTC(comparison.year, comparison.month - 1, 1)));
-
-  if (temperature.delta >= 0.5) {
-    if (locale === "lv") {
-      return `${monthLabel} ${locationName} bija siltāks par ierastu (${temperature.delta.toFixed(1)}°C).`;
-    }
-    if (locale === "ru") {
-      return `${monthLabel} в ${locationName} было теплее обычного (+${temperature.delta.toFixed(1)}°C).`;
-    }
-    return `${monthLabel} was warmer than usual in ${locationName} (+${temperature.delta.toFixed(1)}°C).`;
-  }
-  if (temperature.delta <= -0.5) {
-    if (locale === "lv") {
-      return `${monthLabel} ${locationName} bija aukstāks par ierastu (${Math.abs(temperature.delta).toFixed(1)}°C).`;
-    }
-    if (locale === "ru") {
-      return `${monthLabel} в ${locationName} было холоднее обычного (${temperature.delta.toFixed(1)}°C).`;
-    }
-    return `${monthLabel} was colder than usual in ${locationName} (${temperature.delta.toFixed(1)}°C).`;
-  }
-  return null;
-}
-
 export async function generateMetadata({ params, searchParams }: HomeProps): Promise<Metadata> {
   const { locale } = await params;
   const { punkts, location } = await searchParams;
@@ -154,14 +113,6 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
       canonicalPath = localizedPath(locale, canonicalLocationId, data.location.name);
     }
 
-    const climate = await getClimateMonthComparison({
-      lat: data.location.lat,
-      lon: data.location.lon,
-    }).catch(() => null);
-    const climateLine = climateSnippetLine(locale, data.location.name, climate);
-    if (climateLine) {
-      description = climateLine;
-    }
   } catch {
     // Fall back to generic site metadata when the forecast is unavailable.
   }
@@ -199,6 +150,57 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
   };
 }
 
+async function WeatherWarningsSection({ locale }: { locale: string }) {
+  const warnings = await getWeatherWarnings();
+  return <WeatherWarnings locale={locale} warnings={warnings} />;
+}
+
+async function ClimateComparisonSection({
+  location,
+  locale,
+}: {
+  location: WeatherData["location"];
+  locale: string;
+}) {
+  const comparison = await getClimateMonthComparison({
+    lat: location.lat,
+    lon: location.lon,
+  }).catch(() => null);
+
+  if (!comparison) return null;
+
+  return (
+    <div id="climate">
+      <ClimateComparison comparison={comparison} locale={locale} />
+    </div>
+  );
+}
+
+async function LocationLinksSection({
+  location,
+}: {
+  location: WeatherData["location"];
+}) {
+  const locations = await getLocationPoints().catch(() => []);
+  if (locations.length === 0) return null;
+
+  const currentPoint =
+    locations.find((point) => point.id === location.id) ?? {
+      ...location,
+      temperature: 0,
+      windSpeed: 0,
+      windDirection: 0,
+      iconCode: "1101",
+    };
+
+  return (
+    <>
+      <NearbyPlaces current={currentPoint} locations={locations} />
+      <PopularPlaces locations={locations} currentLocationId={location.id} />
+    </>
+  );
+}
+
 export default async function Home({ params, searchParams }: HomeProps) {
   const { locale } = await params;
   const { punkts, location } = await searchParams;
@@ -222,32 +224,19 @@ export default async function Home({ params, searchParams }: HomeProps) {
   const tTable = await getTranslations({ locale, namespace: "table" });
 
   let data;
-  let locations;
-  let warnings;
 
   try {
-    [data, locations, warnings] = await Promise.all([
-      getHourlyForecast(locationId),
-      getLocationPoints(),
-      getWeatherWarnings(),
-    ]);
+    data = await getHourlyForecast(locationId);
   } catch (error) {
     const message = error instanceof Error ? error.message : t("loadWeatherData");
     return <ForecastError message={message} />;
   }
 
-  data = mergeForecastLocation(data, locations);
-  const [sunTimesByDay, climateComparison] = await Promise.all([
-    getAuthoritativeSunTimesByDay(
-      data.forecasts.map((forecast) => getLatviaDayKey(forecast.time)),
-      data.location.lat,
-      data.location.lon,
-    ),
-    getClimateMonthComparison({
-      lat: data.location.lat,
-      lon: data.location.lon,
-    }).catch(() => null),
-  ]);
+  const sunTimesByDay = await getAuthoritativeSunTimesByDay(
+    data.forecasts.map((forecast) => getLatviaDayKey(forecast.time)),
+    data.location.lat,
+    data.location.lon,
+  );
 
   const pageUrl = `${getSiteUrl()}${localizedPath(
     locale,
@@ -271,15 +260,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
     },
   });
 
-  const currentPoint =
-    locations.find((point) => point.id === data.location.id) ?? {
-      ...data.location,
-      temperature: 0,
-      windSpeed: 0,
-      windDirection: 0,
-      iconCode: "1101",
-    };
-
   return (
     <>
       <script
@@ -302,7 +282,9 @@ export default async function Home({ params, searchParams }: HomeProps) {
             {tFooter("staleData")}
           </p>
         ) : null}
-        <WeatherWarnings locale={locale} warnings={warnings} />
+        <Suspense fallback={null}>
+          <WeatherWarningsSection locale={locale} />
+        </Suspense>
         <HourlyStripCard
           forecasts={data.forecasts}
           sunTimesByDay={sunTimesByDay}
@@ -345,16 +327,12 @@ export default async function Home({ params, searchParams }: HomeProps) {
             ],
           }}
         />
-        {climateComparison ? (
-          <div id="climate">
-            <ClimateComparison comparison={climateComparison} locale={locale} />
-          </div>
-        ) : null}
-        <NearbyPlaces current={currentPoint} locations={locations} />
-        <PopularPlaces
-          locations={locations}
-          currentLocationId={data.location.id}
-        />
+        <Suspense fallback={null}>
+          <ClimateComparisonSection location={data.location} locale={locale} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <LocationLinksSection location={data.location} />
+        </Suspense>
         <footer className="flex flex-col gap-3 pt-4 pb-4 text-xs text-slate-500 sm:flex-row sm:items-end sm:justify-between dark:text-slate-400">
           <div className="space-y-2">
             <p>
