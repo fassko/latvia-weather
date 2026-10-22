@@ -131,7 +131,9 @@ export function DailyHeaderRow({
       return t("mmTotal", { value: summary.totalPrecipitation.toFixed(1) });
     }
 
-    return t("upToPercent", { value: Math.round(summary.maxPrecipitationProbability) });
+    return summary.maxPrecipitationProbability === null
+      ? "—"
+      : t("upToPercent", { value: Math.round(summary.maxPrecipitationProbability) });
   }
 
   if (variant === "hourly") {
@@ -207,13 +209,17 @@ export function DailyHeaderRow({
         className={`px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitationStrong}`}
         {...toggleCellProps}
       >
-        {t("upToPercent", { value: Math.round(summary.maxPrecipitationProbability) })}
+        {summary.maxPrecipitationProbability === null
+          ? "—"
+          : t("upToPercent", { value: Math.round(summary.maxPrecipitationProbability) })}
       </td>
       <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
         {t("avgHumidity", { value: Math.round(summary.avgHumidity) })}
       </td>
       <td className="px-4 py-2 text-sm font-semibold tabular-nums" {...toggleCellProps}>
-        {t("avgCloudCover", { value: Math.round(summary.avgCloudCover) })}
+        {summary.avgCloudCover === null
+          ? "—"
+          : t("avgCloudCover", { value: Math.round(summary.avgCloudCover) })}
       </td>
       <td
         className={`whitespace-nowrap px-4 py-2 text-sm font-semibold tabular-nums ${METRIC_TEXT_CLASS_NAMES.windStrong}`}

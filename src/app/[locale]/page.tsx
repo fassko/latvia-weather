@@ -15,7 +15,6 @@ import { WeatherAssistantLoader } from "@/components/WeatherAssistantLoader";
 import { WeatherHero } from "@/components/WeatherHero";
 import { ClimateComparison } from "@/components/ClimateComparison";
 import { FavoritesRail } from "@/components/FavoritesRail";
-import { WeatherHighlights } from "@/components/WeatherHighlights";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
 import { routing, type Locale } from "@/i18n/routing";
 import { PopularPlaces } from "@/components/PopularPlaces";
@@ -290,7 +289,11 @@ export default async function Home({ params, searchParams }: HomeProps) {
       />
       <StalePageRefresh />
       <TopNav locationId={data.location.id} locationName={data.location.name} />
-      <WeatherHero data={data} sunTimesByDay={sunTimesByDay} />
+      <WeatherHero
+        data={data}
+        sunTimesByDay={sunTimesByDay}
+        conditions={<MetricCards forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />}
+      />
       <main
         id={MAIN_CONTENT_ID}
         className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-6 pb-[max(6rem,calc(4.5rem+env(safe-area-inset-bottom)))] sm:px-6"
@@ -311,8 +314,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
           }}
         />
         <DailyForecastList forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
-        <MetricCards forecasts={data.forecasts} sunTimesByDay={sunTimesByDay} />
-        <WeatherHighlights forecasts={data.forecasts} />
         <ForecastChartsSection
           forecasts={data.forecasts}
           sunTimesByDay={sunTimesByDay}

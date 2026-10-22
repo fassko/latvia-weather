@@ -303,7 +303,7 @@ function formatTodayBriefLine(
 ): string {
   const parts = [labels.today, labels.formatHighLow(brief.high, brief.low)];
 
-  if (brief.rainChance > 0) {
+  if (brief.rainChance !== null && brief.rainChance > 0) {
     parts.push(labels.formatRainChance(brief.rainChance));
   }
 

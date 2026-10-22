@@ -9,6 +9,7 @@ import { WindDirection } from "@/components/WindDirection";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
 import type { DailySummary } from "@/lib/weather/daily";
 import { METRIC_TEXT_CLASS_NAMES } from "@/lib/weather/metric-styles";
+import { formatOptionalPercent } from "@/lib/weather/optional-metrics";
 import { formatLatviaTime } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
@@ -124,7 +125,7 @@ export function DetailedForecastMobileDay({
                   <dt className="text-xs text-slate-500 dark:text-slate-400">{t("precip")}</dt>
                   <dd className={`tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
                     {forecast.precipitation.toFixed(1)} mm
-                    {forecast.snow > 0
+                    {forecast.snow !== null && forecast.snow > 0
                       ? ` · ${forecast.snow.toFixed(1)} cm`
                       : null}
                   </dd>
@@ -132,7 +133,7 @@ export function DetailedForecastMobileDay({
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-400">{t("rainPercent")}</dt>
                   <dd className={`tabular-nums ${METRIC_TEXT_CLASS_NAMES.precipitation}`}>
-                    {Math.round(forecast.precipitationProbability)}%
+                    {formatOptionalPercent(forecast.precipitationProbability)}
                   </dd>
                 </div>
                 <div>
@@ -141,7 +142,7 @@ export function DetailedForecastMobileDay({
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-400">{t("cloudCover")}</dt>
-                  <dd className="tabular-nums">{Math.round(forecast.cloudCover)}%</dd>
+                  <dd className="tabular-nums">{formatOptionalPercent(forecast.cloudCover)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-400">{t("wind")}</dt>

@@ -13,14 +13,14 @@ export interface OverlappingHourSummary {
   time: string;
   localTime: string;
   precipitation: number;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
 }
 
 export interface NextHourRainSummary {
   /** True when any overlapping forecast hour has measurable rain or high probability. */
   willRain: boolean;
   maxPrecipitationMm: number;
-  maxPrecipitationProbability: number;
+  maxPrecipitationProbability: number | null;
   totalPrecipitationMm: number;
   overlappingHours: OverlappingHourSummary[];
   earliestRainTime: string | null;
@@ -32,7 +32,7 @@ export interface RainWindowSummary {
   startLocalTime: string;
   endLocalTime: string;
   totalPrecipitationMm: number;
-  maxPrecipitationProbability: number;
+  maxPrecipitationProbability: number | null;
 }
 
 export interface AssistantTimingContext {
@@ -47,7 +47,7 @@ export interface AssistantTimingContext {
 function hourHasRain(forecast: HourlyForecast): boolean {
   return (
     forecast.precipitation > 0 ||
-    forecast.precipitationProbability >= RAIN_PROBABILITY_THRESHOLD
+    (forecast.precipitationProbability ?? 0) >= RAIN_PROBABILITY_THRESHOLD
   );
 }
 
@@ -81,13 +81,13 @@ export function summarizeNextHourRain(
   const willRain = overlappingHours.some(
     (hour) =>
       hour.precipitation > 0 ||
-      hour.precipitationProbability >= RAIN_PROBABILITY_THRESHOLD,
+      (hour.precipitationProbability ?? 0) >= RAIN_PROBABILITY_THRESHOLD,
   );
 
   const rainyHours = overlappingHours.filter(
     (hour) =>
       hour.precipitation > 0 ||
-      hour.precipitationProbability >= RAIN_PROBABILITY_THRESHOLD,
+      (hour.precipitationProbability ?? 0) >= RAIN_PROBABILITY_THRESHOLD,
   );
 
   return {
@@ -96,10 +96,9 @@ export function summarizeNextHourRain(
       (max, hour) => Math.max(max, hour.precipitation),
       0,
     ),
-    maxPrecipitationProbability: overlappingHours.reduce(
-      (max, hour) => Math.max(max, hour.precipitationProbability),
-      0,
-    ),
+    maxPrecipitationProbability: overlappingHours.some((hour) => hour.precipitationProbability !== null)
+      ? overlappingHours.reduce((max, hour) => Math.max(max, hour.precipitationProbability ?? 0), 0)
+      : null,
     totalPrecipitationMm: overlappingHours.reduce(
       (total, hour) => total + hour.precipitation,
       0,
@@ -153,10 +152,9 @@ function toRainWindow(period: HourlyForecast[]): RainWindowSummary {
       (total, forecast) => total + forecast.precipitation,
       0,
     ),
-    maxPrecipitationProbability: period.reduce(
-      (max, forecast) => Math.max(max, forecast.precipitationProbability),
-      0,
-    ),
+    maxPrecipitationProbability: period.some((forecast) => forecast.precipitationProbability !== null)
+      ? period.reduce((max, forecast) => Math.max(max, forecast.precipitationProbability ?? 0), 0)
+      : null,
   };
 }
 

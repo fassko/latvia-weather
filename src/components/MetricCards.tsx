@@ -9,6 +9,7 @@ import {
   getWindBandKey,
 } from "@/lib/weather/metric-descriptors";
 import { getWindDirection } from "@/lib/weather/parse";
+import { formatOptionalPercent } from "@/lib/weather/optional-metrics";
 import type { SunTimesByDay } from "@/lib/weather/sun";
 import { formatLatviaTime, getLatviaDayKey } from "@/lib/weather/timezone";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
@@ -75,15 +76,15 @@ export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps
       key: "rain",
       label: t("rain"),
       icon: <RainIcon />,
-      value: `${Math.round(current.precipitationProbability)}%`,
+      value: formatOptionalPercent(current.precipitationProbability),
       sub: t("rainNextHour"),
     },
     {
       key: "clouds",
       label: t("clouds"),
       icon: <CloudIcon />,
-      value: `${Math.round(current.cloudCover)}%`,
-      sub: t(`cloudBand.${getCloudBandKey(current.cloudCover)}`),
+      value: formatOptionalPercent(current.cloudCover),
+      sub: current.cloudCover === null ? "" : t(`cloudBand.${getCloudBandKey(current.cloudCover)}`),
     },
   ];
 
@@ -156,20 +157,14 @@ export async function MetricCards({ forecasts, sunTimesByDay }: MetricCardsProps
   }
 
   return (
-    <section aria-labelledby="metrics-heading" className="space-y-3">
-      <h2
-        id="metrics-heading"
-        className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-      >
-        {t("title")}
-      </h2>
+    <div>
       <MetricCardsExpand
         moreLabel={t("moreDetails")}
         fewerLabel={t("fewerDetails")}
         primary={primaryCards.map(renderCard)}
         secondary={secondaryCards.map(renderCard)}
       />
-    </section>
+    </div>
   );
 }
 

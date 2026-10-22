@@ -1,4 +1,4 @@
-import type { WeatherAlarmPolygon, WeatherWarningLevel } from "./types";
+import type { WeatherAlarmPolygon, WeatherWarning, WeatherWarningLevel } from "./types";
 
 const DATASTORE_API =
   "https://data.gov.lv/dati/api/3/action/datastore_search";
@@ -72,23 +72,14 @@ const weatherAlarmPolygonsCache: CachedValue<WeatherAlarmPolygon[]> = {
   value: [],
   storedAt: 0,
 };
-const weatherAlarmRegionLabelsCache: CachedValue<
-  Map<string, { lv: string[]; en: string[] }>
-> = {
-  value: new Map(),
+const weatherWarningsCache: CachedValue<WeatherWarning[]> = {
+  value: [],
   storedAt: 0,
 };
 
 function rememberWeatherAlarmPolygons(value: WeatherAlarmPolygon[]) {
   weatherAlarmPolygonsCache.value = value;
   weatherAlarmPolygonsCache.storedAt = Date.now();
-}
-
-function rememberWeatherAlarmRegionLabels(
-  value: Map<string, { lv: string[]; en: string[] }>,
-) {
-  weatherAlarmRegionLabelsCache.value = value;
-  weatherAlarmRegionLabelsCache.storedAt = Date.now();
 }
 
 function hasUsableStaleAlarms(): boolean {
@@ -98,10 +89,10 @@ function hasUsableStaleAlarms(): boolean {
   );
 }
 
-function hasUsableStaleRegionLabels(): boolean {
+function hasUsableStaleWarnings(): boolean {
   return (
-    weatherAlarmRegionLabelsCache.value.size > 0 &&
-    Date.now() - weatherAlarmRegionLabelsCache.storedAt <= STALE_FALLBACK_MS
+    weatherWarningsCache.value.length > 0 &&
+    Date.now() - weatherWarningsCache.storedAt <= STALE_FALLBACK_MS
   );
 }
 
@@ -123,10 +114,6 @@ function getWarningLevel(intensity: string): WeatherWarningLevel {
 
 function normalizeId(value: number | string): string {
   return String(value);
-}
-
-function normalizeWarningText(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
 }
 
 function splitRegionNames(value: string): string[] {
@@ -319,46 +306,49 @@ export function buildWeatherAlarmPolygons(
     .filter((alarm): alarm is WeatherAlarmPolygon => alarm != null);
 }
 
-export function buildWeatherAlarmRegionLabelsByText(
-  metadataRecords: AlarmMetadataRecord[],
-): Map<string, { lv: string[]; en: string[] }> {
-  const labelsByText = new Map<string, { lv: string[]; en: string[] }>();
-
-  for (const record of metadataRecords) {
-    const labels = {
-      lv: splitRegionNames(record.REGIONS),
-      en: splitRegionNames(record.REGIONS_EN),
-    };
-
-    labelsByText.set(normalizeWarningText(record.TEKSTS_LV), labels);
-    if (record.TEKSTS_EN.trim()) {
-      labelsByText.set(normalizeWarningText(record.TEKSTS_EN), labels);
-    }
-  }
-
-  return labelsByText;
+export function buildWeatherWarnings(metadataRecords: AlarmMetadataRecord[]): WeatherWarning[] {
+  return metadataRecords
+    .filter((record) =>
+      String(record.WEATHER_WARNING_EV_ID).trim() !== "" &&
+      Boolean(record.TEKSTS_LV?.trim() || record.TEKSTS_EN?.trim()),
+    )
+    .map((record) => ({
+      id: normalizeId(record.WEATHER_WARNING_EV_ID),
+      textLv: record.TEKSTS_LV,
+      textEn: record.TEKSTS_EN,
+      type: record.PARADIBA,
+      color: record.INTENSITY_LV,
+      level: getWarningLevel(record.INTENSITY_LV || record.INTENSITY_EN),
+      iconCode: "",
+      regions: splitRegionNames(record.REGIONS),
+      regionNamesLv: splitRegionNames(record.REGIONS),
+      regionNamesEn: splitRegionNames(record.REGIONS_EN),
+    }));
 }
 
-export async function getWeatherAlarmRegionLabelsByText(): Promise<
-  Map<string, { lv: string[]; en: string[] }>
-> {
+export async function getWeatherWarnings(options?: { throwOnUnavailable?: boolean }): Promise<WeatherWarning[]> {
   try {
     const metadataRecords = await fetchDatastoreRecords<AlarmMetadataRecord>(
       RESOURCE_IDS.metadata,
     );
-    const labelsByText = buildWeatherAlarmRegionLabelsByText(metadataRecords);
-    rememberWeatherAlarmRegionLabels(labelsByText);
-    return labelsByText;
-  } catch {
-    if (hasUsableStaleRegionLabels()) {
-      return weatherAlarmRegionLabelsCache.value;
+    const warnings = buildWeatherWarnings(metadataRecords);
+    weatherWarningsCache.value = warnings;
+    weatherWarningsCache.storedAt = Date.now();
+    return warnings;
+  } catch (error) {
+    if (hasUsableStaleWarnings()) {
+      return weatherWarningsCache.value.map((warning) => ({
+        ...warning,
+        isStale: true,
+      }));
     }
 
-    return new Map();
+    if (options?.throwOnUnavailable) throw error;
+    return [];
   }
 }
 
-export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> {
+export async function getWeatherAlarmPolygons(options?: { throwOnUnavailable?: boolean }): Promise<WeatherAlarmPolygon[]> {
   try {
     const [
       metadataRecords,
@@ -382,7 +372,7 @@ export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> 
     );
     rememberWeatherAlarmPolygons(alarms);
     return alarms;
-  } catch {
+  } catch (error) {
     if (hasUsableStaleAlarms()) {
       return weatherAlarmPolygonsCache.value.map((alarm) => ({
         ...alarm,
@@ -390,6 +380,7 @@ export async function getWeatherAlarmPolygons(): Promise<WeatherAlarmPolygon[]> 
       }));
     }
 
+    if (options?.throwOnUnavailable) throw error;
     return [];
   }
 }

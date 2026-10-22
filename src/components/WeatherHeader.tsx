@@ -12,6 +12,7 @@ import { getWeatherHeaderTheme } from "@/lib/weather/header-theme";
 import { formatLatviaDateTime } from "@/lib/weather/timezone";
 import { getLocationSubtitle } from "@/lib/weather/locations";
 import { getConditionEmoji, getConditionKey } from "@/lib/weather/parse";
+import { formatOptionalPercent } from "@/lib/weather/optional-metrics";
 import { getWindUnitsCookie } from "@/lib/weather/wind-units-cookie.server";
 import { formatWindSpeed } from "@/lib/weather/wind-units";
 import type { HourlyForecast, WeatherData } from "@/lib/weather/types";
@@ -41,10 +42,12 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
 
   const extraStats: Array<{ label: string; value: string }> = [];
 
-  extraStats.push({
-    label: t("cloudCover"),
-    value: `${Math.round(current.cloudCover)}%`,
-  });
+  if (current.cloudCover !== null) {
+    extraStats.push({
+      label: t("cloudCover"),
+      value: formatOptionalPercent(current.cloudCover),
+    });
+  }
 
   if (current.uvIndex !== null) {
     extraStats.push({
@@ -127,7 +130,7 @@ export async function WeatherHeader({ data }: WeatherHeaderProps) {
           <div>
             <dt className={`text-sm ${headerTheme.statLabel}`}>{t("rainChance")}</dt>
             <dd className="text-lg font-semibold">
-              {Math.round(current.precipitationProbability)}%
+              {formatOptionalPercent(current.precipitationProbability)}
             </dd>
           </div>
           {extraStats.map((stat) => (

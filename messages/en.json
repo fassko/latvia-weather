@@ -348,7 +348,8 @@
     "map": "Map",
     "skipToContent": "Skip to content",
     "moreControls": "More controls",
-    "closeControls": "Close controls"
+    "closeControls": "Close controls",
+    "closeConditions": "Close current conditions"
   },
   "map": {
     "title": "Weather map",
@@ -414,6 +415,7 @@
       "clearDay": "Clear and sunny",
       "clearNight": "Clear skies tonight",
       "partlyCloudy": "A mix of sun and clouds",
+      "partlyCloudyNight": "Clouds with clear spells",
       "cloudy": "Cloudy skies",
       "overcast": "Grey and overcast",
       "fog": "Foggy conditions",
@@ -427,8 +429,11 @@
       "cold": "Dress warm before heading out.",
       "cool": "A light jacket will do.",
       "mild": "A fine day to be outside.",
+      "mildNight": "A pleasant night to be out.",
       "warm": "Great weather to be out.",
+      "warmNight": "A warm night ahead.",
       "hot": "Stay cool and hydrated.",
+      "hotNight": "A hot night — keep the bedroom cool.",
       "rain": "Keep an umbrella handy.",
       "snow": "Watch for slippery paths.",
       "thunder": "Best to stay indoors.",
@@ -521,13 +526,6 @@
     "stationNear": "Nearest climate station: {station} ({distance} km away).",
     "stationFar": "Nearest available climate station: {station} ({distance} km away) — local conditions may differ.",
     "disclaimer": "Observed values come from the LVĢMC hourly station archive (last ~365 days). Temperature and rain use 1991–2020 climate normals; wind uses the same month last year when available, otherwise the station’s multi-year monthly average (no official wind normal). Archive data is operational and can change after quality checks. Source:"
-  },
-  "highlights": {
-    "title": "Today's peaks",
-    "warmest": "Warmest",
-    "peakRain": "Peak rain",
-    "windGusts": "Wind gusts",
-    "at": "at {time}"
   },
   "warnings": {
     "sectionLabel": "Weather warnings",

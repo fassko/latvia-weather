@@ -13,9 +13,9 @@ export interface DailySummary {
   minFeelsLike: number;
   maxFeelsLike: number;
   totalPrecipitation: number;
-  maxPrecipitationProbability: number;
+  maxPrecipitationProbability: number | null;
   avgHumidity: number;
-  avgCloudCover: number;
+  avgCloudCover: number | null;
   maxWindSpeed: number;
   windDirectionAtMaxWind: number;
   avgPressure: number;
@@ -66,9 +66,10 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
   let minFeelsLike = forecasts[0].feelsLike;
   let maxFeelsLike = forecasts[0].feelsLike;
   let totalPrecipitation = 0;
-  let maxPrecipitationProbability = 0;
+  let maxPrecipitationProbability: number | null = null;
   let humiditySum = 0;
   let cloudCoverSum = 0;
+  let cloudCoverCount = 0;
   let maxWindSpeed = 0;
   let windDirectionAtMaxWind = forecasts[0].windDirection;
   let pressureSum = 0;
@@ -79,12 +80,17 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
     minFeelsLike = Math.min(minFeelsLike, forecast.feelsLike);
     maxFeelsLike = Math.max(maxFeelsLike, forecast.feelsLike);
     totalPrecipitation += forecast.precipitation;
-    maxPrecipitationProbability = Math.max(
-      maxPrecipitationProbability,
-      forecast.precipitationProbability,
-    );
+    if (forecast.precipitationProbability !== null) {
+      maxPrecipitationProbability = Math.max(
+        maxPrecipitationProbability ?? 0,
+        forecast.precipitationProbability,
+      );
+    }
     humiditySum += forecast.humidity;
-    cloudCoverSum += forecast.cloudCover;
+    if (forecast.cloudCover !== null) {
+      cloudCoverSum += forecast.cloudCover;
+      cloudCoverCount++;
+    }
     if (forecast.windSpeed >= maxWindSpeed) {
       maxWindSpeed = forecast.windSpeed;
       windDirectionAtMaxWind = forecast.windDirection;
@@ -100,7 +106,7 @@ export function summarizeDay(forecasts: HourlyForecast[]): DailySummary {
     totalPrecipitation,
     maxPrecipitationProbability,
     avgHumidity: humiditySum / forecasts.length,
-    avgCloudCover: cloudCoverSum / forecasts.length,
+    avgCloudCover: cloudCoverCount > 0 ? cloudCoverSum / cloudCoverCount : null,
     maxWindSpeed,
     windDirectionAtMaxWind,
     avgPressure: pressureSum / forecasts.length,

@@ -14,7 +14,7 @@ export interface ChartPoint {
   dayKey: string;
   temperature: number;
   precipitation: number;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
   windSpeed: number;
   windDirection: number;
   iconCode: string;

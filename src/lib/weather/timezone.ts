@@ -3,6 +3,26 @@ import { getDateFnsLocale, getDatePattern, type DatePatternKey } from "@/lib/dat
 
 export const LATVIA_TIME_ZONE = "Europe/Riga";
 
+/** LVĢMC `laiks` uses the start of the current hour in Latvia local time. */
+export function formatLaiks(date: Date): string {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: LATVIA_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  return `${parts.year}${parts.month}${parts.day}${hour}00`;
+}
+
 function zonedTimeToUtc(
   year: number,
   month: number,

@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     // are present — do not rely on static headers here for HTML freshness.
     return [
       {
+        source: "/.well-known/apple-app-site-association",
+        headers: [{ key: "Content-Type", value: "application/json" }],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },

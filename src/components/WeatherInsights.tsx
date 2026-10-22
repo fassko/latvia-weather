@@ -52,7 +52,7 @@ function getMainSnowPeriod(forecasts: HourlyForecast[]): HourlyForecast[] {
   let current: HourlyForecast[] = [];
 
   for (const forecast of forecasts) {
-    if (forecast.snow > 0) {
+    if (forecast.snow !== null && forecast.snow > 0) {
       current.push(forecast);
     } else if (current.length > 0) {
       periods.push(current);
@@ -70,7 +70,7 @@ function getMainSnowPeriod(forecasts: HourlyForecast[]): HourlyForecast[] {
 }
 
 function sumSnow(forecasts: HourlyForecast[]): number {
-  return forecasts.reduce((total, forecast) => total + forecast.snow, 0);
+  return forecasts.reduce((total, forecast) => total + (forecast.snow ?? 0), 0);
 }
 
 export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
@@ -81,7 +81,8 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
   if (periodForecasts.length === 0) return null;
 
   const warmest = maxBy(periodForecasts, (forecast) => forecast.temperature);
-  const wettest = maxBy(periodForecasts, (forecast) => forecast.precipitationProbability);
+  const wettest = maxBy(periodForecasts, (forecast) => forecast.precipitationProbability ?? 0);
+  const hasRainChance = periodForecasts.some((forecast) => forecast.precipitationProbability !== null);
   const windiest = maxBy(periodForecasts, (forecast) => forecast.windGust);
   const stormiest = maxBy(periodForecasts, (forecast) => forecast.thunderProbability);
   const totalPrecipitation = sumPrecipitation(periodForecasts);
@@ -90,7 +91,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
   const mainRainStart = mainRainPeriod[0];
   const mainRainEnd = mainRainPeriod[mainRainPeriod.length - 1];
   const mainRainChance = mainRainPeriod.reduce(
-    (max, forecast) => Math.max(max, forecast.precipitationProbability),
+    (max, forecast) => Math.max(max, forecast.precipitationProbability ?? 0),
     0,
   );
   const mainSnowPeriod = getMainSnowPeriod(periodForecasts);
@@ -109,8 +110,13 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
     {
       key: "rain",
       label: t("rain"),
-      value:
-        mainRainStart && mainRainEnd && mainRainStart !== mainRainEnd
+      value: !hasRainChance
+        ? mainRainStart && mainRainEnd && mainRainStart !== mainRainEnd
+          ? `${sumPrecipitation(mainRainPeriod).toFixed(1)} mm · ${formatLatviaTime(mainRainStart.time, "HH:mm")}–${formatLatviaTime(mainRainEnd.time, "HH:mm")}`
+          : mainRainStart
+            ? `${mainRainStart.precipitation.toFixed(1)} mm · ${formatLatviaTime(mainRainStart.time, "HH:mm")}`
+            : `${totalPrecipitation.toFixed(1)} mm`
+        : mainRainStart && mainRainEnd && mainRainStart !== mainRainEnd
           ? t("rainPeriod", {
               start: formatLatviaTime(mainRainStart.time, "HH:mm"),
               end: formatLatviaTime(mainRainEnd.time, "HH:mm"),
@@ -121,15 +127,15 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
             ? t("rainAmountAt", {
                 time: formatLatviaTime(mainRainStart.time, "HH:mm"),
                 amount: mainRainStart.precipitation.toFixed(1),
-                chance: Math.round(mainRainStart.precipitationProbability),
+                chance: Math.round(mainRainStart.precipitationProbability ?? 0),
               })
             : totalPrecipitation > 0
               ? t("rainAmount", {
                   amount: totalPrecipitation.toFixed(1),
-                  chance: Math.round(wettest.precipitationProbability),
+                  chance: Math.round(wettest.precipitationProbability ?? 0),
                 })
               : t("rainChance", {
-                  chance: Math.round(wettest.precipitationProbability),
+                  chance: Math.round(wettest.precipitationProbability ?? 0),
                   time: formatLatviaTime(wettest.time, "HH:mm"),
                 }),
     },
@@ -175,7 +181,7 @@ export async function WeatherInsights({ forecasts }: WeatherInsightsProps) {
           : mainSnowStart
             ? t("snowAmountAt", {
                 time: formatLatviaTime(mainSnowStart.time, "HH:mm"),
-                amount: mainSnowStart.snow.toFixed(1),
+                amount: (mainSnowStart.snow ?? 0).toFixed(1),
               })
             : t("snowAmount", {
                 amount: totalSnow.toFixed(1),

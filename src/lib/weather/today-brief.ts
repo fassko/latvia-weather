@@ -5,7 +5,7 @@ import type { HourlyForecast } from "./types";
 export interface TodayBrief {
   high: number;
   low: number;
-  rainChance: number;
+  rainChance: number | null;
   precipMm: number;
 }
 
@@ -14,15 +14,15 @@ interface WeatherApiForecastJson {
   temperature: number;
   feelsLike: number;
   precipitation: number;
-  snow: number;
+  snow: number | null;
   humidity: number;
   windSpeed: number;
   windGust: number;
   windDirection: number;
   pressure: number;
-  cloudCover: number;
+  cloudCover: number | null;
   iconCode: string;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
   uvIndex: number | null;
   thunderProbability: number;
 }
@@ -49,7 +49,8 @@ export function summarizeTodayBrief(forecasts: HourlyForecast[]): TodayBrief | n
   return {
     high: Math.round(today.maxTemperature),
     low: Math.round(today.minTemperature),
-    rainChance: Math.round(today.maxPrecipitationProbability),
+    rainChance: today.maxPrecipitationProbability === null
+      ? null : Math.round(today.maxPrecipitationProbability),
     precipMm: Math.round(today.totalPrecipitation * 10) / 10,
   };
 }

@@ -311,7 +311,8 @@
     "map": "Karte",
     "skipToContent": "Pāriet uz saturu",
     "moreControls": "Vairāk vadīklu",
-    "closeControls": "Aizvērt vadīklas"
+    "closeControls": "Aizvērt vadīklas",
+    "closeConditions": "Aizvērt pašreizējos apstākļus"
   },
   "map": {
     "title": "Laika karte",
@@ -377,6 +378,7 @@
       "clearDay": "Skaidrs un saulains",
       "clearNight": "Skaidra nakts",
       "partlyCloudy": "Saule un mākoņi",
+      "partlyCloudyNight": "Mākoņi ar skaidrām starpām",
       "cloudy": "Apmācies",
       "overcast": "Pelēks un apmācies",
       "fog": "Migla",
@@ -390,8 +392,11 @@
       "cold": "Pirms iziešanas apģērbies silti.",
       "cool": "Viegla jaka noderēs.",
       "mild": "Lieliska diena pastaigai.",
+      "mildNight": "Patīkama nakts pastaigai.",
       "warm": "Lielisks laiks būt ārā.",
+      "warmNight": "Gaidāma silta nakts.",
       "hot": "Uzturi vēsumu un dzer ūdeni.",
+      "hotNight": "Karsta nakts — vēdini guļamistabu.",
       "rain": "Paņem līdzi lietussargu.",
       "snow": "Uzmanies no slidenām takām.",
       "thunder": "Labāk palikt telpās.",
@@ -484,13 +489,6 @@
     "stationNear": "Tuvākā klimatiskā stacija: {station} ({distance} km).",
     "stationFar": "Tuvākā pieejamā klimatiskā stacija: {station} ({distance} km) — vietējie apstākļi var atšķirties.",
     "disclaimer": "Novērojumi no LVĢMC stundu arhīva (aptuveni pēdējās 365 dienas). Temperatūra un nokrišņi izmantoti 1991.–2020. gadu klimata normas; vējš — tas pats mēnesis pērn, ja pieejams, citādi stacijas daudzgadu mēneša vidējais (oficiālas vēja normas nav). Arhīva dati ir operatīvi un var mainīties pēc kvalitātes pārbaudēm. Avots:"
-  },
-  "highlights": {
-    "title": "Šodienas maksimumi",
-    "warmest": "Siltākais",
-    "peakRain": "Lietus maksimums",
-    "windGusts": "Vēja brāzmas",
-    "at": "plkst. {time}"
   },
   "warnings": {
     "sectionLabel": "Laikapstākļu brīdinājumi",

@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getDateFnsLocale, getDatePattern } from "@/lib/date-locale";
+import { formatOptionalPercent } from "@/lib/weather/optional-metrics";
 import {
   getTodayForecasts,
   getUpcomingHourlyForecasts,
@@ -154,12 +155,14 @@ export function HourlyStrip({
               </span>
               <span className="text-xs tabular-nums text-sky-600 dark:text-sky-400">
                 <span aria-hidden="true">
-                  {Math.round(forecast.precipitationProbability)}%
+                  {formatOptionalPercent(forecast.precipitationProbability)}
                 </span>
                 <span className="sr-only">
-                  {tDaily("rainChance", {
-                    value: Math.round(forecast.precipitationProbability),
-                  })}
+                  {forecast.precipitationProbability === null
+                    ? "—"
+                    : tDaily("rainChance", {
+                        value: Math.round(forecast.precipitationProbability),
+                      })}
                 </span>
               </span>
               <span className="flex items-center gap-0.5 text-[11px] tabular-nums text-slate-500 dark:text-slate-400">

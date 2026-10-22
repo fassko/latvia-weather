@@ -25,11 +25,13 @@ import type {
 } from "@/lib/weather/types";
 
 const MAX_FORECAST_OFFSET_HOURS = 72;
-const HOUR_TICKS = Array.from({ length: 13 }, (_, index) => index * 6);
-const DAY_TICKS = [0, 24, 48, 72];
+const FALLBACK_FORECAST_OFFSET_HOURS = 24;
 const MAP_HEIGHT_STORAGE_KEY = "latvia-weather-map-height-px";
 const MOBILE_MAP_MIN_HEIGHT_PX = 160;
-const MOBILE_MAP_CHROME_PX = 360;
+const MOBILE_MAP_MAX_VIEWPORT_RATIO = 0.46;
+const MOBILE_MAP_DEFAULT_VIEWPORT_RATIO = 0.38;
+const MOBILE_MAP_MAX_RESERVED_CHROME_PX = 420;
+const MOBILE_MAP_DEFAULT_RESERVED_CHROME_PX = 500;
 type TimelineTickStyle = CSSProperties & { "--tick-position": string };
 
 const WeatherMap = dynamic(
@@ -103,9 +105,9 @@ function formatForecastHour(locale: string, offsetHours: number): string {
   }).format(time);
 }
 
-function getTimelineTickStyle(offsetHours: number): TimelineTickStyle {
+function getTimelineTickStyle(offsetHours: number, maxOffsetHours: number): TimelineTickStyle {
   return {
-    "--tick-position": `${(offsetHours / MAX_FORECAST_OFFSET_HOURS) * 100}%`,
+    "--tick-position": `${(offsetHours / maxOffsetHours) * 100}%`,
   };
 }
 
@@ -117,8 +119,8 @@ function clampMobileMapHeight(heightPx: number, viewportHeight = getViewportHeig
   const maxHeight = Math.max(
     MOBILE_MAP_MIN_HEIGHT_PX,
     Math.min(
-      Math.round(viewportHeight * 0.72),
-      Math.round(viewportHeight - MOBILE_MAP_CHROME_PX + 80),
+      Math.round(viewportHeight * MOBILE_MAP_MAX_VIEWPORT_RATIO),
+      Math.round(viewportHeight - MOBILE_MAP_MAX_RESERVED_CHROME_PX),
     ),
   );
   return Math.min(maxHeight, Math.max(MOBILE_MAP_MIN_HEIGHT_PX, Math.round(heightPx)));
@@ -126,7 +128,10 @@ function clampMobileMapHeight(heightPx: number, viewportHeight = getViewportHeig
 
 function defaultMobileMapHeight(viewportHeight = getViewportHeight()): number {
   return clampMobileMapHeight(
-    Math.min(viewportHeight * 0.52, viewportHeight - MOBILE_MAP_CHROME_PX),
+    Math.min(
+      viewportHeight * MOBILE_MAP_DEFAULT_VIEWPORT_RATIO,
+      viewportHeight - MOBILE_MAP_DEFAULT_RESERVED_CHROME_PX,
+    ),
     viewportHeight,
   );
 }
@@ -220,6 +225,7 @@ function PlayIcon({ paused }: { paused?: boolean }) {
 
 function ForecastTimeControl({
   offsetHours,
+  maxOffsetHours,
   isPlaying,
   isLoading,
   hasError,
@@ -229,6 +235,7 @@ function ForecastTimeControl({
   onRetry,
 }: {
   offsetHours: number;
+  maxOffsetHours: number;
   isPlaying: boolean;
   isLoading: boolean;
   hasError: boolean;
@@ -240,7 +247,12 @@ function ForecastTimeControl({
   const tMap = useTranslations("map");
   const tErrors = useTranslations("errors");
   const canStepBack = offsetHours > 0;
-  const canStepForward = offsetHours < MAX_FORECAST_OFFSET_HOURS;
+  const canStepForward = offsetHours < maxOffsetHours;
+  const hourTicks = Array.from(
+    { length: maxOffsetHours / (maxOffsetHours === 24 ? 4 : 6) + 1 },
+    (_, index) => index * (maxOffsetHours === 24 ? 4 : 6),
+  );
+  const dayTicks = maxOffsetHours === 24 ? [0, 24] : [0, 24, 48, 72];
 
   return (
     <div className="weather-map-time-control">
@@ -278,16 +290,16 @@ function ForecastTimeControl({
         </button>
         <div className="weather-map-time-control__timeline">
           <div className="weather-map-time-control__days">
-            {DAY_TICKS.map((dayOffset) => (
+            {dayTicks.map((dayOffset) => (
               <button
                 key={dayOffset}
                 type="button"
                 className="weather-map-time-control__day"
-                style={getTimelineTickStyle(dayOffset)}
+                style={getTimelineTickStyle(dayOffset, maxOffsetHours)}
                 data-edge={
                   dayOffset === 0
                     ? "start"
-                    : dayOffset === MAX_FORECAST_OFFSET_HOURS
+                    : dayOffset === maxOffsetHours
                       ? "end"
                       : undefined
                 }
@@ -307,23 +319,23 @@ function ForecastTimeControl({
             className="weather-map-time-control__slider"
             type="range"
             min={0}
-            max={MAX_FORECAST_OFFSET_HOURS}
+            max={maxOffsetHours}
             step={1}
             value={offsetHours}
             aria-label={tMap("forecastTime")}
             onChange={(event) => onChange(Number(event.currentTarget.value))}
           />
           <div className="weather-map-time-control__hours" aria-hidden="true">
-            {HOUR_TICKS.map((hourOffset) => (
+            {hourTicks.map((hourOffset) => (
               <span
                 key={hourOffset}
                 className="weather-map-time-control__hour"
-                style={getTimelineTickStyle(hourOffset)}
+                style={getTimelineTickStyle(hourOffset, maxOffsetHours)}
                 data-dense={hourOffset % 12 === 0 ? undefined : "true"}
                 data-edge={
                   hourOffset === 0
                     ? "start"
-                    : hourOffset === MAX_FORECAST_OFFSET_HOURS
+                  : hourOffset === maxOffsetHours
                       ? "end"
                       : undefined
                 }
@@ -374,6 +386,11 @@ export function WeatherMapSection({
 }: WeatherMapSectionProps) {
   const tMap = useTranslations("map");
   const [offsetHours, setOffsetHours] = useState(0);
+  const [maxOffsetHours, setMaxOffsetHours] = useState(
+    locations[0]?.source === "data.gov.lv"
+      ? FALLBACK_FORECAST_OFFSET_HOURS
+      : MAX_FORECAST_OFFSET_HOURS,
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
   const [hasForecastError, setHasForecastError] = useState(false);
@@ -456,6 +473,9 @@ export function WeatherMapSection({
     fetchMapWeather(offsetHours)
       .then((data) => {
         if (ignore) return;
+        setMaxOffsetHours(data.locations[0]?.source === "data.gov.lv"
+          ? FALLBACK_FORECAST_OFFSET_HOURS
+          : MAX_FORECAST_OFFSET_HOURS);
         setMapWeatherCache((cache) => {
           const nextCache = new Map(cache);
           nextCache.set(data.offsetHours, data.locations);
@@ -481,7 +501,7 @@ export function WeatherMapSection({
 
     const interval = window.setInterval(() => {
       setOffsetHours((currentOffsetHours) => {
-        if (currentOffsetHours >= MAX_FORECAST_OFFSET_HOURS) {
+        if (currentOffsetHours >= maxOffsetHours) {
           setIsPlaying(false);
           return currentOffsetHours;
         }
@@ -496,16 +516,17 @@ export function WeatherMapSection({
     }, 900);
 
     return () => window.clearInterval(interval);
-  }, [isPlaying, mapWeatherCache]);
+  }, [isPlaying, mapWeatherCache, maxOffsetHours]);
 
   function handleForecastOffsetChange(nextOffsetHours: number) {
-    setOffsetHours(nextOffsetHours);
-    if (nextOffsetHours >= MAX_FORECAST_OFFSET_HOURS) {
+    const boundedOffset = Math.min(Math.max(nextOffsetHours, 0), maxOffsetHours);
+    setOffsetHours(boundedOffset);
+    if (boundedOffset >= maxOffsetHours) {
       setIsPlaying(false);
     }
     setHasForecastError(false);
     setIsForecastLoading(
-      nextOffsetHours !== 0 && !mapWeatherCache.has(nextOffsetHours),
+      boundedOffset !== 0 && !mapWeatherCache.has(boundedOffset),
     );
   }
 
@@ -518,7 +539,7 @@ export function WeatherMapSection({
   function handleTogglePlay() {
     setIsPlaying((currentIsPlaying) => {
       if (currentIsPlaying) return false;
-      if (offsetHours >= MAX_FORECAST_OFFSET_HOURS) {
+      if (offsetHours >= maxOffsetHours) {
         handleForecastOffsetChange(0);
       }
       return true;
@@ -581,7 +602,7 @@ export function WeatherMapSection({
         nextHeight = MOBILE_MAP_MIN_HEIGHT_PX;
         break;
       case "End":
-        nextHeight = getViewportHeight() * 0.72;
+        nextHeight = clampMobileMapHeight(Number.POSITIVE_INFINITY);
         break;
       default:
         return;
@@ -600,7 +621,7 @@ export function WeatherMapSection({
       : undefined;
   const mobileMaxHeightPx =
     isMobileViewport && typeof window !== "undefined"
-      ? Math.round(getViewportHeight() * 0.72)
+      ? clampMobileMapHeight(Number.POSITIVE_INFINITY)
       : undefined;
 
   const favoritesToggleLabel = tMap("favoritesOnly");
@@ -685,6 +706,7 @@ export function WeatherMapSection({
       ) : null}
       <ForecastTimeControl
         offsetHours={offsetHours}
+        maxOffsetHours={maxOffsetHours}
         isPlaying={isPlaying}
         isLoading={isForecastLoading}
         hasError={hasForecastError}
