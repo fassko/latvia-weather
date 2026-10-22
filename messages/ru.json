@@ -301,10 +301,8 @@
     "noResults": "Нет подходящих мест",
     "recent": "Недавние места",
     "favorites": "Избранное",
-    "favoriteChip": "{name}, {temperature}, {condition}",
     "addFavorite": "Добавить в избранное",
     "removeFavorite": "Удалить из избранного",
-    "removeFavoriteNamed": "Удалить {name} из избранного",
     "useCurrent": "Моё местоположение",
     "locating": "Ищем ближайшее место...",
     "locationError": "Не удалось использовать ваше местоположение."
