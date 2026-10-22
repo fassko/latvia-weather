@@ -148,7 +148,13 @@ export async function WeatherHero({ data, sunTimesByDay, conditions }: WeatherHe
                 high: Math.round(today.maxTemperature),
                 low: Math.round(today.minTemperature),
               }),
-              <><WindArrow degrees={current.windDirection} />{formatWindSpeed(current.windSpeed, windUnit)}<span className="opacity-80">{tWind(`directions.${getWindDirection(current.windDirection)}`)}</span></>,
+              <span key="wind" className="inline-flex items-center gap-1.5">
+                <WindArrow degrees={current.windDirection} />
+                {formatWindSpeed(current.windSpeed, windUnit)}
+                <span className="opacity-80">
+                  {tWind(`directions.${getWindDirection(current.windDirection)}`)}
+                </span>
+              </span>,
             ]}
           >
             {conditions}

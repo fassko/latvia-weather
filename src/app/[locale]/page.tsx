@@ -14,7 +14,6 @@ import { TopNav } from "@/components/TopNav";
 import { WeatherAssistantLoader } from "@/components/WeatherAssistantLoader";
 import { WeatherHero } from "@/components/WeatherHero";
 import { ClimateComparison } from "@/components/ClimateComparison";
-import { FavoritesRail } from "@/components/FavoritesRail";
 import { WeatherWarnings } from "@/components/WeatherWarnings";
 import { routing, type Locale } from "@/i18n/routing";
 import { PopularPlaces } from "@/components/PopularPlaces";
@@ -303,7 +302,6 @@ export default async function Home({ params, searchParams }: HomeProps) {
             {tFooter("staleData")}
           </p>
         ) : null}
-        <FavoritesRail currentLocationId={data.location.id} locations={locations} />
         <WeatherWarnings locale={locale} warnings={warnings} />
         <HourlyStripCard
           forecasts={data.forecasts}
