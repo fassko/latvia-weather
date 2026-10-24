@@ -362,10 +362,12 @@ export default async function Home({ params, searchParams }: HomeProps) {
               <LegalLinks />
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:items-end">
+          <div className="flex flex-col gap-3 sm:items-end">
             <FooterAppSocials
               navLabel={tFooter("socialNav")}
               appStoreLabel={tFooter("appStoreAria")}
+              appStoreBadgeLine1={tFooter("appStoreBadgeLine1")}
+              appStoreBadgeLine2={tFooter("appStoreBadgeLine2")}
               instagramLabel={tFooter("instagramAria")}
               tiktokLabel={tFooter("tiktokAria")}
               xLabel={tFooter("xAria")}
