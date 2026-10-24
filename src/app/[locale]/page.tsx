@@ -365,6 +365,7 @@ export default async function Home({ params, searchParams }: HomeProps) {
           <div className="flex flex-col gap-2 sm:items-end">
             <FooterAppSocials
               navLabel={tFooter("socialNav")}
+              appStoreLabel={tFooter("appStoreAria")}
               instagramLabel={tFooter("instagramAria")}
               tiktokLabel={tFooter("tiktokAria")}
               xLabel={tFooter("xAria")}
