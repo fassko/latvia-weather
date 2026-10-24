@@ -26,10 +26,10 @@ export function FooterAppSocials({
   xLabel,
 }: FooterAppSocialsProps) {
   return (
-    <div className="flex flex-col gap-3 sm:items-end">
+    <div className="flex flex-col items-start gap-3 sm:items-end">
       <a
         href={APP_STORE_URL}
-        className="inline-flex h-10 items-center gap-2.5 rounded-[9px] bg-black px-3.5 text-white transition hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:h-11 sm:gap-3 sm:px-4 dark:focus-visible:ring-offset-slate-950"
+        className="inline-flex h-10 w-fit items-center gap-2.5 rounded-[9px] bg-black px-3.5 text-white transition hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:h-11 sm:gap-3 sm:px-4 dark:focus-visible:ring-offset-slate-950"
         target="_blank"
         rel="noopener noreferrer"
         aria-label={appStoreLabel}
