@@ -1,6 +1,6 @@
 import { LOCATION_POINT_IDS } from "./locations";
 import { getDataGovHourlyForecast, getDataGovLocationPoints } from "./data-gov";
-import { parseHourlyForecast, parseLaiks, parseNumber } from "./parse";
+import { parseHourlyForecasts, parseLaiks, parseNumber } from "./parse";
 import { formatLaiks } from "./timezone";
 import type {
   HourlyForecastRaw,
@@ -173,7 +173,7 @@ export async function getHourlyForecast(punkts: string): Promise<WeatherData> {
         lat: 0,
         lon: 0,
       },
-      forecasts: raw.map(parseHourlyForecast),
+      forecasts: parseHourlyForecasts(raw),
       fetchedAt: parseLaiks(first.laiks),
       isStale: false,
     };

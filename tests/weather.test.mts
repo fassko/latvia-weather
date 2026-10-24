@@ -21,11 +21,42 @@ import {
   getConditionEmoji,
   getWindDirection,
   parseHourlyForecast,
+  parseHourlyForecasts,
   parseNumber,
 } from "../src/lib/weather/parse.ts";
+import {
+  addForecastHours,
+  getNextLatviaMidnight,
+  parseLaiks,
+  parseLaiksCandidates,
+} from "../src/lib/weather/timezone.ts";
 import { getConditionGroup } from "../src/lib/weather/condition-group.ts";
+import type { HourlyForecastRaw } from "../src/lib/weather/types.ts";
 
 const originalFetch = globalThis.fetch;
+
+function rawForecast(laiks: string, temperature: string): HourlyForecastRaw {
+  return {
+    punkts: "P269",
+    nosaukums: "Rīga",
+    novads: "Rīga",
+    laiks,
+    temperatura: temperature,
+    veja_atrums: "3.6",
+    veja_virziens: "159.3",
+    brazmas: "7.5",
+    nokrisni_1h: "0",
+    relativais_mitrums: "93",
+    laika_apstaklu_ikona: "2102",
+    spiediens: "1016",
+    sajutu_temperatura: "4.9",
+    sniegs: "0",
+    makoni: "16.8",
+    nokrisnu_varbutiba: "0.7",
+    uvi_indekss: "0",
+    perkons: "0",
+  };
+}
 
 after(() => {
   globalThis.fetch = originalFetch;
@@ -35,6 +66,49 @@ test("formatLaiks formats Europe/Riga local hours across midnight and DST", () =
   assert.equal(formatLaiks(new Date("2026-01-01T22:30:00.000Z")), "202601020000");
   assert.equal(formatLaiks(new Date("2026-03-29T00:30:00.000Z")), "202603290200");
   assert.equal(formatLaiks(new Date("2026-03-29T01:30:00.000Z")), "202603290400");
+});
+
+test("parseLaiks resolves hours around the autumn DST fallback", () => {
+  assert.equal(parseLaiks("202610250200").toISOString(), "2026-10-24T23:00:00.000Z");
+  assert.deepEqual(
+    parseLaiksCandidates("202610250300").map((time) => time.toISOString()),
+    ["2026-10-25T00:00:00.000Z", "2026-10-25T01:00:00.000Z"],
+  );
+  assert.equal(parseLaiks("202610250400").toISOString(), "2026-10-25T02:00:00.000Z");
+});
+
+test("forecast offsets advance by elapsed hours across DST fallback", () => {
+  const firstThreeAm = new Date("2026-10-25T00:30:00.000Z");
+  assert.equal(addForecastHours(firstThreeAm, 0).toISOString(), "2026-10-25T00:00:00.000Z");
+  assert.equal(addForecastHours(firstThreeAm, 1).toISOString(), "2026-10-25T01:00:00.000Z");
+});
+
+test("next Latvia midnight accounts for the 25-hour DST fallback day", () => {
+  const fallbackDayStart = new Date("2026-10-24T21:00:00.000Z");
+  const nextMidnight = getNextLatviaMidnight(fallbackDayStart);
+  assert.equal(nextMidnight.toISOString(), "2026-10-25T22:00:00.000Z");
+  assert.equal(nextMidnight.getTime() - fallbackDayStart.getTime(), 25 * 60 * 60 * 1000);
+});
+
+test("hourly parsing keeps two 03:00 hours and collapses provider duplicates", () => {
+  const firstThreeAm = rawForecast("202610250300", "7.3");
+  const secondThreeAm = rawForecast("202610250300", "7.1");
+  const forecasts = parseHourlyForecasts([
+    firstThreeAm,
+    { ...firstThreeAm, nokrisnu_varbutiba: "0.9" },
+    secondThreeAm,
+    { ...secondThreeAm, nokrisnu_varbutiba: "0.9" },
+    firstThreeAm,
+    secondThreeAm,
+  ]);
+
+  assert.deepEqual(
+    forecasts.map((forecast) => [forecast.time.toISOString(), forecast.temperature]),
+    [
+      ["2026-10-25T00:00:00.000Z", 7.3],
+      ["2026-10-25T01:00:00.000Z", 7.1],
+    ],
+  );
 });
 
 test("parseNumber safely normalizes empty and invalid numeric values", () => {
