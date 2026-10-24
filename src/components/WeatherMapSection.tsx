@@ -19,6 +19,7 @@ import {
 } from "@/lib/weather/favorite-location-ids";
 import { filterLocationsByFavoriteIds } from "@/lib/weather/filter-favorite-locations";
 import { MOBILE_MAP_MAX_WIDTH } from "@/lib/weather/map-view";
+import { addForecastHours } from "@/lib/weather/timezone";
 import type {
   WeatherAlarmPolygon,
   WeatherLocationPoint,
@@ -58,14 +59,11 @@ interface MapWeatherResponse {
 }
 
 function getInitialForecastTime(): Date {
-  const time = new Date();
-  time.setMinutes(0, 0, 0);
-  return time;
+  return addForecastHours(new Date(), 0);
 }
 
 function formatForecastTime(locale: string, offsetHours: number): string {
-  const time = getInitialForecastTime();
-  time.setHours(time.getHours() + offsetHours);
+  const time = addForecastHours(getInitialForecastTime(), offsetHours);
 
   return new Intl.DateTimeFormat(getIntlLocale(locale), {
     timeZone: "Europe/Riga",
@@ -84,8 +82,7 @@ function formatForecastDay(locale: string, offsetHours: number): string {
     return "Today";
   }
 
-  const time = getInitialForecastTime();
-  time.setHours(time.getHours() + offsetHours);
+  const time = addForecastHours(getInitialForecastTime(), offsetHours);
 
   // Weekday-only keeps day chips readable on narrow phone timelines.
   return new Intl.DateTimeFormat(getIntlLocale(locale), {
@@ -95,8 +92,7 @@ function formatForecastDay(locale: string, offsetHours: number): string {
 }
 
 function formatForecastHour(locale: string, offsetHours: number): string {
-  const time = getInitialForecastTime();
-  time.setHours(time.getHours() + offsetHours);
+  const time = addForecastHours(getInitialForecastTime(), offsetHours);
 
   return new Intl.DateTimeFormat(getIntlLocale(locale), {
     timeZone: "Europe/Riga",

@@ -1,5 +1,5 @@
 import type { HourlyForecast, HourlyForecastRaw } from "./types";
-import { parseLaiks } from "./timezone";
+import { parseLaiks, parseLaiksCandidates } from "./timezone";
 
 export { parseLaiks } from "./timezone";
 
@@ -25,9 +25,12 @@ export function parseNumber(value: string | null | undefined): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-export function parseHourlyForecast(raw: HourlyForecastRaw): HourlyForecast {
+export function parseHourlyForecast(
+  raw: HourlyForecastRaw,
+  time = parseLaiks(raw.laiks),
+): HourlyForecast {
   return {
-    time: parseLaiks(raw.laiks),
+    time,
     temperature: parseNumber(raw.temperatura),
     feelsLike: parseNumber(raw.sajutu_temperatura),
     precipitation: parseNumber(raw.nokrisni_1h),
@@ -43,6 +46,51 @@ export function parseHourlyForecast(raw: HourlyForecastRaw): HourlyForecast {
     uvIndex: raw.uvi_indekss != null ? parseNumber(raw.uvi_indekss) : null,
     thunderProbability: parseNumber(raw.perkons),
   };
+}
+
+function coreForecastFingerprint(raw: HourlyForecastRaw): string {
+  return JSON.stringify(
+    Object.entries(raw).filter(
+      ([key]) => key !== "laiks" && key !== "nokrisnu_varbutiba",
+    ),
+  );
+}
+
+/**
+ * Parse a complete LVĢMC series, preserving the two real 03:00 hours at the
+ * autumn DST fallback while collapsing the provider's duplicated join rows.
+ */
+export function parseHourlyForecasts(rawForecasts: HourlyForecastRaw[]): HourlyForecast[] {
+  const result: HourlyForecast[] = [];
+
+  for (let index = 0; index < rawForecasts.length;) {
+    const laiks = rawForecasts[index].laiks;
+    const sameWallTime: HourlyForecastRaw[] = [];
+    while (index < rawForecasts.length && rawForecasts[index].laiks === laiks) {
+      sameWallTime.push(rawForecasts[index]);
+      index += 1;
+    }
+
+    const candidates = parseLaiksCandidates(laiks);
+    if (candidates.length !== 2) {
+      result.push(...sameWallTime.map((raw) => parseHourlyForecast(raw)));
+      continue;
+    }
+
+    const uniqueWeather = [...new Map(
+      sameWallTime.map((raw) => [coreForecastFingerprint(raw), raw]),
+    ).values()];
+    const representatives = sameWallTime.length <= 2 ? sameWallTime : uniqueWeather;
+
+    result.push(...candidates.map((time, candidateIndex) =>
+      parseHourlyForecast(
+        representatives[candidateIndex] ?? representatives.at(-1) ?? sameWallTime[0],
+        time,
+      ),
+    ));
+  }
+
+  return result;
 }
 
 const DIRECTIONS = [

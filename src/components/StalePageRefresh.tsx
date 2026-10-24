@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { STALE_REFRESH_MS } from "@/lib/weather/fetch";
-import { getLatviaDayKey } from "@/lib/weather/timezone";
+import { getLatviaDayKey, getNextLatviaMidnight } from "@/lib/weather/timezone";
 
 const STORAGE_KEY = "latvia-weather-last-refresh";
 const DAY_KEY_STORAGE = "latvia-weather-last-day-key";
@@ -47,25 +47,7 @@ function setLastDayKey(dayKey: string) {
 }
 
 function msUntilNextLatviaMidnight(now = new Date()): number {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Riga",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  });
-  const parts = Object.fromEntries(
-    formatter
-      .formatToParts(now)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  const elapsedMs =
-    (Number(parts.hour) * 3600 + Number(parts.minute) * 60 + Number(parts.second)) * 1000;
-  return 24 * 60 * 60 * 1000 - elapsedMs + 250;
+  return getNextLatviaMidnight(now).getTime() - now.getTime() + 250;
 }
 
 function checkAndRefresh(

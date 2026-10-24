@@ -3,6 +3,7 @@ import {
   getLocationPoints,
   REVALIDATE_SECONDS,
 } from "@/lib/weather/fetch";
+import { addForecastHours } from "@/lib/weather/timezone";
 
 const MAX_OFFSET_HOURS = 72;
 
@@ -13,10 +14,7 @@ function parseOffsetHours(value: string | null): number {
 }
 
 function getForecastTime(offsetHours: number): Date {
-  const time = new Date();
-  time.setMinutes(0, 0, 0);
-  time.setHours(time.getHours() + offsetHours);
-  return time;
+  return addForecastHours(new Date(), offsetHours);
 }
 
 export async function GET(request: Request) {
