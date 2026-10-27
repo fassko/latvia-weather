@@ -403,12 +403,14 @@ function ForecastTimeControl({
 
 function layerLabelKey(
   layer: MapLayer,
-): "layerTemperature" | "layerWind" | "layerRain" {
+): "layerTemperature" | "layerWind" | "layerRain" | "layerNone" {
   switch (layer) {
     case "wind":
       return "layerWind";
     case "rain":
       return "layerRain";
+    case "none":
+      return "layerNone";
     default:
       return "layerTemperature";
   }
@@ -521,6 +523,8 @@ function MapLegend({
 function LayerLegend({ layer }: { layer: MapLayer }) {
   const tMap = useTranslations("map");
   const windUnit = useWindUnit();
+
+  if (layer === "none") return null;
 
   if (layer === "wind") {
     const unit = getWindSpeedUnitSuffix(windUnit);

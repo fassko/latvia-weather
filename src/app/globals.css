@@ -183,6 +183,21 @@ body {
   color: #cbd5e1;
 }
 
+/* "None" layer: a plain dot per place, so places can still be clicked without showing any weather. */
+.weather-map-label__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: #475569;
+  border: 2px solid rgb(255 255 255 / 0.95);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.35);
+}
+
+.dark .weather-map-label__dot {
+  background: #cbd5e1;
+  border-color: rgb(15 23 42 / 0.9);
+}
+
 /* The dark basemap is close to the chip fills; a light ring keeps chips apart. */
 .dark .weather-map-label__chip {
   box-shadow:

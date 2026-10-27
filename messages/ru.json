@@ -373,6 +373,7 @@
     "layerTemperature": "Температура",
     "layerWind": "Ветер",
     "layerRain": "Осадки",
+    "layerNone": "Ничего",
     "gusts": "Порывы {speed}",
     "rainNow": "Осадки {amount} мм",
     "rainChanceNow": "Вероятность осадков {chance}%",

@@ -158,6 +158,7 @@ describe("map layer in the URL", () => {
   it("parses the layer and defaults to temperature", () => {
     assert.equal(parseMapLayer("wind"), "wind");
     assert.equal(parseMapLayer("rain"), "rain");
+    assert.equal(parseMapLayer("none"), "none");
     assert.equal(parseMapLayer(["rain", "wind"]), "rain");
     assert.equal(parseMapLayer("temperature"), "temperature");
     assert.equal(parseMapLayer("snow"), "temperature");
@@ -169,6 +170,7 @@ describe("map layer in the URL", () => {
     assert.equal(mapLayerSearch("?alarms=0", "wind"), "?alarms=0&layer=wind");
     assert.equal(mapLayerSearch("?layer=wind&alarms=0", "rain"), "?layer=rain&alarms=0");
     assert.equal(mapLayerSearch("?layer=rain", "temperature"), "");
+    assert.equal(mapLayerSearch("", "none"), "?layer=none");
     assert.equal(mapLayerSearch("", "temperature"), "");
   });
 });

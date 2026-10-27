@@ -373,6 +373,7 @@
     "layerTemperature": "Temperature",
     "layerWind": "Wind",
     "layerRain": "Rain",
+    "layerNone": "None",
     "gusts": "Gusts {speed}",
     "rainNow": "Rain {amount} mm",
     "rainChanceNow": "Chance of rain {chance}%",

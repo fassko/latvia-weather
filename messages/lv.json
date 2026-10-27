@@ -335,6 +335,7 @@
     "layerTemperature": "Temperatūra",
     "layerWind": "Vējš",
     "layerRain": "Nokrišņi",
+    "layerNone": "Nekas",
     "gusts": "Brāzmas {speed}",
     "rainNow": "Nokrišņi {amount} mm",
     "rainChanceNow": "Nokrišņu varbūtība {chance}%",

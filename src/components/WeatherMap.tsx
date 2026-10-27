@@ -119,6 +119,10 @@ function labelChipHtml(
   layer: MapLayer,
   windUnit: WindUnit,
 ): string {
+  if (layer === "none") {
+    return `<span class="weather-map-label__dot"></span>`;
+  }
+
   if (layer === "wind") {
     const rgb = windFieldColor(location.windSpeed);
     const speed = formatWindSpeed(location.windSpeed, windUnit, 0);
@@ -1187,7 +1191,9 @@ export function WeatherMap({
       <FitLatvia enabled={!focusLocationId && !shouldFitLocations} />
       <FitLocations locations={locations} enabled={shouldFitLocations} />
       <InvalidateSizeOnContainerResize />
-      <WeatherFieldLayer locations={fieldLocations ?? locations} layer={layer} />
+      {layer !== "none" ? (
+        <WeatherFieldLayer locations={fieldLocations ?? locations} layer={layer} />
+      ) : null}
       {layer === "wind" ? (
         <WindArrowsLayer locations={fieldLocations ?? locations} />
       ) : null}
