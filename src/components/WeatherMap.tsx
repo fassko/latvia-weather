@@ -49,16 +49,38 @@ import {
 } from "@/lib/weather/map-view";
 import { resolveMapTiles } from "@/lib/weather/map-tiles";
 import {
-  buildTemperatureField,
+  buildField,
+  createWindSampler,
+  rgbToHex,
+  textColorOn,
+} from "@/lib/weather/map-field";
+import type { MapLayer } from "@/lib/weather/map-layer";
+import {
+  TEMPERATURE_FIELD_OPACITY,
   temperatureFieldColor,
 } from "@/lib/weather/temperature-field";
+import {
+  WIND_ARROW_SPACING_PX,
+  WIND_FIELD_OPACITY,
+  windArrowLength,
+  windArrowRotation,
+  windFieldColor,
+} from "@/lib/weather/wind-field";
+import {
+  RAIN_FIELD_OPACITY,
+  rainChip,
+  rainFieldAlpha,
+  rainFieldColor,
+} from "@/lib/weather/rain-field";
 import "leaflet/dist/leaflet.css";
 
 const LOCATE_ZOOM = 11;
 /** Below the warning polygons (overlayPane, 400) and the labels (markerPane, 600). */
-const TEMPERATURE_FIELD_PANE = "temperatureFieldPane";
-const TEMPERATURE_FIELD_PANE_Z_INDEX = 350;
-const TEMPERATURE_FIELD_OPACITY = 0.55;
+const FIELD_PANE = "weatherFieldPane";
+const FIELD_PANE_Z_INDEX = 350;
+/** Above the wash and the warning polygons, below the labels (markerPane, 600). */
+const WIND_ARROWS_PANE = "windArrowsPane";
+const WIND_ARROWS_PANE_Z_INDEX = 450;
 
 /** Colorful OSM/Voyager tiles; dark mode uses CSS invert on the tile pane. */
 function mapTilesForTheme(theme: Theme) {
@@ -78,6 +100,8 @@ interface WeatherMapProps {
   fieldLocations?: WeatherLocationPoint[];
   /** Label every place in `locations`, whatever its rank (the favourites filter). */
   showAllLabels?: boolean;
+  /** Which weather the wash, arrows and chips show. */
+  layer?: MapLayer;
 }
 
 type MarkersById = Map<string, L.Marker>;
@@ -90,14 +114,41 @@ function forecastHref(locale: string, locationId: string, locationName: string):
   );
 }
 
-function createLabelIcon(location: WeatherLocationPoint): L.DivIcon {
+function labelChipHtml(
+  location: WeatherLocationPoint,
+  layer: MapLayer,
+  windUnit: WindUnit,
+): string {
+  if (layer === "wind") {
+    const rgb = windFieldColor(location.windSpeed);
+    const speed = formatWindSpeed(location.windSpeed, windUnit, 0);
+    const rotation = windArrowRotation(location.windDirection);
+    return `<span class="weather-map-label__chip" style="background:${rgbToHex(rgb)};color:${textColorOn(rgb)}"><span class="weather-map-label__arrow" aria-hidden="true" style="transform:rotate(${rotation}deg)">↑</span>${speed}</span>`;
+  }
+
+  if (layer === "rain") {
+    const chip = rainChip(location);
+    if (chip.kind === "amount") {
+      const rgb = rainFieldColor(chip.mm);
+      return `<span class="weather-map-label__chip" style="background:${rgbToHex(rgb)};color:${textColorOn(rgb)}">${chip.text}</span>`;
+    }
+    return `<span class="weather-map-label__chip weather-map-label__chip--muted">${chip.text}</span>`;
+  }
+
   const bg = temperatureMarkerColor(location.temperature);
   const fg = temperatureTextColor(location.temperature);
   const temp = formatMapTemperatureLabel(location.temperature);
+  return `<span class="weather-map-label__chip" style="background:${bg};color:${fg}">${temp}</span>`;
+}
 
+function createLabelIcon(
+  location: WeatherLocationPoint,
+  layer: MapLayer,
+  windUnit: WindUnit,
+): L.DivIcon {
   return L.divIcon({
     className: "weather-map-label",
-    html: `<span class="weather-map-label__chip" style="background:${bg};color:${fg}">${temp}</span>`,
+    html: labelChipHtml(location, layer, windUnit),
     iconSize: [36, 22],
     iconAnchor: [18, 11],
     popupAnchor: [0, -10],
@@ -118,6 +169,9 @@ function createPopupContent(
     formatHighLow: (high: number, low: number) => string;
     formatRainChance: (chance: number) => string;
     formatRainAmount: (amount: number) => string;
+    formatGusts: (speed: string) => string;
+    formatRainNow: (amount: string) => string;
+    formatRainChanceNow: (chance: number) => string;
   },
   windUnit: WindUnit,
 ): HTMLElement {
@@ -161,11 +215,29 @@ function createPopupContent(
   windArrow.appendChild(windArrowPath);
 
   const windText = document.createElement("span");
-  windText.textContent = `${labels.wind} ${formatWindSpeed(location.windSpeed, windUnit)} · ${labels.windDirection}`;
+  const windParts = [
+    `${labels.wind} ${formatWindSpeed(location.windSpeed, windUnit)}`,
+    labels.windDirection,
+  ];
+  if (location.windGust != null && Number.isFinite(location.windGust)) {
+    windParts.push(labels.formatGusts(formatWindSpeed(location.windGust, windUnit)));
+  }
+  windText.textContent = windParts.join(" · ");
 
   wind.appendChild(windArrow);
   wind.appendChild(windText);
   root.appendChild(wind);
+
+  const rain = rainChip(location);
+  if (rain.kind !== "none") {
+    const rainLine = document.createElement("p");
+    rainLine.className = "weather-map-popup__rain";
+    rainLine.textContent =
+      rain.kind === "amount"
+        ? labels.formatRainNow(rain.mm.toFixed(1))
+        : labels.formatRainChanceNow(Math.round(location.precipitationProbability ?? 0));
+    root.appendChild(rainLine);
+  }
 
   const today = document.createElement("p");
   today.className = "weather-map-popup__today";
@@ -338,11 +410,17 @@ function LocationMarkers({
   selectedId,
   focusLocationId,
   showAllLabels = false,
+  layer = "temperature",
   markersByIdRef,
   labelsRef,
 }: Pick<
   WeatherMapProps,
-  "locations" | "locale" | "selectedId" | "focusLocationId" | "showAllLabels"
+  | "locations"
+  | "locale"
+  | "selectedId"
+  | "focusLocationId"
+  | "showAllLabels"
+  | "layer"
 > & {
   markersByIdRef: MutableRefObject<MarkersById>;
   labelsRef: MutableRefObject<L.LayerGroup | null>;
@@ -365,7 +443,7 @@ function LocationMarkers({
       }
 
       const marker = L.marker([location.lat, location.lon], {
-        icon: createLabelIcon(location),
+        icon: createLabelIcon(location, layer, windUnit),
         title: `${location.name}: ${formatMapTemperature(location.temperature)}, ${tConditions(getConditionKey(location.iconCode))}`,
         riseOnHover: true,
         // Where chips overlap, the selected place and then bigger places stay on top.
@@ -395,6 +473,10 @@ function LocationMarkers({
                 tMap("todayRainChance", { chance }),
               formatRainAmount: (amount) =>
                 tMap("todayRainAmount", { amount: amount.toFixed(1) }),
+              formatGusts: (speed) => tMap("gusts", { speed }),
+              formatRainNow: (amount) => tMap("rainNow", { amount }),
+              formatRainChanceNow: (chance) =>
+                tMap("rainChanceNow", { chance }),
             },
             windUnit,
           ),
@@ -462,6 +544,7 @@ function LocationMarkers({
   }, [
     focusLocationId,
     labelsRef,
+    layer,
     locations,
     locale,
     map,
@@ -478,21 +561,72 @@ function LocationMarkers({
   return null;
 }
 
-function TemperatureFieldLayer({
+function ensurePane(map: L.Map, name: string, zIndex: number): HTMLElement {
+  const existing = map.getPane(name);
+  if (existing) return existing;
+
+  const pane = map.createPane(name);
+  pane.style.zIndex = String(zIndex);
+  pane.style.pointerEvents = "none";
+  return pane;
+}
+
+/** RGBA for one wash cell, or null to leave it transparent. */
+function fieldPixel(
+  layer: MapLayer,
+  value: number,
+  fadeAlpha: number,
+): [number, number, number, number] | null {
+  if (Number.isNaN(value)) return null;
+
+  if (layer === "rain") {
+    const alpha = rainFieldAlpha(value, fadeAlpha);
+    if (alpha <= 0) return null;
+    return [...rainFieldColor(value), alpha];
+  }
+
+  const color =
+    layer === "wind" ? windFieldColor(value) : temperatureFieldColor(value);
+  return [...color, fadeAlpha];
+}
+
+function fieldValue(
+  layer: MapLayer,
+): (location: WeatherLocationPoint) => number | null | undefined {
+  switch (layer) {
+    case "wind":
+      return (location) => location.windSpeed;
+    case "rain":
+      return (location) => location.precipitation;
+    default:
+      return (location) => location.temperature;
+  }
+}
+
+function fieldOpacity(layer: MapLayer): number {
+  switch (layer) {
+    case "wind":
+      return WIND_FIELD_OPACITY;
+    case "rain":
+      return RAIN_FIELD_OPACITY;
+    default:
+      return TEMPERATURE_FIELD_OPACITY;
+  }
+}
+
+function WeatherFieldLayer({
   locations,
+  layer,
 }: {
   locations: WeatherLocationPoint[];
+  layer: MapLayer;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map.getPane(TEMPERATURE_FIELD_PANE)) {
-      const pane = map.createPane(TEMPERATURE_FIELD_PANE);
-      pane.style.zIndex = String(TEMPERATURE_FIELD_PANE_Z_INDEX);
-      pane.style.pointerEvents = "none";
-    }
+    ensurePane(map, FIELD_PANE, FIELD_PANE_Z_INDEX);
 
-    const field = buildTemperatureField(locations);
+    const field = buildField(locations, fieldValue(layer));
     const canvas = document.createElement("canvas");
     canvas.width = field.width;
     canvas.height = field.height;
@@ -501,28 +635,121 @@ function TemperatureFieldLayer({
 
     const image = context.createImageData(field.width, field.height);
     for (let cell = 0; cell < field.values.length; cell += 1) {
-      const value = field.values[cell];
-      if (Number.isNaN(value)) continue;
+      const pixel = fieldPixel(layer, field.values[cell], field.alpha[cell]);
+      if (!pixel) continue;
 
-      const [r, g, b] = temperatureFieldColor(value);
       const offset = cell * 4;
-      image.data[offset] = r;
-      image.data[offset + 1] = g;
-      image.data[offset + 2] = b;
-      image.data[offset + 3] = Math.round(field.alpha[cell] * 255);
+      image.data[offset] = pixel[0];
+      image.data[offset + 1] = pixel[1];
+      image.data[offset + 2] = pixel[2];
+      image.data[offset + 3] = Math.round(pixel[3] * 255);
     }
     context.putImageData(image, 0, 0);
 
     const overlay = L.imageOverlay(canvas.toDataURL("image/png"), LATVIA_BOUNDS, {
-      opacity: TEMPERATURE_FIELD_OPACITY,
+      opacity: fieldOpacity(layer),
       interactive: false,
-      pane: TEMPERATURE_FIELD_PANE,
-      className: "weather-map-temperature-field",
+      pane: FIELD_PANE,
+      className: "weather-map-field",
     });
     overlay.addTo(map);
 
     return () => {
       map.removeLayer(overlay);
+    };
+  }, [layer, locations, map]);
+
+  return null;
+}
+
+function drawWindArrow(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  bearing: number,
+  length: number,
+  alpha: number,
+) {
+  const radians = (bearing * Math.PI) / 180;
+  const dx = Math.sin(radians);
+  const dy = -Math.cos(radians);
+  const tailX = x - (dx * length) / 2;
+  const tailY = y - (dy * length) / 2;
+  const headX = x + (dx * length) / 2;
+  const headY = y + (dy * length) / 2;
+  const head = Math.min(6, length * 0.4);
+  // Arrowhead barbs, 28° either side of the shaft.
+  const spread = (28 * Math.PI) / 180;
+  const back = radians + Math.PI;
+
+  context.beginPath();
+  context.moveTo(tailX, tailY);
+  context.lineTo(headX, headY);
+  context.moveTo(headX + Math.sin(back - spread) * head, headY - Math.cos(back - spread) * head);
+  context.lineTo(headX, headY);
+  context.lineTo(headX + Math.sin(back + spread) * head, headY - Math.cos(back + spread) * head);
+
+  context.globalAlpha = alpha;
+  context.strokeStyle = "rgba(15, 23, 42, 0.75)";
+  context.lineWidth = 3.5;
+  context.stroke();
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = 1.6;
+  context.stroke();
+}
+
+function WindArrowsLayer({ locations }: { locations: WeatherLocationPoint[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const pane = ensurePane(map, WIND_ARROWS_PANE, WIND_ARROWS_PANE_Z_INDEX);
+    const canvas = L.DomUtil.create("canvas", "weather-map-wind-arrows", pane);
+    const { windAt } = createWindSampler(locations);
+
+    function draw() {
+      const size = map.getSize();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(size.x * ratio);
+      canvas.height = Math.round(size.y * ratio);
+      canvas.style.width = `${size.x}px`;
+      canvas.style.height = `${size.y}px`;
+      canvas.style.visibility = "visible";
+      // The pane moves with the map; pin the canvas to the container's corner.
+      L.DomUtil.setPosition(canvas, map.containerPointToLayerPoint([0, 0]));
+
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.clearRect(0, 0, size.x, size.y);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+
+      const spacing = WIND_ARROW_SPACING_PX;
+      for (let y = spacing / 2; y < size.y; y += spacing) {
+        for (let x = spacing / 2; x < size.x; x += spacing) {
+          const { lat, lng } = map.containerPointToLatLng([x, y]);
+          const wind = windAt(lat, lng);
+          if (!wind || wind.alpha <= 0) continue;
+
+          drawWindArrow(context, x, y, wind.bearing, windArrowLength(wind.speed), wind.alpha);
+        }
+      }
+      context.globalAlpha = 1;
+    }
+
+    // Arrows are drawn for one view; hide them while a zoom animates.
+    function hide() {
+      canvas.style.visibility = "hidden";
+    }
+
+    draw();
+    map.on("moveend zoomend resize", draw);
+    map.on("zoomstart", hide);
+
+    return () => {
+      map.off("moveend zoomend resize", draw);
+      map.off("zoomstart", hide);
+      L.DomUtil.remove(canvas);
     };
   }, [locations, map]);
 
@@ -910,6 +1137,7 @@ export function WeatherMap({
   fitToLocations = false,
   fieldLocations,
   showAllLabels = false,
+  layer = "temperature",
 }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
@@ -959,7 +1187,10 @@ export function WeatherMap({
       <FitLatvia enabled={!focusLocationId && !shouldFitLocations} />
       <FitLocations locations={locations} enabled={shouldFitLocations} />
       <InvalidateSizeOnContainerResize />
-      <TemperatureFieldLayer locations={fieldLocations ?? locations} />
+      <WeatherFieldLayer locations={fieldLocations ?? locations} layer={layer} />
+      {layer === "wind" ? (
+        <WindArrowsLayer locations={fieldLocations ?? locations} />
+      ) : null}
       {showAlarms ? <AlarmPolygons alarms={alarms} locale={locale} /> : null}
       <LocationMarkers
         locations={locations}
@@ -967,6 +1198,7 @@ export function WeatherMap({
         selectedId={selectedId}
         focusLocationId={focusLocationId}
         showAllLabels={showAllLabels}
+        layer={layer}
         markersByIdRef={markersByIdRef}
         labelsRef={labelsRef}
       />

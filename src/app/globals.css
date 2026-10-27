@@ -130,9 +130,16 @@ body {
   border-bottom-color: rgb(226 232 240 / 0.16);
 }
 
-.weather-map-temperature-field {
+.weather-map-field {
   /* The field is a small grid; let the browser smooth it when scaled up. */
   image-rendering: auto;
+}
+
+.weather-map-wind-arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }
 
 .weather-map-label {
@@ -156,6 +163,24 @@ body {
     0 1px 2px rgb(15 23 42 / 0.25),
     0 0 0 1px rgb(255 255 255 / 0.7);
   cursor: pointer;
+}
+
+.weather-map-label__arrow {
+  display: inline-block;
+  margin-right: 0.12rem;
+  font-size: 0.7rem;
+}
+
+/* Rain chips without measurable rain: the chance, or 0. */
+.weather-map-label__chip--muted {
+  background: rgb(255 255 255 / 0.92);
+  color: #475569;
+  font-weight: 600;
+}
+
+.dark .weather-map-label__chip--muted {
+  background: rgb(30 41 59 / 0.92);
+  color: #cbd5e1;
 }
 
 /* The dark basemap is close to the chip fills; a light ring keeps chips apart. */
@@ -224,6 +249,13 @@ body {
   flex-shrink: 0;
 }
 
+.weather-map-popup__rain {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: #0369a1;
+}
+
 .weather-map-popup__today {
   margin: 0.4rem 0 0;
   font-size: 0.75rem;
@@ -287,6 +319,10 @@ body {
 
 .dark .weather-map-popup__wind {
   color: #94a3b8;
+}
+
+.dark .weather-map-popup__rain {
+  color: #7dd3fc;
 }
 
 .dark .weather-map-popup__today {
@@ -540,6 +576,89 @@ body {
   color: #64748b;
   font-size: 0.8rem;
   line-height: 1.35;
+}
+
+.weather-map-layer-switch {
+  display: inline-flex;
+  min-height: 2.75rem;
+  padding: 0.2rem;
+  gap: 0.15rem;
+  border: 1px solid rgb(203 213 225 / 0.95);
+  border-radius: 0.55rem;
+  background: rgb(255 255 255 / 0.98);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+}
+
+.weather-map-layer-switch__option {
+  min-width: 0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.4rem;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.weather-map-layer-switch__option:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.weather-map-layer-switch__option[aria-checked="true"] {
+  background: #0369a1;
+  color: #ffffff;
+}
+
+.weather-map-layer-switch__option:focus-visible {
+  outline: 2px solid rgb(14 165 233 / 0.7);
+  outline-offset: 1px;
+}
+
+.dark .weather-map-layer-switch {
+  border-color: rgb(51 65 85 / 0.95);
+  background: rgb(15 23 42 / 0.92);
+  box-shadow: none;
+}
+
+.dark .weather-map-layer-switch__option {
+  color: #cbd5e1;
+}
+
+.dark .weather-map-layer-switch__option:hover {
+  background: rgb(30 41 59 / 0.95);
+  color: #f8fafc;
+}
+
+.dark .weather-map-layer-switch__option[aria-checked="true"] {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.weather-map-note {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 10;
+  transform: translateX(-50%);
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.dark .weather-map-note {
+  background: rgb(15 23 42 / 0.92);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+  color: #e2e8f0;
 }
 
 .weather-map-favorites-empty {

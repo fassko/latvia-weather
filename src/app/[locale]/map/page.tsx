@@ -11,18 +11,19 @@ import { getLocationPoints } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { DEFAULT_LOCATION_ID, isValidLocationId, resolveLocationId } from "@/lib/weather/locations";
 import { pickLocationQueryValue } from "@/lib/weather/location-query";
-import {
-  TEMPERATURE_FIELD_STOPS,
-  temperatureFieldGradientCss,
-  temperatureFieldLegendPosition,
-} from "@/lib/weather/temperature-field";
+import { parseMapLayer } from "@/lib/weather/map-layer";
 import { buildPageStructuredData } from "@/lib/seo/structured-data";
 import { getOgAlternateLocales, getOgLocale } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ alarms?: string; punkts?: string; location?: string }>;
+  searchParams: Promise<{
+    alarms?: string;
+    punkts?: string;
+    location?: string;
+    layer?: string;
+  }>;
 }
 
 export async function generateMetadata({
@@ -74,7 +75,7 @@ export async function generateMetadata({
 
 export default async function MapPage({ params, searchParams }: MapPageProps) {
   const { locale } = await params;
-  const { alarms: alarmsParam, punkts, location } = await searchParams;
+  const { alarms: alarmsParam, punkts, location, layer } = await searchParams;
 
   if (!routing.locales.includes(locale as Locale)) {
     return null;
@@ -162,14 +163,7 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
           selectedId={selected?.id}
           focusLocationId={focusLocationId}
           initialShowAlarms={initialShowAlarms}
-        />
-
-        <TemperatureLegend
-          title={t("legend")}
-          description={t("legendScale", {
-            min: TEMPERATURE_FIELD_STOPS[0].temperature,
-            max: TEMPERATURE_FIELD_STOPS.at(-1)!.temperature,
-          })}
+          initialLayer={parseMapLayer(layer)}
         />
 
         <footer className="pt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -189,43 +183,5 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         </footer>
       </main>
     </>
-  );
-}
-
-const LEGEND_TICKS = [-10, 0, 10, 20, 30];
-
-function TemperatureLegend({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-      <span className="font-medium text-slate-600 dark:text-slate-300">
-        {title}
-      </span>
-      <div className="flex w-full max-w-xs flex-col gap-1">
-        <div
-          role="img"
-          aria-label={description}
-          title={description}
-          className="h-2 w-full rounded-full ring-1 ring-slate-900/10 dark:ring-white/15"
-          style={{ backgroundImage: temperatureFieldGradientCss() }}
-        />
-        <div className="relative h-3.5" aria-hidden="true">
-          {LEGEND_TICKS.map((tick) => (
-            <span
-              key={tick}
-              className="absolute -translate-x-1/2 tabular-nums leading-none"
-              style={{ left: `${temperatureFieldLegendPosition(tick) * 100}%` }}
-            >
-              {tick}°
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
