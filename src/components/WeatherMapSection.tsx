@@ -678,6 +678,8 @@ export function WeatherMapSection({
             focusLocationId={effectiveFocusLocationId}
             initialShowAlarms={initialShowAlarms}
             fitToLocations={favoritesOnly}
+            fieldLocations={allDisplayLocations}
+            showAllLabels={favoritesOnly}
           />
         )}
       </div>

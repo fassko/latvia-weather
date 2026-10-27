@@ -1,7 +1,6 @@
 "use client";
 
 import L from "leaflet";
-import "leaflet.markercluster";
 import {
   useEffect,
   useRef,
@@ -17,6 +16,7 @@ import { getBrowserPosition } from "@/lib/weather/geolocation";
 import { getConditionEmoji, getConditionKey, getWindDirection } from "@/lib/weather/parse";
 import {
   formatMapTemperature,
+  formatMapTemperatureLabel,
   temperatureMarkerColor,
   temperatureTextColor,
 } from "@/lib/weather/map-temp";
@@ -42,16 +42,23 @@ import type {
 import {
   LATVIA_BOUNDS,
   LATVIA_CENTER,
+  DEFAULT_PLACE_RANK,
   MOBILE_DEFAULT_ZOOM,
+  isPlaceLabelVisible,
   latviaOverviewForWidth,
 } from "@/lib/weather/map-view";
 import { resolveMapTiles } from "@/lib/weather/map-tiles";
+import {
+  buildTemperatureField,
+  temperatureFieldColor,
+} from "@/lib/weather/temperature-field";
 import "leaflet/dist/leaflet.css";
-import "leaflet.markercluster/dist/MarkerCluster.css";
-import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 const LOCATE_ZOOM = 11;
-const DETAILED_MARKER_ZOOM = 11;
+/** Below the warning polygons (overlayPane, 400) and the labels (markerPane, 600). */
+const TEMPERATURE_FIELD_PANE = "temperatureFieldPane";
+const TEMPERATURE_FIELD_PANE_Z_INDEX = 350;
+const TEMPERATURE_FIELD_OPACITY = 0.55;
 
 /** Colorful OSM/Voyager tiles; dark mode uses CSS invert on the tile pane. */
 function mapTilesForTheme(theme: Theme) {
@@ -67,6 +74,10 @@ interface WeatherMapProps {
   initialShowAlarms?: boolean;
   /** When true, fit the map to the provided locations instead of Latvia overview. */
   fitToLocations?: boolean;
+  /** Places for the temperature wash; defaults to `locations`. */
+  fieldLocations?: WeatherLocationPoint[];
+  /** Label every place in `locations`, whatever its rank (the favourites filter). */
+  showAllLabels?: boolean;
 }
 
 type MarkersById = Map<string, L.Marker>;
@@ -79,38 +90,17 @@ function forecastHref(locale: string, locationId: string, locationName: string):
   );
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function formatMarkerWindSpeed(speedMs: number, windUnit: WindUnit): string {
-  if (windUnit === "kmh") return `${Math.round(speedMs * 3.6)}km/h`;
-  return `${Math.round(speedMs)}m/s`;
-}
-
-function createWeatherIcon(
-  location: WeatherLocationPoint,
-  windUnit: WindUnit,
-): L.DivIcon {
+function createLabelIcon(location: WeatherLocationPoint): L.DivIcon {
   const bg = temperatureMarkerColor(location.temperature);
   const fg = temperatureTextColor(location.temperature);
-  const temp = formatMapTemperature(location.temperature);
-  const emoji = getConditionEmoji(location.iconCode);
-  const name = escapeHtml(location.name);
-  const wind = escapeHtml(formatMarkerWindSpeed(location.windSpeed, windUnit));
-  const windArrowRotation = (location.windDirection + 180 + 360) % 360;
+  const temp = formatMapTemperatureLabel(location.temperature);
 
   return L.divIcon({
-    className: "weather-map-marker",
-    html: `<span class="weather-map-marker__pill" style="background:${bg};color:${fg}"><span class="weather-map-marker__main"><span class="weather-map-marker__emoji" aria-hidden="true">${emoji}</span><span class="weather-map-marker__temp">${temp}</span></span><span class="weather-map-marker__wind"><span class="weather-map-marker__wind-arrow" aria-hidden="true" style="transform:rotate(${windArrowRotation}deg)">↑</span><span>${wind}</span></span><span class="weather-map-marker__name">${name}</span></span>`,
-    iconSize: [82, 42],
-    iconAnchor: [41, 21],
-    popupAnchor: [0, -18],
+    className: "weather-map-label",
+    html: `<span class="weather-map-label__chip" style="background:${bg};color:${fg}">${temp}</span>`,
+    iconSize: [36, 22],
+    iconAnchor: [18, 11],
+    popupAnchor: [0, -10],
   });
 }
 
@@ -336,101 +326,10 @@ async function fillTodayBrief(
   }
 }
 
-function createClusterIcon(
-  cluster: L.MarkerCluster,
-  temperatureByMarker: WeakMap<L.Marker, number>,
-  iconCodeByMarker: WeakMap<L.Marker, string>,
-  windSpeedByMarker: WeakMap<L.Marker, number>,
-  windDirectionByMarker: WeakMap<L.Marker, number>,
-  windUnit: WindUnit,
-): L.DivIcon {
-  const childCount = cluster.getChildCount();
-  const childMarkers = cluster.getAllChildMarkers();
-  let temperatureSum = 0;
-  let temperatureCount = 0;
-  let windSpeedSum = 0;
-  let windSpeedCount = 0;
-  let windVectorX = 0;
-  let windVectorY = 0;
-  let windDirectionCount = 0;
-  const iconCounts = new Map<string, number>();
-
-  for (const marker of childMarkers) {
-    const temperature = temperatureByMarker.get(marker);
-    if (temperature != null && Number.isFinite(temperature)) {
-      temperatureSum += temperature;
-      temperatureCount += 1;
-    }
-
-    const iconCode = iconCodeByMarker.get(marker);
-    if (iconCode) {
-      iconCounts.set(iconCode, (iconCounts.get(iconCode) ?? 0) + 1);
-    }
-
-    const windSpeed = windSpeedByMarker.get(marker);
-    if (windSpeed != null && Number.isFinite(windSpeed)) {
-      windSpeedSum += windSpeed;
-      windSpeedCount += 1;
-    }
-
-    const windDirection = windDirectionByMarker.get(marker);
-    if (windDirection != null && Number.isFinite(windDirection)) {
-      const radians = (windDirection * Math.PI) / 180;
-      windVectorX += Math.sin(radians);
-      windVectorY += Math.cos(radians);
-      windDirectionCount += 1;
-    }
-  }
-
-  const averageTemperature =
-    temperatureCount > 0 ? temperatureSum / temperatureCount : 15;
-  const averageWindSpeed = windSpeedCount > 0 ? windSpeedSum / windSpeedCount : 0;
-  const averageWindDirection =
-    windDirectionCount > 0
-      ? (Math.atan2(windVectorX, windVectorY) * 180) / Math.PI
-      : 0;
-  const windArrowRotation = (averageWindDirection + 180 + 360) % 360;
-  let dominantIconCode = "";
-  let dominantIconCount = 0;
-
-  for (const [iconCode, count] of iconCounts) {
-    if (count > dominantIconCount) {
-      dominantIconCode = iconCode;
-      dominantIconCount = count;
-    }
-  }
-
-  const emoji = getConditionEmoji(dominantIconCode);
-  const fill = temperatureMarkerColor(averageTemperature);
-  const text = temperatureTextColor(averageTemperature);
-  const tempLabel = formatMapTemperature(averageTemperature);
-  const windLabel = escapeHtml(formatMarkerWindSpeed(averageWindSpeed, windUnit));
-  const sizeClass =
-    childCount < 10
-      ? "weather-map-cluster--small"
-      : childCount < 25
-        ? "weather-map-cluster--medium"
-        : "weather-map-cluster--large";
-  const dimension = childCount < 10 ? 56 : childCount < 25 ? 62 : 68;
-
-  return L.divIcon({
-    html: `<div class="weather-map-cluster__core" style="background:${fill};color:${text};box-shadow:0 0 0 6px ${fill}33"><span class="weather-map-cluster__top"><span class="weather-map-cluster__emoji" aria-hidden="true">${emoji}</span><span class="weather-map-cluster__temp">${tempLabel}</span></span><span class="weather-map-cluster__wind"><span class="weather-map-cluster__wind-arrow" aria-hidden="true" style="transform:rotate(${windArrowRotation}deg)">↑</span><span>${windLabel}</span></span><span class="weather-map-cluster__count" aria-label="${childCount} locations">${childCount}</span></div>`,
-    className: `weather-map-cluster ${sizeClass}`,
-    iconSize: L.point(dimension, dimension),
-  });
-}
-
-function openClusteredMarkerPopup(
-  map: L.Map,
-  cluster: L.MarkerClusterGroup,
-  marker: L.Marker,
-) {
-  if (!map.hasLayer(cluster)) return;
-
-  cluster.zoomToShowLayer(marker, () => {
-    if (!map.hasLayer(cluster)) return;
-    marker.openPopup();
-  });
+/** Open a place's popup, showing its label first if its rank hides it at this zoom. */
+function openLabelPopup(labels: L.LayerGroup, marker: L.Marker) {
+  if (!labels.hasLayer(marker)) labels.addLayer(marker);
+  marker.openPopup();
 }
 
 function LocationMarkers({
@@ -438,14 +337,15 @@ function LocationMarkers({
   locale,
   selectedId,
   focusLocationId,
+  showAllLabels = false,
   markersByIdRef,
-  clusterRef,
+  labelsRef,
 }: Pick<
   WeatherMapProps,
-  "locations" | "locale" | "selectedId" | "focusLocationId"
+  "locations" | "locale" | "selectedId" | "focusLocationId" | "showAllLabels"
 > & {
   markersByIdRef: MutableRefObject<MarkersById>;
-  clusterRef: MutableRefObject<L.MarkerClusterGroup | null>;
+  labelsRef: MutableRefObject<L.LayerGroup | null>;
 }) {
   const map = useMap();
   const tConditions = useTranslations("conditions");
@@ -455,26 +355,9 @@ function LocationMarkers({
   const windUnit = useWindUnit();
 
   useEffect(() => {
-    const temperatureByMarker = new WeakMap<L.Marker, number>();
-    const iconCodeByMarker = new WeakMap<L.Marker, string>();
-    const windSpeedByMarker = new WeakMap<L.Marker, number>();
-    const windDirectionByMarker = new WeakMap<L.Marker, number>();
-    const cluster = L.markerClusterGroup({
-      showCoverageOnHover: false,
-      maxClusterRadius: (zoom) => (zoom <= 8 ? 72 : zoom <= 10 ? 56 : 44),
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 11,
-      iconCreateFunction: (markerCluster) =>
-        createClusterIcon(
-          markerCluster,
-          temperatureByMarker,
-          iconCodeByMarker,
-          windSpeedByMarker,
-          windDirectionByMarker,
-          windUnit,
-        ),
-    });
+    const labels = L.layerGroup();
     const markersById: MarkersById = new Map();
+    const rankByMarker = new Map<L.Marker, number | null | undefined>();
 
     for (const location of locations) {
       if (!Number.isFinite(location.lat) || !Number.isFinite(location.lon)) {
@@ -482,15 +365,15 @@ function LocationMarkers({
       }
 
       const marker = L.marker([location.lat, location.lon], {
-        icon: createWeatherIcon(location, windUnit),
+        icon: createLabelIcon(location),
         title: `${location.name}: ${formatMapTemperature(location.temperature)}, ${tConditions(getConditionKey(location.iconCode))}`,
         riseOnHover: true,
-        zIndexOffset: location.id === selectedId ? 1000 : 0,
+        // Where chips overlap, the selected place and then bigger places stay on top.
+        zIndexOffset:
+          location.id === selectedId
+            ? 1000
+            : (5 - (location.rank ?? DEFAULT_PLACE_RANK)) * 100,
       });
-      temperatureByMarker.set(marker, location.temperature);
-      iconCodeByMarker.set(marker, location.iconCode);
-      windSpeedByMarker.set(marker, location.windSpeed);
-      windDirectionByMarker.set(marker, location.windDirection);
 
       marker.bindPopup(
         () =>
@@ -518,13 +401,29 @@ function LocationMarkers({
         { maxWidth: 280, className: "weather-map-popup-pane" },
       );
 
-      cluster.addLayer(marker);
+      rankByMarker.set(marker, location.rank);
       markersById.set(location.id, marker);
     }
 
+    function syncLabels() {
+      const zoom = map.getZoom();
+
+      for (const [marker, rank] of rankByMarker) {
+        const visible =
+          showAllLabels ||
+          isPlaceLabelVisible(rank, zoom) ||
+          marker.isPopupOpen();
+
+        if (visible && !labels.hasLayer(marker)) labels.addLayer(marker);
+        else if (!visible && labels.hasLayer(marker)) labels.removeLayer(marker);
+      }
+    }
+
+    syncLabels();
     markersByIdRef.current = markersById;
-    clusterRef.current = cluster;
-    map.addLayer(cluster);
+    labelsRef.current = labels;
+    map.addLayer(labels);
+    map.on("zoomend", syncLabels);
     let handleFocusMoveEnd: (() => void) | null = null;
 
     if (focusLocationId) {
@@ -543,7 +442,7 @@ function LocationMarkers({
           duration: 0.75,
         });
         handleFocusMoveEnd = () => {
-          openClusteredMarkerPopup(map, cluster, focusMarker);
+          openLabelPopup(labels, focusMarker);
         };
         map.once("moveend", handleFocusMoveEnd);
       }
@@ -553,26 +452,79 @@ function LocationMarkers({
       if (handleFocusMoveEnd) {
         map.off("moveend", handleFocusMoveEnd);
       }
-      map.removeLayer(cluster);
-      if (clusterRef.current === cluster) {
-        clusterRef.current = null;
+      map.off("zoomend", syncLabels);
+      map.removeLayer(labels);
+      if (labelsRef.current === labels) {
+        labelsRef.current = null;
       }
       markersByIdRef.current = new Map();
     };
   }, [
-    clusterRef,
     focusLocationId,
+    labelsRef,
     locations,
     locale,
     map,
     markersByIdRef,
     selectedId,
+    showAllLabels,
     tConditions,
     tHero,
     tMap,
     tWind,
     windUnit,
   ]);
+
+  return null;
+}
+
+function TemperatureFieldLayer({
+  locations,
+}: {
+  locations: WeatherLocationPoint[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map.getPane(TEMPERATURE_FIELD_PANE)) {
+      const pane = map.createPane(TEMPERATURE_FIELD_PANE);
+      pane.style.zIndex = String(TEMPERATURE_FIELD_PANE_Z_INDEX);
+      pane.style.pointerEvents = "none";
+    }
+
+    const field = buildTemperatureField(locations);
+    const canvas = document.createElement("canvas");
+    canvas.width = field.width;
+    canvas.height = field.height;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const image = context.createImageData(field.width, field.height);
+    for (let cell = 0; cell < field.values.length; cell += 1) {
+      const value = field.values[cell];
+      if (Number.isNaN(value)) continue;
+
+      const [r, g, b] = temperatureFieldColor(value);
+      const offset = cell * 4;
+      image.data[offset] = r;
+      image.data[offset + 1] = g;
+      image.data[offset + 2] = b;
+      image.data[offset + 3] = Math.round(field.alpha[cell] * 255);
+    }
+    context.putImageData(image, 0, 0);
+
+    const overlay = L.imageOverlay(canvas.toDataURL("image/png"), LATVIA_BOUNDS, {
+      opacity: TEMPERATURE_FIELD_OPACITY,
+      interactive: false,
+      pane: TEMPERATURE_FIELD_PANE,
+      className: "weather-map-temperature-field",
+    });
+    overlay.addTo(map);
+
+    return () => {
+      map.removeLayer(overlay);
+    };
+  }, [locations, map]);
 
   return null;
 }
@@ -697,31 +649,6 @@ function AlarmLayerControl({
   );
 }
 
-function MapZoomDetailClass() {
-  const map = useMap();
-
-  useEffect(() => {
-    const container = map.getContainer();
-
-    function syncDetailClass() {
-      container.classList.toggle(
-        "weather-map--detail",
-        map.getZoom() >= DETAILED_MARKER_ZOOM,
-      );
-    }
-
-    syncDetailClass();
-    map.on("zoomend", syncDetailClass);
-
-    return () => {
-      map.off("zoomend", syncDetailClass);
-      container.classList.remove("weather-map--detail");
-    };
-  }, [map]);
-
-  return null;
-}
-
 function InvalidateSizeOnContainerResize() {
   const map = useMap();
 
@@ -840,11 +767,11 @@ function LocateIcon({ spinning }: { spinning?: boolean }) {
 function LocateMeControl({
   locations,
   markersByIdRef,
-  clusterRef,
+  labelsRef,
 }: {
   locations: WeatherLocationPoint[];
   markersByIdRef: RefObject<MarkersById>;
-  clusterRef: RefObject<L.MarkerClusterGroup | null>;
+  labelsRef: RefObject<L.LayerGroup | null>;
 }) {
   const map = useMap();
   const tMap = useTranslations("map");
@@ -904,10 +831,10 @@ function LocateMeControl({
 
   function openNearestPopup(locationId: string) {
     const marker = markersByIdRef.current?.get(locationId);
-    const cluster = clusterRef.current;
-    if (!marker || !cluster) return;
+    const labels = labelsRef.current;
+    if (!marker || !labels || !map.hasLayer(labels)) return;
 
-    openClusteredMarkerPopup(map, cluster, marker);
+    openLabelPopup(labels, marker);
   }
 
   async function handleLocate() {
@@ -981,12 +908,14 @@ export function WeatherMap({
   focusLocationId,
   initialShowAlarms = true,
   fitToLocations = false,
+  fieldLocations,
+  showAllLabels = false,
 }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
   const [showAlarms, setShowAlarms] = useState(initialShowAlarms);
   const markersByIdRef = useRef<MarkersById>(new Map());
-  const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
+  const labelsRef = useRef<L.LayerGroup | null>(null);
   const mapTiles = mapTilesForTheme(theme);
   const shouldFitLocations = fitToLocations && !focusLocationId;
 
@@ -1030,15 +959,16 @@ export function WeatherMap({
       <FitLatvia enabled={!focusLocationId && !shouldFitLocations} />
       <FitLocations locations={locations} enabled={shouldFitLocations} />
       <InvalidateSizeOnContainerResize />
-      <MapZoomDetailClass />
+      <TemperatureFieldLayer locations={fieldLocations ?? locations} />
       {showAlarms ? <AlarmPolygons alarms={alarms} locale={locale} /> : null}
       <LocationMarkers
         locations={locations}
         locale={locale}
         selectedId={selectedId}
         focusLocationId={focusLocationId}
+        showAllLabels={showAllLabels}
         markersByIdRef={markersByIdRef}
-        clusterRef={clusterRef}
+        labelsRef={labelsRef}
       />
       <AlarmLayerControl
         alarmCount={alarms.length}
@@ -1048,7 +978,7 @@ export function WeatherMap({
       <LocateMeControl
         locations={locations}
         markersByIdRef={markersByIdRef}
-        clusterRef={clusterRef}
+        labelsRef={labelsRef}
       />
       <span className="sr-only">
         {tMap("markerCount", { count: locations.length })}

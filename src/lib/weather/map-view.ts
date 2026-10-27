@@ -37,3 +37,23 @@ export function latviaOverviewForWidth(_mapWidth: number): LatviaOverview {
     maxZoom: LATVIA_FIT_MAX_ZOOM,
   };
 }
+
+/** LVĢMC's rank for places it doesn't rank, such as the data.gov.lv fallback. */
+export const DEFAULT_PLACE_RANK = 4;
+
+/** Highest place rank (0 is Rīga, 5 a village) whose label shows at a zoom. */
+export function maxLabelRankForZoom(zoom: number): number {
+  const level = Math.floor(zoom);
+  if (level <= 7) return 1;
+  if (level === 8) return 2;
+  if (level === 9) return 3;
+  if (level === 10) return 4;
+  return Number.POSITIVE_INFINITY;
+}
+
+export function isPlaceLabelVisible(
+  rank: number | null | undefined,
+  zoom: number,
+): boolean {
+  return (rank ?? DEFAULT_PLACE_RANK) <= maxLabelRankForZoom(zoom);
+}
