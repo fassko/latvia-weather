@@ -73,6 +73,14 @@ export interface WeatherLocationPoint extends WeatherLocation {
   windSpeed: number;
   windDirection: number;
   iconCode: string;
+  // The fields below are for the map; not every source of places has them.
+  windGust?: number;
+  /** mm in the hour. */
+  precipitation?: number;
+  /** Percent, or null when the source doesn't have it. */
+  precipitationProbability?: number | null;
+  /** LVĢMC's place ranking: 0 is Rīga, 1 the other big cities, up to 5 for villages. Null when unknown. */
+  rank?: number | null;
   source?: "data.gov.lv";
 }
 
