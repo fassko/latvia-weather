@@ -123,7 +123,11 @@ export async function getLocationPoints(time?: Date): Promise<WeatherLocationPoi
         temperature: parseNumber(point.temperatura),
         windSpeed: parseNumber(point.veja_atrums),
         windDirection: parseNumber(point.veja_virziens),
+        windGust: parseNumber(point.brazmas),
+        precipitation: parseNumber(point.nokrisni_1h),
+        precipitationProbability: parseNumber(point.nokrisnu_varbutiba),
         iconCode: point.laika_apstaklu_ikona,
+        rank: Number.isFinite(point.svars) ? point.svars : null,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "lv"));
 

@@ -11,17 +11,19 @@ import { getLocationPoints } from "@/lib/weather/fetch";
 import { getLocationCookie } from "@/lib/weather/location-cookie.server";
 import { DEFAULT_LOCATION_ID, isValidLocationId, resolveLocationId } from "@/lib/weather/locations";
 import { pickLocationQueryValue } from "@/lib/weather/location-query";
-import {
-  TEMPERATURE_LEGEND_BANDS,
-  type TemperatureLegendBandId,
-} from "@/lib/weather/map-temp";
+import { parseMapLayer } from "@/lib/weather/map-layer";
 import { buildPageStructuredData } from "@/lib/seo/structured-data";
 import { getOgAlternateLocales, getOgLocale } from "@/lib/locale";
 import { getSiteUrl } from "@/lib/site";
 
 interface MapPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ alarms?: string; punkts?: string; location?: string }>;
+  searchParams: Promise<{
+    alarms?: string;
+    punkts?: string;
+    location?: string;
+    layer?: string;
+  }>;
 }
 
 export async function generateMetadata({
@@ -73,7 +75,7 @@ export async function generateMetadata({
 
 export default async function MapPage({ params, searchParams }: MapPageProps) {
   const { locale } = await params;
-  const { alarms: alarmsParam, punkts, location } = await searchParams;
+  const { alarms: alarmsParam, punkts, location, layer } = await searchParams;
 
   if (!routing.locales.includes(locale as Locale)) {
     return null;
@@ -161,27 +163,8 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
           selectedId={selected?.id}
           focusLocationId={focusLocationId}
           initialShowAlarms={initialShowAlarms}
+          initialLayer={parseMapLayer(layer)}
         />
-
-        <div
-          // Positioning context for the swatch tooltips: centring them on the
-          // row keeps them on screen, which centring on a swatch does not.
-          className="relative flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400"
-          role="list"
-          aria-label={t("legend")}
-        >
-          <span className="font-medium text-slate-600 dark:text-slate-300">
-            {t("legend")}
-          </span>
-          {TEMPERATURE_LEGEND_BANDS.map((band) => (
-            <LegendSwatch
-              key={band.id}
-              color={band.color}
-              label={t(legendLabelKey(band.id))}
-              range={t(legendRangeKey(band.id))}
-            />
-          ))}
-        </div>
 
         <footer className="pt-2 text-xs text-slate-500 dark:text-slate-400">
           <p>
@@ -200,82 +183,5 @@ export default async function MapPage({ params, searchParams }: MapPageProps) {
         </footer>
       </main>
     </>
-  );
-}
-
-function legendLabelKey(
-  id: TemperatureLegendBandId,
-):
-  | "legendCold"
-  | "legendCool"
-  | "legendMild"
-  | "legendWarm"
-  | "legendHot" {
-  switch (id) {
-    case "cold":
-      return "legendCold";
-    case "cool":
-      return "legendCool";
-    case "mild":
-      return "legendMild";
-    case "warm":
-      return "legendWarm";
-    case "hot":
-      return "legendHot";
-  }
-}
-
-function legendRangeKey(
-  id: TemperatureLegendBandId,
-):
-  | "legendColdRange"
-  | "legendCoolRange"
-  | "legendMildRange"
-  | "legendWarmRange"
-  | "legendHotRange" {
-  switch (id) {
-    case "cold":
-      return "legendColdRange";
-    case "cool":
-      return "legendCoolRange";
-    case "mild":
-      return "legendMildRange";
-    case "warm":
-      return "legendWarmRange";
-    case "hot":
-      return "legendHotRange";
-  }
-}
-
-function LegendSwatch({
-  color,
-  label,
-  range,
-}: {
-  color: string;
-  label: string;
-  range: string;
-}) {
-  return (
-    <span
-      role="listitem"
-      tabIndex={0}
-      title={`${label}: ${range}`}
-      aria-label={`${label}: ${range}`}
-      className="group inline-flex cursor-help items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500/70"
-    >
-      <span
-        className="inline-block h-2.5 w-2.5 rounded-full"
-        style={{ backgroundColor: color }}
-        aria-hidden="true"
-      />
-      {label}
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 max-w-full -translate-x-1/2 rounded-md bg-slate-900 px-2 py-1 text-center text-[0.7rem] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 dark:bg-slate-100 dark:text-slate-900"
-      >
-        {range}
-      </span>
-    </span>
   );
 }

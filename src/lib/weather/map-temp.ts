@@ -50,3 +50,9 @@ export const TEMPERATURE_LEGEND_BANDS: ReadonlyArray<{
   { id: "warm", color: "#ca8a04", minC: 21, maxC: 25 },
   { id: "hot", color: "#ef4444", minC: 26, maxC: null },
 ];
+
+/** Compact map label, e.g. `7°` or `-3°`. */
+export function formatMapTemperatureLabel(temperature: number): string {
+  const rounded = Math.round(temperature);
+  return `${rounded === 0 ? 0 : rounded}°`;
+}

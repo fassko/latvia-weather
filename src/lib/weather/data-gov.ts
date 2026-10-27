@@ -150,7 +150,7 @@ export async function getDataGovLocationPoints(time: Date): Promise<WeatherLocat
     getCities(),
     Promise.all(chunks(LOCATION_POINT_IDS, BATCH_SIZE).map((ids) =>
       datastoreSearchSql<ForecastRow>({
-        sql: `SELECT "CITY_ID", "PARA_ID", "DATUMS", "VERTIBA" FROM "${HOURLY_RESOURCE_ID}" WHERE "CITY_ID" IN (${sqlIds(ids)}) AND "DATUMS"='${timestamp}' AND "PARA_ID" IN (1,2,4,5) LIMIT 500`,
+        sql: `SELECT "CITY_ID", "PARA_ID", "DATUMS", "VERTIBA" FROM "${HOURLY_RESOURCE_ID}" WHERE "CITY_ID" IN (${sqlIds(ids)}) AND "DATUMS"='${timestamp}' AND "PARA_ID" IN (1,2,4,5,6,7) LIMIT 700`,
         revalidate: FORECAST_REVALIDATE_SECONDS,
       }),
     )),
@@ -175,7 +175,11 @@ export async function getDataGovLocationPoints(time: Date): Promise<WeatherLocat
       temperature: required(values, 2),
       windSpeed: numeric(values, 4) ?? 0,
       windDirection: numeric(values, 5) ?? 0,
+      windGust: numeric(values, 6) ?? 0,
+      precipitation: numeric(values, 7) ?? 0,
+      precipitationProbability: null,
       iconCode: String(required(values, 1)),
+      rank: null,
       source: "data.gov.lv" as const,
     }];
   }).sort((a, b) => a.name.localeCompare(b.name, "lv"));

@@ -19,6 +19,32 @@ import {
 } from "@/lib/weather/favorite-location-ids";
 import { filterLocationsByFavoriteIds } from "@/lib/weather/filter-favorite-locations";
 import { MOBILE_MAP_MAX_WIDTH } from "@/lib/weather/map-view";
+import {
+  MAP_LAYERS,
+  mapLayerSearch,
+  type MapLayer,
+} from "@/lib/weather/map-layer";
+import {
+  TEMPERATURE_FIELD_STOPS,
+  temperatureFieldGradientCss,
+  temperatureFieldLegendPosition,
+} from "@/lib/weather/temperature-field";
+import {
+  WIND_LEGEND_TICKS_MS,
+  windFieldGradientCss,
+  windFieldLegendPosition,
+} from "@/lib/weather/wind-field";
+import {
+  hasAnyRain,
+  RAIN_LEGEND_TICKS_MM,
+  rainFieldGradientCss,
+  rainFieldLegendPosition,
+} from "@/lib/weather/rain-field";
+import { useWindUnit } from "@/lib/weather/use-wind-unit";
+import {
+  convertWindSpeed,
+  getWindSpeedUnitSuffix,
+} from "@/lib/weather/wind-units";
 import { addForecastHours } from "@/lib/weather/timezone";
 import type {
   WeatherAlarmPolygon,
@@ -34,6 +60,7 @@ const MOBILE_MAP_DEFAULT_VIEWPORT_RATIO = 0.38;
 const MOBILE_MAP_MAX_RESERVED_CHROME_PX = 420;
 const MOBILE_MAP_DEFAULT_RESERVED_CHROME_PX = 500;
 type TimelineTickStyle = CSSProperties & { "--tick-position": string };
+const TEMPERATURE_LEGEND_TICKS = [-10, 0, 10, 20, 30];
 
 const WeatherMap = dynamic(
   () => import("@/components/WeatherMap").then((mod) => mod.WeatherMap),
@@ -50,6 +77,8 @@ interface WeatherMapSectionProps {
   selectedId?: string;
   focusLocationId?: string;
   initialShowAlarms?: boolean;
+  /** Layer from the page's `?layer=`. */
+  initialLayer?: MapLayer;
 }
 
 interface MapWeatherResponse {
@@ -372,6 +401,180 @@ function ForecastTimeControl({
   );
 }
 
+function layerLabelKey(
+  layer: MapLayer,
+): "layerTemperature" | "layerWind" | "layerRain" | "layerNone" {
+  switch (layer) {
+    case "wind":
+      return "layerWind";
+    case "rain":
+      return "layerRain";
+    case "none":
+      return "layerNone";
+    default:
+      return "layerTemperature";
+  }
+}
+
+function MapLayerSwitch({
+  layer,
+  onChange,
+}: {
+  layer: MapLayer;
+  onChange: (layer: MapLayer) => void;
+}) {
+  const tMap = useTranslations("map");
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
+    let nextIndex: number;
+
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        nextIndex = (index + 1) % MAP_LAYERS.length;
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        nextIndex = (index - 1 + MAP_LAYERS.length) % MAP_LAYERS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = MAP_LAYERS.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    onChange(MAP_LAYERS[nextIndex]);
+    optionRefs.current[nextIndex]?.focus();
+  }
+
+  return (
+    <div
+      className="weather-map-layer-switch"
+      role="radiogroup"
+      aria-label={tMap("layer")}
+    >
+      {MAP_LAYERS.map((option, index) => (
+        <button
+          key={option}
+          ref={(element) => {
+            optionRefs.current[index] = element;
+          }}
+          type="button"
+          role="radio"
+          aria-checked={layer === option}
+          tabIndex={layer === option ? 0 : -1}
+          className="weather-map-layer-switch__option"
+          onClick={() => onChange(option)}
+          onKeyDown={(event) => handleKeyDown(event, index)}
+        >
+          {tMap(layerLabelKey(option))}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function MapLegend({
+  title,
+  description,
+  gradient,
+  ticks,
+}: {
+  title: string;
+  description: string;
+  gradient: string;
+  ticks: Array<{ label: string; position: number }>;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+      <span className="shrink-0 font-medium text-slate-600 dark:text-slate-300">
+        {title}
+      </span>
+      <div className="flex w-full max-w-xs flex-col gap-1">
+        <div
+          role="img"
+          aria-label={description}
+          title={description}
+          className="h-2 w-full rounded-full ring-1 ring-slate-900/10 dark:ring-white/15"
+          style={{ backgroundImage: gradient }}
+        />
+        <div className="relative h-3.5" aria-hidden="true">
+          {ticks.map((tick) => (
+            <span
+              key={tick.label}
+              className="absolute -translate-x-1/2 tabular-nums leading-none"
+              style={{ left: `${tick.position * 100}%` }}
+            >
+              {tick.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LayerLegend({ layer }: { layer: MapLayer }) {
+  const tMap = useTranslations("map");
+  const windUnit = useWindUnit();
+
+  if (layer === "none") return null;
+
+  if (layer === "wind") {
+    const unit = getWindSpeedUnitSuffix(windUnit);
+    const max = WIND_LEGEND_TICKS_MS.at(-1) ?? 0;
+    return (
+      <MapLegend
+        title={tMap("legendWind", { unit })}
+        description={tMap("legendWindScale", {
+          max: Math.round(convertWindSpeed(max, windUnit)),
+          unit,
+        })}
+        gradient={windFieldGradientCss()}
+        ticks={WIND_LEGEND_TICKS_MS.map((speed) => ({
+          label: String(Math.round(convertWindSpeed(speed, windUnit))),
+          position: windFieldLegendPosition(speed),
+        }))}
+      />
+    );
+  }
+
+  if (layer === "rain") {
+    return (
+      <MapLegend
+        title={tMap("legendRain")}
+        description={tMap("legendRainScale")}
+        gradient={rainFieldGradientCss()}
+        ticks={RAIN_LEGEND_TICKS_MM.map((mm) => ({
+          label: String(mm),
+          position: rainFieldLegendPosition(mm),
+        }))}
+      />
+    );
+  }
+
+  return (
+    <MapLegend
+      title={tMap("legend")}
+      description={tMap("legendScale", {
+        min: TEMPERATURE_FIELD_STOPS[0].temperature,
+        max: TEMPERATURE_FIELD_STOPS.at(-1)?.temperature ?? 0,
+      })}
+      gradient={temperatureFieldGradientCss()}
+      ticks={TEMPERATURE_LEGEND_TICKS.map((temperature) => ({
+        label: `${temperature}°`,
+        position: temperatureFieldLegendPosition(temperature),
+      }))}
+    />
+  );
+}
+
 export function WeatherMapSection({
   locations,
   alarms,
@@ -379,8 +582,10 @@ export function WeatherMapSection({
   selectedId,
   focusLocationId,
   initialShowAlarms = true,
+  initialLayer = "temperature",
 }: WeatherMapSectionProps) {
   const tMap = useTranslations("map");
+  const [layer, setLayer] = useState<MapLayer>(initialLayer);
   const [offsetHours, setOffsetHours] = useState(0);
   const [maxOffsetHours, setMaxOffsetHours] = useState(
     locations[0]?.source === "data.gov.lv"
@@ -423,6 +628,11 @@ export function WeatherMapSection({
       ? undefined
       : focusLocationId;
   const showFavoritesEmpty = favoritesOnly && displayLocations.length === 0;
+  const showNoRain =
+    layer === "rain" &&
+    hasCachedForecast &&
+    !showFavoritesEmpty &&
+    !hasAnyRain(allDisplayLocations);
 
   useEffect(() => {
     mobileMapHeightRef.current = mobileMapHeightPx;
@@ -542,6 +752,17 @@ export function WeatherMapSection({
     });
   }
 
+  function handleLayerChange(nextLayer: MapLayer) {
+    setLayer(nextLayer);
+    // Keep the layer in the URL so a shared link opens the same view.
+    const { pathname, search, hash } = window.location;
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${pathname}${mapLayerSearch(search, nextLayer)}${hash}`,
+    );
+  }
+
   function handleFavoritesOnlyToggle() {
     setWantFavoritesOnly((current) => !current);
   }
@@ -628,6 +849,7 @@ export function WeatherMapSection({
   return (
     <section className="flex w-full flex-col gap-2">
       <div className="weather-map-favorites-filter">
+        <MapLayerSwitch layer={layer} onChange={handleLayerChange} />
         <button
           type="button"
           className="weather-map-favorites-filter__button"
@@ -651,7 +873,7 @@ export function WeatherMapSection({
         ) : null}
       </div>
       <div
-        className={`weather-map-frame w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800 ${
+        className={`weather-map-frame relative w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800 ${
           isResizingMap ? "select-none" : ""
         }`}
         style={mapFrameStyle}
@@ -678,8 +900,16 @@ export function WeatherMapSection({
             focusLocationId={effectiveFocusLocationId}
             initialShowAlarms={initialShowAlarms}
             fitToLocations={favoritesOnly}
+            fieldLocations={allDisplayLocations}
+            showAllLabels={favoritesOnly}
+            layer={layer}
           />
         )}
+        {showNoRain ? (
+          <p className="weather-map-note" role="status">
+            {tMap("noRain")}
+          </p>
+        ) : null}
       </div>
       {isMobileViewport ? (
         <div
@@ -711,6 +941,7 @@ export function WeatherMapSection({
         onTogglePlay={handleTogglePlay}
         onRetry={handleForecastRetry}
       />
+      <LayerLegend layer={layer} />
     </section>
   );
 }

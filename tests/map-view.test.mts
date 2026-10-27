@@ -5,6 +5,8 @@ import {
   LATVIA_FIT_PADDING,
   MOBILE_MAP_MAX_WIDTH,
   isMobileMapWidth,
+  isPlaceLabelVisible,
+  maxLabelRankForZoom,
   latviaOverviewForWidth,
 } from "../src/lib/weather/map-view.ts";
 
@@ -31,5 +33,24 @@ describe("map overview helpers", () => {
       padding: LATVIA_FIT_PADDING,
       maxZoom: LATVIA_FIT_MAX_ZOOM,
     });
+  });
+});
+
+describe("map place labels", () => {
+  it("shows more ranks as the map zooms in", () => {
+    assert.equal(maxLabelRankForZoom(6), 1);
+    assert.equal(maxLabelRankForZoom(7), 1);
+    assert.equal(maxLabelRankForZoom(8), 2);
+    assert.equal(maxLabelRankForZoom(9), 3);
+    assert.equal(maxLabelRankForZoom(10), 4);
+    assert.equal(maxLabelRankForZoom(11), Number.POSITIVE_INFINITY);
+  });
+
+  it("treats an unknown rank as 4", () => {
+    assert.equal(isPlaceLabelVisible(null, 9), false);
+    assert.equal(isPlaceLabelVisible(undefined, 10), true);
+    assert.equal(isPlaceLabelVisible(0, 6), true);
+    assert.equal(isPlaceLabelVisible(5, 10), false);
+    assert.equal(isPlaceLabelVisible(5, 11), true);
   });
 });

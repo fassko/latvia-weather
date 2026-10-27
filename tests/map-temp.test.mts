@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   formatMapTemperature,
+  formatMapTemperatureLabel,
   TEMPERATURE_LEGEND_BANDS,
   temperatureMarkerColor,
   temperatureTextColor,
@@ -12,6 +13,12 @@ describe("map temperature helpers", () => {
     assert.equal(formatMapTemperature(12.6), "+13°C");
     assert.equal(formatMapTemperature(-3.2), "-3°C");
     assert.equal(formatMapTemperature(0), "0°C");
+  });
+
+  it("formats compact labels", () => {
+    assert.equal(formatMapTemperatureLabel(7.4), "7°");
+    assert.equal(formatMapTemperatureLabel(-2.6), "-3°");
+    assert.equal(formatMapTemperatureLabel(-0.2), "0°");
   });
 
   it("picks colder and warmer marker colors", () => {
