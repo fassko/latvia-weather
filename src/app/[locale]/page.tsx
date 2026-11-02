@@ -368,6 +368,9 @@ export default async function Home({ params, searchParams }: HomeProps) {
               appStoreLabel={tFooter("appStoreAria")}
               appStoreBadgeLine1={tFooter("appStoreBadgeLine1")}
               appStoreBadgeLine2={tFooter("appStoreBadgeLine2")}
+              playStoreLabel={tFooter("playStoreAria")}
+              playStoreBadgeLine1={tFooter("playStoreBadgeLine1")}
+              playStoreBadgeLine2={tFooter("playStoreBadgeLine2")}
               instagramLabel={tFooter("instagramAria")}
               tiktokLabel={tFooter("tiktokAria")}
               xLabel={tFooter("xAria")}

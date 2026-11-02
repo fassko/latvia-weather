@@ -1,16 +1,24 @@
 const APP_STORE_URL =
   "https://apps.apple.com/us/app/latvia-weather/id6820900202";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.fassko.latviaweather.lv";
 
 const iconLinkClassName =
   "inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/30 sm:h-12 sm:w-12 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";
 
 const iconClassName = "h-6 w-6 sm:h-7 sm:w-7";
 
+const badgeClassName =
+  "inline-flex h-10 w-fit items-center gap-2.5 rounded-[9px] bg-black px-3.5 text-white transition hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:h-11 sm:gap-3 sm:px-4 dark:focus-visible:ring-offset-slate-950";
+
 interface FooterAppSocialsProps {
   navLabel: string;
   appStoreLabel: string;
   appStoreBadgeLine1: string;
   appStoreBadgeLine2: string;
+  playStoreLabel: string;
+  playStoreBadgeLine1: string;
+  playStoreBadgeLine2: string;
   instagramLabel: string;
   tiktokLabel: string;
   xLabel: string;
@@ -21,29 +29,51 @@ export function FooterAppSocials({
   appStoreLabel,
   appStoreBadgeLine1,
   appStoreBadgeLine2,
+  playStoreLabel,
+  playStoreBadgeLine1,
+  playStoreBadgeLine2,
   instagramLabel,
   tiktokLabel,
   xLabel,
 }: FooterAppSocialsProps) {
   return (
     <div className="flex flex-col items-start gap-3 sm:items-end">
-      <a
-        href={APP_STORE_URL}
-        className="inline-flex h-10 w-fit items-center gap-2.5 rounded-[9px] bg-black px-3.5 text-white transition hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:h-11 sm:gap-3 sm:px-4 dark:focus-visible:ring-offset-slate-950"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={appStoreLabel}
-      >
-        <AppleLogo />
-        <span className="flex min-w-0 flex-col items-start leading-none">
-          <span className="text-[9px] font-normal tracking-wide sm:text-[10px]">
-            {appStoreBadgeLine1}
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <a
+          href={APP_STORE_URL}
+          className={badgeClassName}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={appStoreLabel}
+        >
+          <AppleLogo />
+          <span className="flex min-w-0 flex-col items-start leading-none">
+            <span className="text-[9px] font-normal tracking-wide sm:text-[10px]">
+              {appStoreBadgeLine1}
+            </span>
+            <span className="mt-0.5 text-[17px] font-medium tracking-tight sm:text-[18px]">
+              {appStoreBadgeLine2}
+            </span>
           </span>
-          <span className="mt-0.5 text-[17px] font-medium tracking-tight sm:text-[18px]">
-            {appStoreBadgeLine2}
+        </a>
+        <a
+          href={PLAY_STORE_URL}
+          className={badgeClassName}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={playStoreLabel}
+        >
+          <PlayStoreLogo />
+          <span className="flex min-w-0 flex-col items-start leading-none">
+            <span className="text-[9px] font-normal tracking-wide sm:text-[10px]">
+              {playStoreBadgeLine1}
+            </span>
+            <span className="mt-0.5 text-[17px] font-medium tracking-tight sm:text-[18px]">
+              {playStoreBadgeLine2}
+            </span>
           </span>
-        </span>
-      </a>
+        </a>
+      </div>
       <nav aria-label={navLabel} className="flex items-center gap-1.5 sm:gap-2">
         <a
           href="https://www.instagram.com/latviaweather"
@@ -87,6 +117,20 @@ function AppleLogo() {
       aria-hidden="true"
     >
       <path d="M12.15 6.9c-.95 0-2.42-1.08-3.96-1.04-2.04.03-3.91 1.18-4.96 3.01-2.12 3.68-.55 9.1 1.52 12.09 1.01 1.45 2.21 3.09 3.79 3.04 1.52-.07 2.09-.99 3.94-.99 1.83 0 2.35.99 3.96.95 1.64-.03 2.68-1.48 3.68-2.95 1.17-1.7 1.65-3.35 1.68-3.44-.04-.01-3.18-1.22-3.22-4.86-.03-3.04 2.48-4.49 2.6-4.56-1.43-2.09-3.62-2.32-4.39-2.38-2-.16-3.68 1.09-4.63 1.09Zm3.39-3.09c.83-1 1.39-2.39 1.25-3.78-1.2.05-2.65.83-3.51 1.83-.77.88-1.44 2.3-1.27 3.64 1.34.1 2.7-.69 3.53-1.69Z" />
+    </svg>
+  );
+}
+
+function PlayStoreLogo() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="h-5 w-5 shrink-0 sm:h-6 sm:w-6"
+      aria-hidden="true"
+    >
+      <path d="M3.079 1.547A1.5 1.5 0 0 0 1.5 2.91v18.18a1.5 1.5 0 0 0 2.25 1.299l15.75-9.09a1.5 1.5 0 0 0 0-2.598L3.75 1.61a1.5 1.5 0 0 0-.671-.063Z" />
     </svg>
   );
 }
