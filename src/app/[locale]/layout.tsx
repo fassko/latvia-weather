@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { AppInstallBanner } from "@/components/AppInstallBanner";
 import { CookieConsent } from "@/components/CookieConsent";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { SetHtmlLang } from "@/components/SetHtmlLang";
@@ -62,6 +63,7 @@ export default async function LocaleLayout({
           <SkipToContent />
           {children}
           <CookieConsent />
+          <AppInstallBanner />
         </NextIntlClientProvider>
       </body>
     </html>

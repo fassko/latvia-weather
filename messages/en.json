@@ -15,6 +15,15 @@
     "regionTitle": "More in {region}",
     "distanceKm": "{value} km"
   },
+  "appBanner": {
+    "region": "Latvia Weather app",
+    "title": "Latvia Weather",
+    "subtitleIos": "On the App Store",
+    "subtitleAndroid": "On Google Play",
+    "open": "Open",
+    "get": "Get",
+    "dismiss": "Close app suggestion"
+  },
   "footer": {
     "dataFrom": "Data from",
     "updatedEvery": "Updated every 15 minutes.",
