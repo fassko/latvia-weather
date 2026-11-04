@@ -12,7 +12,10 @@
           { "/": "/ru", "?": { "punkts": "P*" } },
           { "/": "/en/punkts/*" },
           { "/": "/lv/punkts/*" },
-          { "/": "/ru/punkts/*" }
+          { "/": "/ru/punkts/*" },
+          { "/": "/en/map" },
+          { "/": "/lv/map" },
+          { "/": "/ru/map" }
         ]
       }
     ]
