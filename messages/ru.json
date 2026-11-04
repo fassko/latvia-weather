@@ -15,6 +15,15 @@
     "regionTitle": "Ещё в регионе {region}",
     "distanceKm": "{value} км"
   },
+  "appBanner": {
+    "region": "Приложение Latvia Weather",
+    "title": "Latvia Weather",
+    "subtitleIos": "В App Store",
+    "subtitleAndroid": "В Google Play",
+    "open": "Открыть",
+    "get": "Скачать",
+    "dismiss": "Закрыть предложение приложения"
+  },
   "footer": {
     "dataFrom": "Данные от",
     "updatedEvery": "Обновляется каждые 15 минут.",

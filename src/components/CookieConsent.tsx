@@ -33,8 +33,17 @@ function saveConsent(consent: Consent) {
 
 let bannerVisible = false;
 const bannerListeners = new Set<() => void>();
+const visibleBannerSources = new Set<string>();
+
+/** Bottom banners share one slot; the assistant FAB hides while any is shown. */
+export function setBottomBannerVisible(source: string, visible: boolean) {
+  if (visible) visibleBannerSources.add(source);
+  else visibleBannerSources.delete(source);
+  dispatchBannerVisibility(visibleBannerSources.size > 0);
+}
 
 function dispatchBannerVisibility(visible: boolean) {
+  if (bannerVisible === visible) return;
   bannerVisible = visible;
   document.documentElement.style.setProperty(
     "--lw-cookie-banner-visible",
@@ -109,8 +118,8 @@ export function CookieConsent() {
     hasHydrated && bannerDelayElapsed && consent === null && !settingsOpen;
 
   useEffect(() => {
-    dispatchBannerVisibility(showCompactBanner);
-    return () => dispatchBannerVisibility(false);
+    setBottomBannerVisible("cookies", showCompactBanner);
+    return () => setBottomBannerVisible("cookies", false);
   }, [showCompactBanner]);
 
   return (
@@ -224,6 +233,18 @@ export function CookieConsent() {
 
 export function openCookieSettings() {
   window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT));
+}
+
+/** False until the visitor has answered the consent banner (and during SSR). */
+export function useCookieConsentDecided(): boolean {
+  return useSyncExternalStore(
+    (notify) => {
+      window.addEventListener("lw-cookie-consent-changed", notify);
+      return () => window.removeEventListener("lw-cookie-consent-changed", notify);
+    },
+    () => parseConsent(document.cookie) !== null,
+    () => false,
+  );
 }
 
 /** Subscribe to consent banner visibility for FAB / chrome collision avoidance. */

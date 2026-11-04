@@ -1,7 +1,4 @@
-const APP_STORE_URL =
-  "https://apps.apple.com/us/app/latvia-weather/id6820900202";
-const PLAY_STORE_URL =
-  "https://play.google.com/store/apps/details?id=com.fassko.latviaweather.lv";
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/mobile-app";
 
 const iconLinkClassName =
   "inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/30 sm:h-12 sm:w-12 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100";

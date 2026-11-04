@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { APP_STORE_ID } from "@/lib/mobile-app";
 import { getSiteUrl, isIndexableDeployment } from "@/lib/site";
 import "./globals.css";
 
@@ -16,6 +17,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+  },
+  itunes: {
+    appId: APP_STORE_ID,
   },
 };
 

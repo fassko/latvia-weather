@@ -9,6 +9,15 @@
     "title": "Populāras vietas",
     "subtitle": "Stundu un 10 dienu prognozes lielākajām Latvijas pilsētām un novadu centriem."
   },
+  "appBanner": {
+    "region": "Latvia Weather lietotne",
+    "title": "Latvia Weather",
+    "subtitleIos": "App Store veikalā",
+    "subtitleAndroid": "Google Play veikalā",
+    "open": "Atvērt",
+    "get": "Iegūt",
+    "dismiss": "Aizvērt lietotnes ieteikumu"
+  },
   "footer": {
     "dataFrom": "Dati no",
     "updatedEvery": "Atjaunināts ik pēc 15 minūtēm.",
