@@ -10,6 +10,7 @@ import { SkipToContent } from "@/components/SkipToContent";
 import { ThemeScript } from "@/components/ThemeScript";
 import { ThemeSync } from "@/components/ThemeSync";
 import { routing, type Locale } from "@/i18n/routing";
+import { APP_STORE_ID } from "@/lib/mobile-app";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +52,8 @@ export default async function LocaleLayout({
     >
       <head>
         <ThemeScript />
+        {/* Not `metadata.itunes`: streamed metadata lands in <body>, where Safari ignores it. */}
+        <meta name="apple-itunes-app" content={`app-id=${APP_STORE_ID}`} />
       </head>
       <body
         suppressHydrationWarning

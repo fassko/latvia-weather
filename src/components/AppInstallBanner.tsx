@@ -56,7 +56,7 @@ function usePlatform(): MobilePlatform {
 
 /**
  * Suggests the native app on phones. iOS Safari is left to the native Smart
- * App Banner (`itunes` metadata); every other mobile browser gets this card.
+ * App Banner (`apple-itunes-app` meta tag in the locale layout); every other mobile browser gets this card.
  */
 export function AppInstallBanner() {
   const t = useTranslations("appBanner");

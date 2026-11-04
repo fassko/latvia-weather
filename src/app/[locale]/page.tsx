@@ -36,7 +36,6 @@ import {
 } from "@/lib/weather/locations";
 import { pickLocationQueryValue } from "@/lib/weather/location-query";
 import { getOgAlternateLocales, getOgLocale } from "@/lib/locale";
-import { APP_STORE_ID } from "@/lib/mobile-app";
 import { getSiteUrl, localizedPath } from "@/lib/site";
 import type { WeatherData } from "@/lib/weather/types";
 
@@ -147,10 +146,6 @@ export async function generateMetadata({ params, searchParams }: HomeProps): Pro
       title,
       description,
       images: [imageUrl],
-    },
-    itunes: {
-      appId: APP_STORE_ID,
-      appArgument: pageUrl,
     },
   };
 }
