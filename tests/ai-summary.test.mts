@@ -74,6 +74,7 @@ describe("getSummaryInstructions", () => {
 
     assert.match(instructions, /Latvian only/);
     assert.match(instructions, /at night never mention sun/);
+    assert.match(instructions, /full stop/);
   });
 });
 
@@ -92,6 +93,17 @@ describe("cleanSummary", () => {
 
     assert.equal(summary, first);
     assert.ok(summary.length <= MAX_SUMMARY_LENGTH);
+  });
+
+  it("keeps the finished sentence when the model stops mid-phrase", () => {
+    assert.equal(
+      cleanSummary("Šobrīd apmācies, bet nokrišņi nav gaidāmi. Nakts gaitā debesis"),
+      "Šobrīd apmācies, bet nokrišņi nav gaidāmi.",
+    );
+  });
+
+  it("returns empty when nothing finishes with a full stop", () => {
+    assert.equal(cleanSummary("Nakts gaitā debesis skaidrosies un temperatūra"), "");
   });
 });
 
