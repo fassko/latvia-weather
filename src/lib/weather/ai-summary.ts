@@ -98,6 +98,7 @@ export function getSummaryInstructions(locale: SummaryLocale): string {
     "You write the one-line weather summary shown under the temperature in a Latvian weather app.",
     "Use only the forecast JSON you are given; it is the source of truth. Never invent weather.",
     `Write one or two short sentences, at most ${MAX_SUMMARY_LENGTH} characters in total.`,
+    "Always finish the last sentence with a full stop. Never stop mid-phrase.",
     "Describe what it is like now, then the most useful change in the coming hours with its local time (for example rain starting, wind picking up, clearing, a temperature drop), then a short practical tip.",
     "Respect isNightNow and each hour's isNight: at night never mention sun or sunshine, and talk about tonight or the night instead of the day.",
     "Mention the temperature only if it adds something, and never repeat the exact current temperature, which the app already shows.",
@@ -129,7 +130,18 @@ export function getFallbackSummaryKeys(
   return { conditionKey, adviceKey };
 }
 
-/** Strips whatever formatting the model adds anyway and caps the length so the header layout holds. */
+/** Index of the final `.` / `!` / `?` that ends a sentence, or -1 when none is long enough to keep. */
+function lastSentenceEndIndex(text: string): number {
+  const fromBreak = Math.max(text.lastIndexOf(". "), text.lastIndexOf("! "), text.lastIndexOf("? "));
+  if (fromBreak >= 0) return fromBreak;
+  return /[.!?]$/.test(text) ? text.length - 1 : -1;
+}
+
+/**
+ * Strips whatever formatting the model adds anyway and caps the length so the header layout holds.
+ * Returns "" when the model stopped mid-phrase with no complete sentence, so the route can fall back
+ * to the rule-based line instead of showing a cut-off summary (common with Latvian/Russian token use).
+ */
 export function cleanSummary(text: string): string {
   let summary = text
     .replace(/[*_`#>]/g, "")
@@ -139,11 +151,18 @@ export function cleanSummary(text: string): string {
 
   if (summary.length > MAX_SUMMARY_LENGTH) {
     const cut = summary.slice(0, MAX_SUMMARY_LENGTH);
-    const lastSentenceEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+    const sentenceEnd = lastSentenceEndIndex(cut);
     summary =
-      lastSentenceEnd > 40
-        ? cut.slice(0, lastSentenceEnd + 1)
+      sentenceEnd > 40
+        ? cut.slice(0, sentenceEnd + 1)
         : `${cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:]$/, "")}…`;
+  }
+
+  // maxOutputTokens can stop the model mid-clause even under the character cap.
+  if (summary && !/[.!?…]$/.test(summary)) {
+    const sentenceEnd = lastSentenceEndIndex(summary);
+    if (sentenceEnd > 40) return summary.slice(0, sentenceEnd + 1);
+    return "";
   }
 
   return summary;

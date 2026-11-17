@@ -74,12 +74,13 @@ export async function GET(request: Request) {
       model,
       instructions: getSummaryInstructions(locale),
       prompt: JSON.stringify(context),
-      maxOutputTokens: 120,
+      // Latvian and Russian use more tokens per character than English; 120 often stopped mid-sentence.
+      maxOutputTokens: 220,
       temperature: 0.4,
       abortSignal: request.signal,
     });
     const summary = cleanSummary(text);
-    if (!summary) throw new Error("Empty summary");
+    if (!summary) throw new Error("Empty or incomplete summary");
 
     logSummaryEvent("summary_ok", { locationId, locale, durationMs: Date.now() - startedAt });
     return NextResponse.json(
