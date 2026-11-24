@@ -13,7 +13,10 @@ const FETCH_TIMEOUT_MS = 20_000;
  * One meteo.lt radar composite, cropped to the map's area, shrunk from 4000 px wide and with the out-of-range mask
  * lightened. A frame never changes once published, so CDNs and clients may keep it for good.
  */
-export async function GET(_request: Request, ctx: RouteContext<"/api/radar/lt/[stamp]">) {
+export async function GET(
+  _request: Request,
+  ctx: { params: Promise<{ stamp: string }> },
+) {
   const { stamp } = await ctx.params;
   if (!LT_RADAR_STAMP_PATTERN.test(stamp)) {
     return Response.json({ error: "Invalid radar frame" }, { status: 400 });
