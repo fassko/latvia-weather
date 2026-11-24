@@ -189,8 +189,18 @@ function PlayIcon({ paused }: { paused?: boolean }) {
   );
 }
 
-function radarSourceLabelKey(source: RadarSource): "radarSourceLvgmc" | "radarSourceEe" {
-  return source === "ee" ? "radarSourceEe" : "radarSourceLvgmc";
+function radarSourceLabelKey(
+  source: RadarSource,
+): "radarSourceLvgmc" | "radarSourceEe" | "radarSourceLt" {
+  if (source === "ee") return "radarSourceEe";
+  if (source === "lt") return "radarSourceLt";
+  return "radarSourceLvgmc";
+}
+
+function radarAboutKey(source: RadarSource): "radarAboutLvgmc" | "radarAboutEe" | "radarAboutLt" {
+  if (source === "ee") return "radarAboutEe";
+  if (source === "lt") return "radarAboutLt";
+  return "radarAboutLvgmc";
 }
 
 function frameClock(frame: RadarFrame | null | undefined): string {
@@ -309,7 +319,7 @@ export function RadarTimeControl({ radar }: { radar: RadarState }) {
           ? tMap("radarLoading")
           : radar.hasError && !hasFrames
             ? tMap("radarError")
-            : tMap(radar.source === "ee" ? "radarAboutEe" : "radarAboutLvgmc")}
+            : tMap(radarAboutKey(radar.source))}
         {radar.hasError && !radar.isLoading && !hasFrames ? (
           <button
             type="button"

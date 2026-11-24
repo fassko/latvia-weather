@@ -8,6 +8,13 @@ import {
   EE_RADAR_OBSERVED_LAYER,
   EE_RADAR_WMS,
   eeRadarFrames,
+  LT_RADAR_ATTRIBUTION,
+  LT_RADAR_ATTRIBUTION_TEXT,
+  LT_RADAR_BOUNDS,
+  LT_RADAR_LEGEND,
+  LT_RADAR_PAGE,
+  ltRadarFrames,
+  ltRadarStamps,
   LVGMC_ORIGIN,
   LVGMC_RADAR_ATTRIBUTION,
   LVGMC_RADAR_ATTRIBUTION_TEXT,
@@ -18,6 +25,7 @@ import {
   parseRadarSource,
   parseWmsTimeExtent,
   type RadarFeed,
+  type RadarSource,
 } from "@/lib/weather/radar";
 
 /** New frames arrive every 5–10 minutes; two minutes keeps the newest one close. */
@@ -78,12 +86,36 @@ async function getEeFeed(): Promise<RadarFeed> {
   };
 }
 
+/** Frames point at our own cleaned copies, absolute so the mobile apps can load them as they are. */
+async function getLtFeed(origin: string): Promise<RadarFeed> {
+  const html = await (await fetchUpstream(LT_RADAR_PAGE)).text();
+  return {
+    source: "lt",
+    frames: ltRadarFrames(ltRadarStamps(html), (stamp) => `${origin}/api/radar/lt/${stamp}`),
+    bounds: LT_RADAR_BOUNDS,
+    attribution: LT_RADAR_ATTRIBUTION,
+    attributionText: LT_RADAR_ATTRIBUTION_TEXT,
+    legend: LT_RADAR_LEGEND,
+  };
+}
+
+function getFeed(source: RadarSource, origin: string): Promise<RadarFeed> {
+  switch (source) {
+    case "ee":
+      return getEeFeed();
+    case "lt":
+      return getLtFeed(origin);
+    default:
+      return getLvgmcFeed();
+  }
+}
+
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const { origin, searchParams } = new URL(request.url);
   const source = parseRadarSource(searchParams.get("source"));
 
   try {
-    const feed = source === "ee" ? await getEeFeed() : await getLvgmcFeed();
+    const feed = await getFeed(source, origin);
     if (feed.frames.length === 0) {
       return NextResponse.json({ error: "No radar frames available" }, { status: 502 });
     }

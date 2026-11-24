@@ -541,6 +541,22 @@ function LayerLegend({
 
   if (layer === "none") return null;
 
+  if (layer === "radar" && radarSource === "lt") {
+    // meteo.lt publishes no values for its shades, only their order.
+    const bins = radarLegend(radarSource);
+    return (
+      <MapLegend
+        title={tMap("legendRadarLt")}
+        description={tMap("legendRadarLtScale")}
+        gradient={radarLegendGradientCss(bins)}
+        ticks={[
+          { label: tMap("legendRadarLight"), position: 0.1 },
+          { label: tMap("legendRadarHeavy"), position: 0.9 },
+        ]}
+      />
+    );
+  }
+
   if (layer === "radar") {
     const bins = radarLegend(radarSource);
     return (
