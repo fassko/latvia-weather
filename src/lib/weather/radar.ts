@@ -30,7 +30,12 @@ export interface RadarFeed {
   source: RadarSource;
   frames: RadarFrame[];
   bounds: RadarBounds;
+  /** Credit line as HTML, for Leaflet's attribution control. */
   attribution: string;
+  /** The same credit as plain text, for the mobile apps. */
+  attributionText: string;
+  /** Colour bins low to high (mm/h), so clients can draw the source's own legend. */
+  legend: RadarLegendBin[];
 }
 
 export function parseRadarSource(value: string | string[] | null | undefined): RadarSource {
@@ -52,6 +57,7 @@ export const LVGMC_RADAR_BOUNDS: RadarBounds = [
 ];
 export const LVGMC_RADAR_ATTRIBUTION =
   'Radar © <a href="https://videscentrs.lvgmc.lv/karte/s/meteorologiska-radara-informacija" target="_blank" rel="noopener noreferrer">LVĢMC</a> / EUMETNET OPERA';
+export const LVGMC_RADAR_ATTRIBUTION_TEXT = "Radar © LVĢMC / EUMETNET OPERA";
 /** How far back the LVĢMC animation goes. */
 export const LVGMC_RADAR_WINDOW_MINUTES = 180;
 
@@ -112,6 +118,7 @@ export const EE_RADAR_BOUNDS: RadarBounds = [
 export const EE_RADAR_IMAGE_WIDTH = 1200;
 export const EE_RADAR_ATTRIBUTION =
   'Radar © <a href="https://www.ilmateenistus.ee/ilm/ilmavaatlused/radar/?lang=en" target="_blank" rel="noopener noreferrer">Keskkonnaagentuur</a>';
+export const EE_RADAR_ATTRIBUTION_TEXT = "Radar © Keskkonnaagentuur";
 export const EE_RADAR_WINDOW_MINUTES = 120;
 export const EE_RADAR_NOWCAST_MINUTES = 120;
 /** The WMS has a frame every 5 minutes; every other one keeps requests to their server down. */

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   EE_RADAR_ATTRIBUTION,
+  EE_RADAR_ATTRIBUTION_TEXT,
+  EE_RADAR_LEGEND,
   EE_RADAR_BOUNDS,
   EE_RADAR_NOWCAST_LAYER,
   EE_RADAR_OBSERVED_LAYER,
@@ -8,6 +10,8 @@ import {
   eeRadarFrames,
   LVGMC_ORIGIN,
   LVGMC_RADAR_ATTRIBUTION,
+  LVGMC_RADAR_ATTRIBUTION_TEXT,
+  LVGMC_RADAR_LEGEND,
   LVGMC_RADAR_BOUNDS,
   LVGMC_RADAR_PATH,
   lvgmcRadarFrames,
@@ -43,6 +47,8 @@ async function getLvgmcFeed(): Promise<RadarFeed> {
     frames: lvgmcRadarFrames(entries),
     bounds: LVGMC_RADAR_BOUNDS,
     attribution: LVGMC_RADAR_ATTRIBUTION,
+    attributionText: LVGMC_RADAR_ATTRIBUTION_TEXT,
+    legend: LVGMC_RADAR_LEGEND,
   };
 }
 
@@ -67,6 +73,8 @@ async function getEeFeed(): Promise<RadarFeed> {
     frames: eeRadarFrames(parseWmsTimeExtent(observedXml), parseWmsTimeExtent(nowcastXml)),
     bounds: EE_RADAR_BOUNDS,
     attribution: EE_RADAR_ATTRIBUTION,
+    attributionText: EE_RADAR_ATTRIBUTION_TEXT,
+    legend: EE_RADAR_LEGEND,
   };
 }
 
