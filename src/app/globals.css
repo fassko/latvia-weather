@@ -1058,3 +1058,123 @@ body {
   background: #0284c7;
   color: #f8fafc;
 }
+
+/* Radar: source toggle, a frame slider with start/now/end times and a nowcast band. */
+.weather-map-radar {
+  /* Radar frames are coarse; keep the pixels crisp instead of smearing light rain. */
+  image-rendering: pixelated;
+}
+
+.weather-map-radar-source {
+  display: inline-flex;
+  padding: 0.15rem;
+  gap: 0.1rem;
+  border: 1px solid rgb(203 213 225 / 0.95);
+  border-radius: 0.45rem;
+  background: #f8fafc;
+}
+
+.weather-map-radar-source__option {
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.32rem;
+  color: #475569;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.weather-map-radar-source__option:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.weather-map-radar-source__option[aria-checked="true"] {
+  background: #0369a1;
+  color: #fff;
+}
+
+.weather-map-radar-source__option:focus-visible {
+  outline: 2px solid rgb(14 165 233 / 0.7);
+  outline-offset: 1px;
+}
+
+.weather-map-time-control--radar .weather-map-time-control__value[data-nowcast="true"] {
+  color: #7c3aed;
+}
+
+.weather-map-time-control--radar .weather-map-time-control__play:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.weather-map-time-control .weather-map-radar-timeline {
+  padding: 0.35rem 0 1.05rem;
+}
+
+.weather-map-radar-timeline__nowcast {
+  position: absolute;
+  top: 0.15rem;
+  right: 0;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: rgb(124 58 237 / 0.35);
+  pointer-events: none;
+}
+
+.weather-map-radar-timeline__ends {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.weather-map-radar-timeline__now {
+  color: #0369a1;
+}
+
+@media (max-width: 639px) {
+  .weather-map-time-control .weather-map-radar-timeline {
+    padding: 0.45rem 0 1.15rem;
+  }
+}
+
+.dark .weather-map-radar-source {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.dark .weather-map-radar-source__option {
+  color: #cbd5e1;
+}
+
+.dark .weather-map-radar-source__option:hover {
+  background: rgb(30 41 59 / 0.95);
+  color: #f8fafc;
+}
+
+.dark .weather-map-radar-source__option[aria-checked="true"] {
+  background: #0284c7;
+  color: #fff;
+}
+
+.dark .weather-map-time-control--radar .weather-map-time-control__value[data-nowcast="true"] {
+  color: #c4b5fd;
+}
+
+.dark .weather-map-radar-timeline__ends {
+  color: #64748b;
+}
+
+.dark .weather-map-radar-timeline__now {
+  color: #7dd3fc;
+}

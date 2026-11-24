@@ -42,6 +42,13 @@ import {
 } from "@/lib/weather/rain-field";
 import { useWindUnit } from "@/lib/weather/use-wind-unit";
 import {
+  radarLegend,
+  radarLegendGradientCss,
+  radarLegendTicks,
+  type RadarSource,
+} from "@/lib/weather/radar";
+import { RadarTimeControl, useRadar } from "@/components/RadarTimeControl";
+import {
   convertWindSpeed,
   getWindSpeedUnitSuffix,
 } from "@/lib/weather/wind-units";
@@ -403,12 +410,14 @@ function ForecastTimeControl({
 
 function layerLabelKey(
   layer: MapLayer,
-): "layerTemperature" | "layerWind" | "layerRain" | "layerNone" {
+): "layerTemperature" | "layerWind" | "layerRain" | "layerRadar" | "layerNone" {
   switch (layer) {
     case "wind":
       return "layerWind";
     case "rain":
       return "layerRain";
+    case "radar":
+      return "layerRadar";
     case "none":
       return "layerNone";
     default:
@@ -520,11 +529,29 @@ function MapLegend({
   );
 }
 
-function LayerLegend({ layer }: { layer: MapLayer }) {
+function LayerLegend({
+  layer,
+  radarSource,
+}: {
+  layer: MapLayer;
+  radarSource: RadarSource;
+}) {
   const tMap = useTranslations("map");
   const windUnit = useWindUnit();
 
   if (layer === "none") return null;
+
+  if (layer === "radar") {
+    const bins = radarLegend(radarSource);
+    return (
+      <MapLegend
+        title={tMap("legendRadar")}
+        description={tMap("legendRadarScale")}
+        gradient={radarLegendGradientCss(bins)}
+        ticks={radarLegendTicks(bins)}
+      />
+    );
+  }
 
   if (layer === "wind") {
     const unit = getWindSpeedUnitSuffix(windUnit);
@@ -613,9 +640,12 @@ export function WeatherMapSection({
     getEmptyFavoriteLocationIds,
   );
   const favoritesOnly = wantFavoritesOnly;
+  const isRadar = layer === "radar";
+  const radar = useRadar(isRadar);
   const hasCachedForecast = offsetHours === 0 || mapWeatherCache.has(offsetHours);
+  // Radar is observed weather, so the places show the current hour, not the forecast slider's.
   const allDisplayLocations =
-    offsetHours === 0
+    offsetHours === 0 || isRadar
       ? locations
       : (mapWeatherCache.get(offsetHours) ?? locations);
   const displayLocations = favoritesOnly
@@ -754,6 +784,7 @@ export function WeatherMapSection({
 
   function handleLayerChange(nextLayer: MapLayer) {
     setLayer(nextLayer);
+    if (nextLayer === "radar") setIsPlaying(false);
     // Keep the layer in the URL so a shared link opens the same view.
     const { pathname, search, hash } = window.location;
     window.history.replaceState(
@@ -903,6 +934,15 @@ export function WeatherMapSection({
             fieldLocations={allDisplayLocations}
             showAllLabels={favoritesOnly}
             layer={layer}
+            radarFrame={
+              isRadar && radar.feed && radar.frame
+                ? {
+                    url: radar.frame.url,
+                    bounds: radar.feed.bounds,
+                    attribution: radar.feed.attribution,
+                  }
+                : null
+            }
           />
         )}
         {showNoRain ? (
@@ -930,18 +970,22 @@ export function WeatherMapSection({
           <span className="weather-map-resize-handle__grip" aria-hidden="true" />
         </div>
       ) : null}
-      <ForecastTimeControl
-        offsetHours={offsetHours}
-        maxOffsetHours={maxOffsetHours}
-        isPlaying={isPlaying}
-        isLoading={isForecastLoading}
-        hasError={hasForecastError}
-        locale={locale}
-        onChange={handleForecastOffsetChange}
-        onTogglePlay={handleTogglePlay}
-        onRetry={handleForecastRetry}
-      />
-      <LayerLegend layer={layer} />
+      {isRadar ? (
+        <RadarTimeControl radar={radar} />
+      ) : (
+        <ForecastTimeControl
+          offsetHours={offsetHours}
+          maxOffsetHours={maxOffsetHours}
+          isPlaying={isPlaying}
+          isLoading={isForecastLoading}
+          hasError={hasForecastError}
+          locale={locale}
+          onChange={handleForecastOffsetChange}
+          onTogglePlay={handleTogglePlay}
+          onRetry={handleForecastRetry}
+        />
+      )}
+      <LayerLegend layer={layer} radarSource={radar.source} />
     </section>
   );
 }
