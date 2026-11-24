@@ -1,8 +1,8 @@
 /**
  * The map's weather layers. Temperature is the default and isn't written to the URL; "none" is the plain map with
- * only dots for the places.
+ * only dots for the places; "radar" is observed precipitation radar with dots for the places.
  */
-export const MAP_LAYERS = ["temperature", "wind", "rain", "none"] as const;
+export const MAP_LAYERS = ["temperature", "wind", "rain", "radar", "none"] as const;
 
 export type MapLayer = (typeof MAP_LAYERS)[number];
 
@@ -12,7 +12,9 @@ export const MAP_LAYER_QUERY_KEY = "layer";
 /** Layer from a `?layer=` value; anything unknown is temperature. */
 export function parseMapLayer(value: string | string[] | null | undefined): MapLayer {
   const raw = Array.isArray(value) ? value[0] : value;
-  return raw === "wind" || raw === "rain" || raw === "none" ? raw : DEFAULT_MAP_LAYER;
+  return raw === "wind" || raw === "rain" || raw === "radar" || raw === "none"
+    ? raw
+    : DEFAULT_MAP_LAYER;
 }
 
 /** `search` (e.g. `?alarms=0`) with the layer set, or removed for temperature. */

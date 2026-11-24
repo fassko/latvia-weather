@@ -55,6 +55,7 @@ import {
   textColorOn,
 } from "@/lib/weather/map-field";
 import type { MapLayer } from "@/lib/weather/map-layer";
+import type { RadarBounds } from "@/lib/weather/radar";
 import {
   TEMPERATURE_FIELD_OPACITY,
   temperatureFieldColor,
@@ -102,6 +103,14 @@ interface WeatherMapProps {
   showAllLabels?: boolean;
   /** Which weather the wash, arrows and chips show. */
   layer?: MapLayer;
+  /** Radar frame to draw when `layer` is "radar". */
+  radarFrame?: RadarOverlayFrame | null;
+}
+
+export interface RadarOverlayFrame {
+  url: string;
+  bounds: RadarBounds;
+  attribution: string;
 }
 
 type MarkersById = Map<string, L.Marker>;
@@ -119,7 +128,7 @@ function labelChipHtml(
   layer: MapLayer,
   windUnit: WindUnit,
 ): string {
-  if (layer === "none") {
+  if (layer === "none" || layer === "radar") {
     return `<span class="weather-map-label__dot"></span>`;
   }
 
@@ -814,6 +823,52 @@ function AlarmPolygons({
   return null;
 }
 
+const RADAR_OPACITY = 0.75;
+
+/**
+ * One radar image over fixed bounds. Changing frames loads the next image first and then swaps it in, so the
+ * animation doesn't flash empty between frames.
+ */
+function RadarOverlay({ frame }: { frame: RadarOverlayFrame }) {
+  const map = useMap();
+  const overlayRef = useRef<L.ImageOverlay | null>(null);
+  const boundsKey = JSON.stringify(frame.bounds);
+
+  useEffect(() => {
+    ensurePane(map, FIELD_PANE, FIELD_PANE_Z_INDEX);
+    const overlay = L.imageOverlay(frame.url, JSON.parse(boundsKey) as RadarBounds, {
+      opacity: RADAR_OPACITY,
+      interactive: false,
+      pane: FIELD_PANE,
+      className: "weather-map-radar",
+      attribution: frame.attribution,
+    });
+    overlay.addTo(map);
+    overlayRef.current = overlay;
+
+    return () => {
+      map.removeLayer(overlay);
+      overlayRef.current = null;
+    };
+    // The url is swapped in by the effect below; re-creating the overlay would flash.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boundsKey, frame.attribution, map]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const image = new Image();
+    image.onload = () => {
+      if (!cancelled) overlayRef.current?.setUrl(frame.url);
+    };
+    image.src = frame.url;
+    return () => {
+      cancelled = true;
+    };
+  }, [frame.url]);
+
+  return null;
+}
+
 function AlarmToggleIcon() {
   return (
     <svg
@@ -1142,6 +1197,7 @@ export function WeatherMap({
   fieldLocations,
   showAllLabels = false,
   layer = "temperature",
+  radarFrame,
 }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
@@ -1191,7 +1247,8 @@ export function WeatherMap({
       <FitLatvia enabled={!focusLocationId && !shouldFitLocations} />
       <FitLocations locations={locations} enabled={shouldFitLocations} />
       <InvalidateSizeOnContainerResize />
-      {layer !== "none" ? (
+      {layer === "radar" && radarFrame ? <RadarOverlay frame={radarFrame} /> : null}
+      {layer !== "none" && layer !== "radar" ? (
         <WeatherFieldLayer locations={fieldLocations ?? locations} layer={layer} />
       ) : null}
       {layer === "wind" ? (
