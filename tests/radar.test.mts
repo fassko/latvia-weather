@@ -8,6 +8,16 @@ import {
   eeRadarFrames,
   eeRadarImageSize,
   latestObservedFrameIndex,
+  cleanLtRadarPixels,
+  LT_RADAR_BOUNDS,
+  LT_RADAR_LEGEND,
+  LT_RADAR_SOURCE_BOUNDS,
+  ltRadarCrop,
+  ltRadarFrames,
+  ltRadarSourceUrl,
+  ltRadarStamps,
+  parseLtRadarStamp,
+  radarLegend,
   LVGMC_RADAR_LEGEND,
   lvgmcRadarFrames,
   parseLvgmcRadarTime,
@@ -36,6 +46,7 @@ describe("radar layer selection", () => {
 
   it("defaults the source to LVĢMC", () => {
     assert.equal(parseRadarSource("ee"), "ee");
+    assert.equal(parseRadarSource("lt"), "lt");
     assert.equal(parseRadarSource("lvgmc"), "lvgmc");
     assert.equal(parseRadarSource("opera"), "lvgmc");
     assert.equal(parseRadarSource(null), "lvgmc");
@@ -201,5 +212,71 @@ describe("radar legend", () => {
       1,
     );
     assert.equal(latestObservedFrameIndex([]), -1);
+  });
+});
+
+describe("Lithuanian radar frames", () => {
+  const html = `
+    <script>var MIM_CONFIG = {"maps":{"radar":{"markers":{
+      "2026-11-24 21:15:00":{"radar":[{"img":"https:\\/\\/new.meteo.lt\\/meteo_jobs\\/radaru_informacija\\/Header_Radar-composite-202611241915.png"}]},
+      "2026-11-24 21:05:00":{"radar":[{"img":"https:\\/\\/new.meteo.lt\\/meteo_jobs\\/radaru_informacija\\/Header_Radar-composite-202611241905.png"}]},
+      "2026-11-24 21:10:00":{"radar":[{"img":"https:\\/\\/new.meteo.lt\\/meteo_jobs\\/radaru_informacija\\/Header_Radar-composite-202611241910.png"}]},
+      "2026-11-24 15:00:00":{"radar":[{"img":"…/Header_Radar-composite-202611241300.png"}]},
+      "dup":{"radar":[{"img":"…/Header_Radar-composite-202611241910.png"}]}
+    }}}};</script>`;
+
+  it("finds every composite on the page once, oldest first", () => {
+    assert.deepEqual(ltRadarStamps(html), [
+      "202611241300",
+      "202611241905",
+      "202611241910",
+      "202611241915",
+    ]);
+  });
+
+  it("reads stamps as UTC", () => {
+    assert.equal(parseLtRadarStamp("202611241915")?.toISOString(), "2026-11-24T19:15:00.000Z");
+    assert.equal(parseLtRadarStamp("2026112419"), null);
+    assert.equal(parseLtRadarStamp("../etc/passwd"), null);
+  });
+
+  it("keeps the window on a 10-minute step plus the newest frame, pointing at our cleaned copies", () => {
+    const frames = ltRadarFrames(ltRadarStamps(html), (stamp) => `https://example.test/api/radar/lt/${stamp}`);
+    assert.deepEqual(
+      frames.map((frame) => frame.time.slice(11, 16)),
+      ["19:10", "19:15"],
+    );
+    assert.equal(frames[1].url, "https://example.test/api/radar/lt/202611241915");
+    assert.ok(frames.every((frame) => !frame.nowcast));
+    assert.equal(
+      ltRadarSourceUrl("202611241915"),
+      "https://www.meteo.lt/meteo_jobs/radaru_informacija/Header_Radar-composite-202611241915.png",
+    );
+  });
+
+  it("crops the map's area out of the full composite", () => {
+    const crop = ltRadarCrop(4000, 3669);
+    // 18°E is 2.38° into a 18.69° wide image; 32°E is 2.31° from its east edge.
+    assert.ok(Math.abs(crop.left - (2.381389 / 18.695) * 4000) < 2);
+    assert.ok(Math.abs(4000 - (crop.left + crop.width) - (2.313611 / 18.695) * 4000) < 2);
+    // The top of the bounds is the top of the image.
+    assert.equal(LT_RADAR_BOUNDS[1][0], LT_RADAR_SOURCE_BOUNDS[1][0]);
+    assert.equal(crop.top, 0);
+    assert.ok(crop.height > 0 && crop.top + crop.height < 3669);
+  });
+
+  it("lightens the out-of-range mask and makes rain opaque", () => {
+    const pixels = new Uint8Array([
+      230, 230, 230, 191, // out of range
+      0, 199, 199, 191, // light rain
+      0, 0, 0, 0, // nothing
+    ]);
+    cleanLtRadarPixels(pixels);
+    assert.deepEqual([...pixels], [230, 230, 230, 77, 0, 199, 199, 255, 0, 0, 0, 0]);
+  });
+
+  it("has a legend without values", () => {
+    assert.equal(radarLegend("lt"), LT_RADAR_LEGEND);
+    assert.ok(LT_RADAR_LEGEND.every((bin) => !bin.label));
   });
 });

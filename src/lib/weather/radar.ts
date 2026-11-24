@@ -7,11 +7,13 @@ import { parseLaiks } from "@/lib/weather/timezone";
  *   (the same images as videscentrs.lvgmc.lv/karte/s/meteorologiska-radara-informacija).
  * - `ee`: the Estonian Environment Agency's composite from its public WMS, with
  *   observed frames (`ilm:cmp_cap`) and the short nowcast (`ilm:nowcasting`).
+ * - `lt`: the Lithuanian Hydrometeorological Service (LHMT)'s composite from meteo.lt, a 4000×3669 PNG every
+ *   5 minutes. It's cropped, shrunk and cleaned by `/api/radar/lt/[stamp]` before clients get it.
  *
- * Both are drawn as one image per frame, stretched over fixed bounds in Web Mercator.
+ * All are drawn as one image per frame, stretched over fixed bounds in Web Mercator.
  */
 
-export const RADAR_SOURCES = ["lvgmc", "ee"] as const;
+export const RADAR_SOURCES = ["lvgmc", "ee", "lt"] as const;
 export type RadarSource = (typeof RADAR_SOURCES)[number];
 export const DEFAULT_RADAR_SOURCE: RadarSource = "lvgmc";
 
@@ -34,13 +36,16 @@ export interface RadarFeed {
   attribution: string;
   /** The same credit as plain text, for the mobile apps. */
   attributionText: string;
-  /** Colour bins low to high (mm/h), so clients can draw the source's own legend. */
+  /**
+   * Colour bins low to high, so clients can draw the source's own legend. Labels are mm/h; a source that publishes
+   * no scale (Lithuania) has bins without labels.
+   */
   legend: RadarLegendBin[];
 }
 
 export function parseRadarSource(value: string | string[] | null | undefined): RadarSource {
   const raw = Array.isArray(value) ? value[0] : value;
-  return raw === "ee" ? "ee" : DEFAULT_RADAR_SOURCE;
+  return raw === "ee" || raw === "lt" ? raw : DEFAULT_RADAR_SOURCE;
 }
 
 const MINUTE_MS = 60 * 1000;
@@ -251,6 +256,124 @@ export function eeRadarFrames(
   return frames;
 }
 
+/* -------------------------------- Lithuania ------------------------------- */
+
+export const LT_RADAR_PAGE = "https://www.meteo.lt/en/currently/radar-data/";
+const LT_RADAR_IMAGE_BASE = "https://www.meteo.lt/meteo_jobs/radaru_informacija/";
+/** The corners meteo.lt's own Leaflet map stretches each composite over. */
+export const LT_RADAR_SOURCE_BOUNDS: RadarBounds = [
+  [49.876389, 15.618611],
+  [59.701667, 34.313611],
+];
+/** What we serve: the map's max bounds, clipped to the image (which stops short of 60°N). */
+export const LT_RADAR_BOUNDS: RadarBounds = [
+  [53.5, 18],
+  [59.701667, 32],
+];
+export const LT_RADAR_IMAGE_WIDTH = 1000;
+export const LT_RADAR_ATTRIBUTION =
+  'Radar © <a href="https://www.meteo.lt/en/currently/radar-data/" target="_blank" rel="noopener noreferrer">LHMT</a>';
+export const LT_RADAR_ATTRIBUTION_TEXT = "Radar © LHMT (meteo.lt)";
+export const LT_RADAR_WINDOW_MINUTES = 180;
+/** Frames come every 5 minutes; every other one halves the images we process and clients download. */
+export const LT_RADAR_STEP_MINUTES = 10;
+export const LT_RADAR_STAMP_PATTERN = /^\d{12}$/;
+
+/** `yyyyMMddHHmm` stamps of the composites linked from the radar page, oldest first. */
+export function ltRadarStamps(html: string): string[] {
+  const stamps = new Set<string>();
+  for (const match of html.matchAll(/Header_Radar-composite-(\d{12})\.png/g)) stamps.add(match[1]);
+  return [...stamps].sort();
+}
+
+/** The stamps are UTC (the page's local-time keys are two or three hours later). */
+export function parseLtRadarStamp(stamp: string): Date | null {
+  if (!LT_RADAR_STAMP_PATTERN.test(stamp)) return null;
+  const time = new Date(
+    Date.UTC(
+      Number(stamp.slice(0, 4)),
+      Number(stamp.slice(4, 6)) - 1,
+      Number(stamp.slice(6, 8)),
+      Number(stamp.slice(8, 10)),
+      Number(stamp.slice(10, 12)),
+    ),
+  );
+  return Number.isNaN(time.getTime()) ? null : time;
+}
+
+export function ltRadarSourceUrl(stamp: string): string {
+  return `${LT_RADAR_IMAGE_BASE}Header_Radar-composite-${stamp}.png`;
+}
+
+/** Frames for the last window, on a 10-minute step, with the newest always kept. */
+export function ltRadarFrames(
+  stamps: string[],
+  frameUrl: (stamp: string) => string,
+  { windowMinutes = LT_RADAR_WINDOW_MINUTES, stepMinutes = LT_RADAR_STEP_MINUTES } = {},
+): RadarFrame[] {
+  const frames = stamps
+    .map((stamp) => ({ stamp, time: parseLtRadarStamp(stamp) }))
+    .filter((frame): frame is { stamp: string; time: Date } => frame.time !== null)
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
+
+  const latest = frames.at(-1);
+  if (!latest) return [];
+  const latestMs = latest.time.getTime();
+
+  return frames
+    .filter(
+      (frame) =>
+        frame.time.getTime() >= latestMs - windowMinutes * MINUTE_MS &&
+        (onStep(frame.time, stepMinutes) || frame.time.getTime() === latestMs),
+    )
+    .map((frame) => ({ time: frame.time.toISOString(), url: frameUrl(frame.stamp), nowcast: false }));
+}
+
+/**
+ * Pixel rectangle of `LT_RADAR_BOUNDS` inside a source image of the given size. The image is linear in Web
+ * Mercator between `LT_RADAR_SOURCE_BOUNDS`, as Leaflet's image overlay draws it.
+ */
+export function ltRadarCrop(
+  imageWidth: number,
+  imageHeight: number,
+): { left: number; top: number; width: number; height: number } {
+  const [srcWest, srcSouth] = toWebMercator(LT_RADAR_SOURCE_BOUNDS[0][0], LT_RADAR_SOURCE_BOUNDS[0][1]);
+  const [srcEast, srcNorth] = toWebMercator(LT_RADAR_SOURCE_BOUNDS[1][0], LT_RADAR_SOURCE_BOUNDS[1][1]);
+  const [west, south] = toWebMercator(LT_RADAR_BOUNDS[0][0], LT_RADAR_BOUNDS[0][1]);
+  const [east, north] = toWebMercator(LT_RADAR_BOUNDS[1][0], LT_RADAR_BOUNDS[1][1]);
+
+  const xPx = (x: number) => ((x - srcWest) / (srcEast - srcWest)) * imageWidth;
+  const yPx = (y: number) => ((srcNorth - y) / (srcNorth - srcSouth)) * imageHeight;
+
+  const left = Math.max(0, Math.round(xPx(west)));
+  const top = Math.max(0, Math.round(yPx(north)));
+  const right = Math.min(imageWidth, Math.round(xPx(east)));
+  const bottom = Math.min(imageHeight, Math.round(yPx(south)));
+  return { left, top, width: right - left, height: bottom - top };
+}
+
+/** meteo.lt's "outside radar range" grey, and the alpha it bakes into every coloured pixel. */
+const LT_MASK_RGB = [230, 230, 230] as const;
+const LT_BAKED_ALPHA = 191;
+/** Same strength as the Estonian WMS's no-data grey (opacity 0.3). */
+const LT_MASK_ALPHA = 77;
+
+/**
+ * In place, on RGBA bytes: lighten the out-of-range mask to match Estonia's, and make rain opaque so the map's
+ * own overlay opacity applies once instead of on top of meteo.lt's 75%.
+ */
+export function cleanLtRadarPixels(rgba: Uint8Array): void {
+  for (let i = 0; i < rgba.length; i += 4) {
+    const alpha = rgba[i + 3];
+    if (alpha === 0) continue;
+    if (rgba[i] === LT_MASK_RGB[0] && rgba[i + 1] === LT_MASK_RGB[1] && rgba[i + 2] === LT_MASK_RGB[2]) {
+      rgba[i + 3] = Math.round((alpha / LT_BAKED_ALPHA) * LT_MASK_ALPHA);
+    } else {
+      rgba[i + 3] = Math.min(255, Math.round((alpha / LT_BAKED_ALPHA) * 255));
+    }
+  }
+}
+
 /* --------------------------------- Legend --------------------------------- */
 
 export interface RadarLegendBin {
@@ -291,8 +414,24 @@ export const EE_RADAR_LEGEND: RadarLegendBin[] = [
   { color: "#FF45FF", label: "50" },
 ];
 
+/**
+ * The shades meteo.lt's composites use, ordered light to heavy by how often they appear. meteo.lt publishes no
+ * scale for them, so there are no mm/h labels; stronger echoes may add colours not seen here yet.
+ */
+export const LT_RADAR_LEGEND: RadarLegendBin[] = [
+  { color: "#00C7C7" },
+  { color: "#00A8AC" },
+  { color: "#008261" },
+  { color: "#009637" },
+  { color: "#00C027" },
+  { color: "#00E809" },
+  { color: "#24FF24" },
+];
+
 export function radarLegend(source: RadarSource): RadarLegendBin[] {
-  return source === "ee" ? EE_RADAR_LEGEND : LVGMC_RADAR_LEGEND;
+  if (source === "ee") return EE_RADAR_LEGEND;
+  if (source === "lt") return LT_RADAR_LEGEND;
+  return LVGMC_RADAR_LEGEND;
 }
 
 /** Hard-stop CSS gradient, one equal-width band per bin. */
