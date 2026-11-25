@@ -2,7 +2,6 @@
 
 import L from "leaflet";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useMap } from "react-leaflet";
 import { useTranslations } from "next-intl";
 import { getIntlLocale } from "@/lib/locale";
@@ -15,6 +14,8 @@ import {
   type RoadWeatherFeed,
   type RoadWeatherPoint,
   type RoadWeatherStation,
+  type RoadWeatherStatus,
+  IDLE_ROAD_WEATHER_STATUS,
 } from "@/lib/weather/road-weather";
 
 /** Matches the API's cache, so a long-open map keeps the readings current. */
@@ -168,7 +169,15 @@ function useRoadLabels(): RoadLabels {
   };
 }
 
-export type RoadWeatherStatus = "idle" | "loading" | "ready" | "error";
+function readyStatus(feed: RoadWeatherFeed): RoadWeatherStatus {
+  const times = feed.stations.map((station) => station.observedAt).filter((time) => time !== null);
+  return {
+    state: "ready",
+    stations: feed.stations.length,
+    cameras: feed.cameras.length,
+    latestObservedAt: times.length > 0 ? times.reduce((a, b) => (a > b ? a : b)) : null,
+  };
+}
 
 /**
  * Road weather stations (surface temperature chips) and traffic cameras. Loads when first shown and refreshes
@@ -196,17 +205,17 @@ export function RoadWeatherLayer({
     const controller = new AbortController();
 
     async function load(first: boolean) {
-      if (first) statusRef.current?.("loading");
+      if (first) statusRef.current?.({ ...IDLE_ROAD_WEATHER_STATUS, state: "loading" });
       try {
         const response = await fetch("/api/road-weather", { signal: controller.signal });
         if (!response.ok) throw new Error(String(response.status));
         const next = (await response.json()) as RoadWeatherFeed;
         if (cancelled) return;
         setFeed(next);
-        statusRef.current?.("ready");
+        statusRef.current?.(readyStatus(next));
       } catch {
         // A failed refresh keeps the markers already on the map.
-        if (!cancelled && first) statusRef.current?.("error");
+        if (!cancelled && first) statusRef.current?.({ ...IDLE_ROAD_WEATHER_STATUS, state: "error" });
       }
     }
 
@@ -216,7 +225,7 @@ export function RoadWeatherLayer({
       cancelled = true;
       controller.abort();
       window.clearInterval(timer);
-      statusRef.current?.("idle");
+      statusRef.current?.(IDLE_ROAD_WEATHER_STATUS);
     };
   }, []);
 
@@ -255,74 +264,4 @@ export function RoadWeatherLayer({
   }, [feed, labelsKey, locale, map]);
 
   return null;
-}
-
-function RoadToggleIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M8 3 4 21M16 3l4 18M12 4v3M12 11v2M12 17v3" />
-    </svg>
-  );
-}
-
-/** Map button that shows or hides road weather; sits between the warnings toggle and "locate me". */
-export function RoadWeatherControl({
-  active,
-  status,
-  onToggle,
-}: {
-  active: boolean;
-  status: RoadWeatherStatus;
-  onToggle: () => void;
-}) {
-  const map = useMap();
-  const tMap = useTranslations("map");
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const corner = map.getContainer().querySelector<HTMLElement>(".leaflet-top.leaflet-left");
-
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    L.DomEvent.disableClickPropagation(wrap);
-    L.DomEvent.disableScrollPropagation(wrap);
-  }, [corner]);
-
-  if (!corner) return null;
-
-  const label = active ? tMap("hideRoadWeather") : tMap("showRoadWeather");
-
-  return createPortal(
-    <div ref={wrapRef} className="weather-map-locate-wrap">
-      <div className="leaflet-bar leaflet-control weather-map-locate">
-        <button
-          type="button"
-          className="weather-map-locate__button road-weather-toggle"
-          data-active={active ? "true" : "false"}
-          data-status={status}
-          onClick={onToggle}
-          title={label}
-          aria-label={label}
-          aria-pressed={active}
-          aria-busy={status === "loading"}
-        >
-          <RoadToggleIcon />
-        </button>
-      </div>
-      {active && status === "error" ? (
-        <p className="weather-map-locate__error" role="status">
-          {tMap("roadWeatherError")}
-        </p>
-      ) : null}
-    </div>,
-    corner,
-  );
 }

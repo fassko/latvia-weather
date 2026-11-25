@@ -157,6 +157,24 @@ function activePoints(features: MvtFeature[]): ActivePoint[] {
   return [...byId.values()];
 }
 
+/**
+ * A road surface more than this far from the air temperature is a faulty sensor (one station reported +20 °C road
+ * with −1 °C air). Real gaps from sun or traffic stay well under it.
+ */
+export const ROAD_SENSOR_MAX_AIR_GAP = 10;
+
+/** Road surface temperature, or null when it disagrees with the air temperature too much to be real. */
+export function plausibleRoadTemperature(road: number | null, air: number | null): number | null {
+  if (road === null) return null;
+  if (air !== null && Math.abs(road - air) > ROAD_SENSOR_MAX_AIR_GAP) return null;
+  return road;
+}
+
+/** Visibility in metres, or null when the sensor reports nothing (it sends 0 then). */
+export function plausibleVisibility(value: number | null): number | null {
+  return value === null || value <= 0 ? null : value;
+}
+
 function round(value: number, digits: number): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
@@ -183,6 +201,7 @@ export function parseRoadWeather(
   const stations = activePoints(stationFeatures)
     .map((point): RoadWeatherStation => {
       const p = point.feature.properties;
+      const airTemperature = toNumber(p.t1);
       return {
         id: point.id,
         kind: "station",
@@ -190,11 +209,11 @@ export function parseRoadWeather(
         lon: round(point.lon, 5),
         road: toText(p.linear_reference),
         observedAt: parseRoadWeatherTime(p.minutemark),
-        airTemperature: toNumber(p.t1),
-        roadTemperature: toNumber(p.ts1dst111),
+        airTemperature,
+        roadTemperature: plausibleRoadTemperature(toNumber(p.ts1dst111), airTemperature),
         dewPoint: toNumber(p.td1),
         precipitation: toNumber(p.pr),
-        visibility: toNumber(p.vi),
+        visibility: plausibleVisibility(toNumber(p.vi)),
         grip: toNumber(p.gr),
         hasWarnings: toBoolean(p.has_warnings),
         imageUrl: takeImage("station", point),
@@ -237,3 +256,19 @@ export function roadTemperatureTone(value: number | null): "ice" | "near" | "ok"
   if (value <= 3) return "near";
   return "ok";
 }
+
+/** What the map's road layer reports to the page: loading state and a summary of what it shows. */
+export interface RoadWeatherStatus {
+  state: "idle" | "loading" | "ready" | "error";
+  stations: number;
+  cameras: number;
+  /** Newest station reading, ISO. */
+  latestObservedAt: string | null;
+}
+
+export const IDLE_ROAD_WEATHER_STATUS: RoadWeatherStatus = {
+  state: "idle",
+  stations: 0,
+  cameras: 0,
+  latestObservedAt: null,
+};

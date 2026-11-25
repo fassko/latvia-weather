@@ -49,10 +49,15 @@ import {
 } from "@/lib/weather/radar";
 import { RadarTimeControl, useRadar } from "@/components/RadarTimeControl";
 import {
+  IDLE_ROAD_WEATHER_STATUS,
+  ROAD_WEATHER_ATTRIBUTION_TEXT,
+  type RoadWeatherStatus,
+} from "@/lib/weather/road-weather";
+import {
   convertWindSpeed,
   getWindSpeedUnitSuffix,
 } from "@/lib/weather/wind-units";
-import { addForecastHours } from "@/lib/weather/timezone";
+import { addForecastHours, LATVIA_TIME_ZONE } from "@/lib/weather/timezone";
 import type {
   WeatherAlarmPolygon,
   WeatherLocationPoint,
@@ -410,7 +415,7 @@ function ForecastTimeControl({
 
 function layerLabelKey(
   layer: MapLayer,
-): "layerTemperature" | "layerWind" | "layerRain" | "layerRadar" | "layerNone" {
+): "layerTemperature" | "layerWind" | "layerRain" | "layerRadar" | "layerRoads" | "layerNone" {
   switch (layer) {
     case "wind":
       return "layerWind";
@@ -418,6 +423,8 @@ function layerLabelKey(
       return "layerRain";
     case "radar":
       return "layerRadar";
+    case "roads":
+      return "layerRoads";
     case "none":
       return "layerNone";
     default:
@@ -529,6 +536,85 @@ function MapLegend({
   );
 }
 
+/** Road surface chip colours, matching the markers the road layer draws. */
+function RoadLegend() {
+  const tMap = useTranslations("map");
+  const items: Array<{ tone: string; label: string }> = [
+    { tone: "ice", label: tMap("legendRoadsIce") },
+    { tone: "near", label: tMap("legendRoadsNear") },
+    { tone: "ok", label: tMap("legendRoadsOk") },
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+      <span className="shrink-0 font-medium text-slate-600 dark:text-slate-300">
+        {tMap("legendRoads")}
+      </span>
+      {items.map((item) => (
+        <span key={item.tone} className={`road-weather-chip road-weather-chip--${item.tone}`}>
+          {item.label}
+        </span>
+      ))}
+      <span className="inline-flex items-center gap-1.5">
+        <span className="road-weather-chip road-weather-chip--camera" aria-hidden="true">
+          <svg viewBox="0 0 16 16" className="road-weather-chip__icon">
+            <path
+              d="M2 5.5h8.5v6H2zM10.5 7.5l3.5-2v6l-3.5-2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        {tMap("legendRoadsCamera")}
+      </span>
+    </div>
+  );
+}
+
+/** Takes the time slider's place on the road layer: the readings are live, so there is no time to pick. */
+function RoadWeatherStatusBar({
+  status,
+  locale,
+}: {
+  status: RoadWeatherStatus;
+  locale: string;
+}) {
+  const tMap = useTranslations("map");
+  const updated = status.latestObservedAt
+    ? new Intl.DateTimeFormat(getIntlLocale(locale), {
+        timeZone: LATVIA_TIME_ZONE,
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(status.latestObservedAt))
+    : null;
+
+  return (
+    <div className="weather-map-time-control weather-map-time-control--roads">
+      <div className="weather-map-time-control__header">
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+          {status.state === "ready"
+            ? tMap("roadsSummary", { stations: status.stations, cameras: status.cameras })
+            : tMap("layerRoads")}
+        </span>
+        {updated ? (
+          <span className="weather-map-time-control__value">
+            {tMap("roadsUpdated", { time: updated })}
+          </span>
+        ) : null}
+      </div>
+      <p className="weather-map-time-control__status" role="status">
+        {status.state === "error"
+          ? tMap("roadWeatherError")
+          : status.state === "ready"
+            ? `${tMap("roadsAbout")} ${ROAD_WEATHER_ATTRIBUTION_TEXT}`
+            : tMap("roadsLoading")}
+      </p>
+    </div>
+  );
+}
+
 function LayerLegend({
   layer,
   radarSource,
@@ -540,6 +626,8 @@ function LayerLegend({
   const windUnit = useWindUnit();
 
   if (layer === "none") return null;
+
+  if (layer === "roads") return <RoadLegend />;
 
   if (layer === "radar" && radarSource === "lt") {
     // meteo.lt publishes no values for its shades, only their order.
@@ -657,11 +745,13 @@ export function WeatherMapSection({
   );
   const favoritesOnly = wantFavoritesOnly;
   const isRadar = layer === "radar";
+  const isRoads = layer === "roads";
   const radar = useRadar(isRadar);
+  const [roadStatus, setRoadStatus] = useState<RoadWeatherStatus>(IDLE_ROAD_WEATHER_STATUS);
   const hasCachedForecast = offsetHours === 0 || mapWeatherCache.has(offsetHours);
-  // Radar is observed weather, so the places show the current hour, not the forecast slider's.
+  // Radar and road weather are observations, so the places show the current hour, not the forecast slider's.
   const allDisplayLocations =
-    offsetHours === 0 || isRadar
+    offsetHours === 0 || isRadar || isRoads
       ? locations
       : (mapWeatherCache.get(offsetHours) ?? locations);
   const displayLocations = favoritesOnly
@@ -800,7 +890,7 @@ export function WeatherMapSection({
 
   function handleLayerChange(nextLayer: MapLayer) {
     setLayer(nextLayer);
-    if (nextLayer === "radar") setIsPlaying(false);
+    if (nextLayer === "radar" || nextLayer === "roads") setIsPlaying(false);
     // Keep the layer in the URL so a shared link opens the same view.
     const { pathname, search, hash } = window.location;
     window.history.replaceState(
@@ -950,6 +1040,7 @@ export function WeatherMapSection({
             fieldLocations={allDisplayLocations}
             showAllLabels={favoritesOnly}
             layer={layer}
+            onRoadWeatherStatusChange={setRoadStatus}
             radarFrame={
               isRadar && radar.feed && radar.frame
                 ? {
@@ -988,6 +1079,8 @@ export function WeatherMapSection({
       ) : null}
       {isRadar ? (
         <RadarTimeControl radar={radar} />
+      ) : isRoads ? (
+        <RoadWeatherStatusBar status={roadStatus} locale={locale} />
       ) : (
         <ForecastTimeControl
           offsetHours={offsetHours}

@@ -618,6 +618,26 @@ body {
     color 120ms ease;
 }
 
+/* Six layers don't fit a phone's width at full size: tighten them and let the row scroll sideways. */
+@media (max-width: 639px) {
+  .weather-map-layer-switch {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .weather-map-layer-switch::-webkit-scrollbar {
+    display: none;
+  }
+
+  .weather-map-layer-switch__option {
+    flex: none;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}
+
 .weather-map-layer-switch__option:hover {
   background: #f1f5f9;
   color: #0f172a;
@@ -1323,38 +1343,4 @@ body {
 
 .dark .road-weather-popup__time--stale {
   color: #fbbf24;
-}
-
-.road-weather-toggle[data-active="true"] {
-  color: #1e40af;
-  background: #dbeafe;
-}
-
-.road-weather-toggle[data-active="false"] {
-  color: #64748b;
-}
-
-.road-weather-toggle[data-status="loading"] svg {
-  animation: road-weather-pulse 1s ease-in-out infinite;
-}
-
-.dark .road-weather-toggle[data-active="true"] {
-  color: #dbeafe;
-  background: #1e3a8a;
-}
-
-.dark .road-weather-toggle[data-active="false"] {
-  color: #94a3b8;
-}
-
-@keyframes road-weather-pulse {
-  50% {
-    opacity: 0.35;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .road-weather-toggle[data-status="loading"] svg {
-    animation: none;
-  }
 }

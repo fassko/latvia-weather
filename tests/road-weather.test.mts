@@ -6,9 +6,28 @@ import {
   isRoadWeatherStale,
   parseRoadWeather,
   parseRoadWeatherTime,
+  plausibleRoadTemperature,
+  plausibleVisibility,
   ROAD_WEATHER_IMAGE_ID_PATTERN,
   roadTemperatureTone,
 } from "../src/lib/weather/road-weather.ts";
+
+describe("road weather sensor checks", () => {
+  it("drops a road temperature that is far from the air temperature", () => {
+    // Station 1078 on the A8 reported +20.42 °C road with −1.42 °C air.
+    assert.equal(plausibleRoadTemperature(20.42, -1.42), null);
+    assert.equal(plausibleRoadTemperature(-0.9, -0.75), -0.9);
+    assert.equal(plausibleRoadTemperature(8, -1.5), 8);
+    assert.equal(plausibleRoadTemperature(-0.4, null), -0.4);
+    assert.equal(plausibleRoadTemperature(null, 1), null);
+  });
+
+  it("treats zero visibility as no reading", () => {
+    assert.equal(plausibleVisibility(0), null);
+    assert.equal(plausibleVisibility(907), 907);
+    assert.equal(plausibleVisibility(null), null);
+  });
+});
 
 // --- a tiny protobuf writer, just enough to build a vector tile ---
 
