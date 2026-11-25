@@ -618,6 +618,26 @@ body {
     color 120ms ease;
 }
 
+/* Six layers don't fit a phone's width at full size: tighten them and let the row scroll sideways. */
+@media (max-width: 639px) {
+  .weather-map-layer-switch {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .weather-map-layer-switch::-webkit-scrollbar {
+    display: none;
+  }
+
+  .weather-map-layer-switch__option {
+    flex: none;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+}
+
 .weather-map-layer-switch__option:hover {
   background: #f1f5f9;
   color: #0f172a;
@@ -1177,4 +1197,150 @@ body {
 
 .dark .weather-map-radar-timeline__now {
   color: #7dd3fc;
+}
+
+/* Road weather (Latvijas Valsts ceļi): surface temperature chips and camera markers */
+.road-weather-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+}
+
+.road-weather-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.14rem 0.32rem;
+  border-radius: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  background: #f1f5f9;
+  color: #334155;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.3),
+    0 0 0 1px rgb(51 65 85 / 0.45);
+}
+
+.road-weather-chip__icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.road-weather-chip--ice {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.road-weather-chip--near {
+  background: #fde68a;
+  color: #78350f;
+}
+
+.road-weather-chip--warn {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.3),
+    0 0 0 2px #dc2626;
+}
+
+.road-weather-chip--camera {
+  padding: 0.18rem 0.28rem;
+  background: #334155;
+  color: #fff;
+}
+
+.dark .road-weather-chip {
+  background: #1e293b;
+  color: #e2e8f0;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.5),
+    0 0 0 1px rgb(226 232 240 / 0.5);
+}
+
+.dark .road-weather-chip--ice {
+  background: #2563eb;
+  color: #fff;
+}
+
+.dark .road-weather-chip--near {
+  background: #fcd34d;
+  color: #451a03;
+}
+
+.dark .road-weather-chip--camera {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.dark .road-weather-chip--warn {
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.5),
+    0 0 0 2px #f87171;
+}
+
+.road-weather-popup {
+  max-width: 20rem;
+}
+
+.road-weather-popup__photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  margin-top: 0.45rem;
+  border-radius: 6px;
+  background: #e2e8f0;
+  object-fit: cover;
+}
+
+.dark .road-weather-popup__photo {
+  background: #1e293b;
+}
+
+.road-weather-popup__warning {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: #b91c1c;
+}
+
+.dark .road-weather-popup__warning {
+  color: #fca5a5;
+}
+
+.road-weather-popup__stats {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.dark .road-weather-popup__stats {
+  color: #cbd5e1;
+}
+
+.road-weather-popup__time {
+  margin: 0.35rem 0 0;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.road-weather-popup__time--stale {
+  color: #b45309;
+}
+
+.dark .road-weather-popup__time {
+  color: #94a3b8;
+}
+
+.dark .road-weather-popup__time--stale {
+  color: #fbbf24;
 }

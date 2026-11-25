@@ -159,6 +159,7 @@ describe("map layer in the URL", () => {
     assert.equal(parseMapLayer("wind"), "wind");
     assert.equal(parseMapLayer("rain"), "rain");
     assert.equal(parseMapLayer("none"), "none");
+    assert.equal(parseMapLayer("roads"), "roads");
     assert.equal(parseMapLayer(["rain", "wind"]), "rain");
     assert.equal(parseMapLayer("temperature"), "temperature");
     assert.equal(parseMapLayer("snow"), "temperature");

@@ -48,6 +48,8 @@ import {
   latviaOverviewForWidth,
 } from "@/lib/weather/map-view";
 import { resolveMapTiles } from "@/lib/weather/map-tiles";
+import { RoadWeatherLayer } from "@/components/RoadWeatherLayer";
+import type { RoadWeatherStatus } from "@/lib/weather/road-weather";
 import {
   buildField,
   createWindSampler,
@@ -105,6 +107,8 @@ interface WeatherMapProps {
   layer?: MapLayer;
   /** Radar frame to draw when `layer` is "radar". */
   radarFrame?: RadarOverlayFrame | null;
+  /** Loading state of the road weather stations and cameras when `layer` is "roads". */
+  onRoadWeatherStatusChange?: (status: RoadWeatherStatus) => void;
 }
 
 export interface RadarOverlayFrame {
@@ -128,7 +132,7 @@ function labelChipHtml(
   layer: MapLayer,
   windUnit: WindUnit,
 ): string {
-  if (layer === "none" || layer === "radar") {
+  if (layer === "none" || layer === "radar" || layer === "roads") {
     return `<span class="weather-map-label__dot"></span>`;
   }
 
@@ -1198,6 +1202,7 @@ export function WeatherMap({
   showAllLabels = false,
   layer = "temperature",
   radarFrame,
+  onRoadWeatherStatusChange,
 }: WeatherMapProps) {
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
@@ -1248,13 +1253,16 @@ export function WeatherMap({
       <FitLocations locations={locations} enabled={shouldFitLocations} />
       <InvalidateSizeOnContainerResize />
       {layer === "radar" && radarFrame ? <RadarOverlay frame={radarFrame} /> : null}
-      {layer !== "none" && layer !== "radar" ? (
+      {layer !== "none" && layer !== "radar" && layer !== "roads" ? (
         <WeatherFieldLayer locations={fieldLocations ?? locations} layer={layer} />
       ) : null}
       {layer === "wind" ? (
         <WindArrowsLayer locations={fieldLocations ?? locations} />
       ) : null}
       {showAlarms ? <AlarmPolygons alarms={alarms} locale={locale} /> : null}
+      {layer === "roads" ? (
+        <RoadWeatherLayer locale={locale} onStatusChange={onRoadWeatherStatusChange} />
+      ) : null}
       <LocationMarkers
         locations={locations}
         locale={locale}

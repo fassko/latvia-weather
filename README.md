@@ -85,6 +85,16 @@ Deployed on [Vercel](https://vercel.com). Production URL: [latvia-weather.com](h
 | `GET /api/locations` | All forecast locations with current conditions |
 | `GET /api/historical` | Last complete month vs climate normals for a point |
 | `GET /api/alarms` | Active LVĢMC weather alarms/warnings |
+| `GET /api/road-weather` | Road weather stations and traffic cameras (Latvijas Valsts ceļi) |
+| `GET /api/road-weather/image/{station\|camera}-{id}` | Latest photo from one station or camera (JPEG) |
+
+### Road weather
+
+`GET /api/road-weather` returns the road weather stations and traffic cameras that Latvijas Valsts ceļi publishes
+on the [National Access Point map](https://map.transportdata.gov.lv/). Each station has air, road surface and dew
+point temperatures, precipitation, visibility, grip and the time of the reading. Photo URLs are absolute. The
+upstream vector tiles carry every photo (about 25 MB in all), so each server instance keeps the last result in
+memory for five minutes.
 
 ### Weather alarms
 
