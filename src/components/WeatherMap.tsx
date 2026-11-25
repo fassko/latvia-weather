@@ -49,6 +49,11 @@ import {
 } from "@/lib/weather/map-view";
 import { resolveMapTiles } from "@/lib/weather/map-tiles";
 import {
+  RoadWeatherControl,
+  RoadWeatherLayer,
+  type RoadWeatherStatus,
+} from "@/components/RoadWeatherLayer";
+import {
   buildField,
   createWindSampler,
   rgbToHex,
@@ -1202,6 +1207,8 @@ export function WeatherMap({
   const tMap = useTranslations("map");
   const [theme, setTheme] = useState<Theme>(() => getActiveTheme());
   const [showAlarms, setShowAlarms] = useState(initialShowAlarms);
+  const [showRoadWeather, setShowRoadWeather] = useState(false);
+  const [roadWeatherStatus, setRoadWeatherStatus] = useState<RoadWeatherStatus>("idle");
   const markersByIdRef = useRef<MarkersById>(new Map());
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const mapTiles = mapTilesForTheme(theme);
@@ -1255,6 +1262,9 @@ export function WeatherMap({
         <WindArrowsLayer locations={fieldLocations ?? locations} />
       ) : null}
       {showAlarms ? <AlarmPolygons alarms={alarms} locale={locale} /> : null}
+      {showRoadWeather ? (
+        <RoadWeatherLayer locale={locale} onStatusChange={setRoadWeatherStatus} />
+      ) : null}
       <LocationMarkers
         locations={locations}
         locale={locale}
@@ -1269,6 +1279,11 @@ export function WeatherMap({
         alarmCount={alarms.length}
         showAlarms={showAlarms}
         onToggle={() => setShowAlarms((current) => !current)}
+      />
+      <RoadWeatherControl
+        active={showRoadWeather}
+        status={roadWeatherStatus}
+        onToggle={() => setShowRoadWeather((current) => !current)}
       />
       <LocateMeControl
         locations={locations}
